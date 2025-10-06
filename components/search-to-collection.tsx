@@ -27,12 +27,14 @@ export function SearchToCollection({ searchQuery, filterCount, resultCount }: Se
   const [collectionName, setCollectionName] = React.useState("")
 
   React.useEffect(() => {
-    // Show AI suggestion after user has searched and applied filters
-    if (searchQuery && filterCount > 0) {
-      const timer = setTimeout(() => setShowSuggestion(true), 2000)
+    // Show AI suggestion after user has searched (with or without filters)
+    if (searchQuery.trim()) {
+      const timer = setTimeout(() => setShowSuggestion(true), 1500)
       return () => clearTimeout(timer)
+    } else {
+      setShowSuggestion(false)
     }
-  }, [searchQuery, filterCount])
+  }, [searchQuery])
 
   const handleCreateFromSearch = () => {
     setCollectionName(`${searchQuery} Collection`)
@@ -62,15 +64,17 @@ export function SearchToCollection({ searchQuery, filterCount, resultCount }: Se
             </Button>
           </div>
           <CardDescription>
-            You've been searching for "{searchQuery}" with {filterCount} filters. Would you like to save this as a
-            collection?
+            {filterCount > 0 
+              ? `You've been searching for "${searchQuery}" with ${filterCount} filters. Would you like to save this as a collection?`
+              : `You've been searching for "${searchQuery}". Would you like to save this as a collection?`
+            }
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex gap-2">
             <Button size="sm" onClick={handleCreateFromSearch} className="gap-2">
               <Save className="h-4 w-4" />
-              Create Collection ({resultCount} items)
+              Create ({resultCount} items)
             </Button>
             <Button size="sm" variant="outline" onClick={() => setShowSuggestion(false)}>
               Not now
@@ -82,9 +86,9 @@ export function SearchToCollection({ searchQuery, filterCount, resultCount }: Se
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Create Collection from Search</DialogTitle>
+            <DialogTitle>New Collection</DialogTitle>
             <DialogDescription>
-              Save your current search and filters as a smart collection that updates automatically.
+              Group selected items into a new collection. Rules are optional.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -112,7 +116,7 @@ export function SearchToCollection({ searchQuery, filterCount, resultCount }: Se
               Cancel
             </Button>
             <Button onClick={handleSave} disabled={!collectionName}>
-              Create Collection
+              Create
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -255,7 +255,7 @@ export function ShareDialog({
               <div className="flex items-center gap-2">
                 <Edit className="h-3 w-3" />
                 <span>
-                  <strong>Can Edit:</strong> Can view, add, modify, and delete items in the collection
+                  <strong>Can Edit:</strong> Can view, add, modify, and remove items in the collection
                 </span>
               </div>
             </div>

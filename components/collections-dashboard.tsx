@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useCollections } from "@/contexts/collections-context"
 import {
   Sparkles,
   Clock,
@@ -41,7 +42,6 @@ import {
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { AICollectionDialog } from "@/components/ai-collection-dialog"
 import { AICollectionPreviewDialog } from "@/components/ai-collection-preview-dialog"
 
 const mockItems = [
@@ -128,46 +128,57 @@ const stats = [
   { label: "Pinned Items", value: "0", icon: Clock, trend: "Pin important items" },
 ]
 
-// AI Suggested Collections for Oil Nut Bay Resort
-const aiSuggestionCards = [
-  {
-    id: "luxury-villas",
-    name: "Luxury Villas & Properties",
-    description: "Beachfront estates, hillside villas, and vacation rental properties",
-    itemCount: 28,
-    icon: ResortIcon,
-    color: "from-blue-500/20 to-cyan-500/20",
-  },
-  {
-    id: "marina-assets",
-    name: "Marina Village Assets",
-    description: "Private marina, boats, water sports equipment, and marine facilities",
-    itemCount: 22,
-    icon: MarinaIcon,
-    color: "from-teal-500/20 to-blue-500/20",
-  },
-  {
-    id: "resort-amenities",
-    name: "Resort Amenities",
-    description: "Spa facilities, dining venues, beach club, and recreational activities",
-    itemCount: 35,
-    icon: AmenitiesIcon,
-    color: "from-green-500/20 to-emerald-500/20",
-  },
-  {
-    id: "guest-experiences",
-    name: "Guest Experiences",
-    description: "Activities, events, excursions, and personalized service records",
-    itemCount: 19,
-    icon: ExperienceIcon,
-    color: "from-purple-500/20 to-pink-500/20",
-  },
-]
 
 export function CollectionsDashboard() {
   const [previewDialogOpen, setPreviewDialogOpen] = React.useState(false)
   const [selectedCollectionType, setSelectedCollectionType] = React.useState<string>("")
+  const { collections } = useCollections()
   const [searchQuery, setSearchQuery] = React.useState<string>("")
+
+  // Calculate real item counts for AI suggestions based on actual data
+  const getAISuggestionCards = () => {
+    const propertiesCount = mockItems.filter(item => item.category === "Properties").length
+    const maritimeCount = mockItems.filter(item => item.category === "Maritime").length
+    const eventsCount = mockItems.filter(item => item.category === "Events").length
+    const petsCount = mockItems.filter(item => item.category === "Pets").length
+
+    return [
+      {
+        id: "luxury-villas",
+        name: "Luxury Villas & Properties",
+        description: "Beachfront estates, hillside villas, and vacation rental properties",
+        itemCount: propertiesCount,
+        icon: ResortIcon,
+        color: "from-blue-50 to-cyan-50",
+      },
+      {
+        id: "marina-assets",
+        name: "Marina Village Assets",
+        description: "Private marina, boats, water sports equipment, and marine facilities",
+        itemCount: maritimeCount,
+        icon: MarinaIcon,
+        color: "from-teal-50 to-blue-50",
+      },
+      {
+        id: "resort-amenities",
+        name: "Resort Amenities",
+        description: "Spa facilities, dining venues, beach club, and recreational activities",
+        itemCount: eventsCount,
+        icon: AmenitiesIcon,
+        color: "from-green-50 to-emerald-50",
+      },
+      {
+        id: "guest-experiences",
+        name: "Guest Experiences",
+        description: "Activities, events, excursions, and personalized service records",
+        itemCount: petsCount,
+        icon: ExperienceIcon,
+        color: "from-purple-50 to-pink-50",
+      },
+    ]
+  }
+
+  const aiSuggestionCards = getAISuggestionCards()
 
   const handleAISuggestionClick = (suggestionId: string) => {
     // Open preview dialog with AI suggested items
@@ -188,77 +199,101 @@ export function CollectionsDashboard() {
     }
   }
 
+  const handleQuickPrompt = (prompt: string) => {
+    setSearchQuery(prompt)
+    // Only populate the search field, don't auto-open dialog
+  }
+
   return (
     <div className="space-y-8">
       {/* AI-Powered Collections Hero */}
-      <div className="relative overflow-hidden rounded-xl border border-border bg-gradient-to-br from-primary/10 via-accent/5 to-background p-4 shadow-sm">
-        <div className="relative z-10 text-center">
-          <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary shadow-lg">
-            <Sparkles className="h-3 w-3" />
+      <div className="bg-white border border-gray-200 rounded-lg p-6">
+        <div className="text-center">
+          <h1 className="text-xl font-semibold text-gray-900 mb-2">
             AI-Powered Collections
-          </div>
-          
-          <h1 className="mb-2 text-lg font-bold leading-tight text-foreground">
-            Organize Everything, Find Anything Instantly
           </h1>
           
-          <p className="mb-4 mx-auto max-w-xl text-sm leading-relaxed text-muted-foreground">
-            Create smart collections with AI assistance, collaborate with your team, and manage your data with powerful views and filters.
+          <p className="text-sm text-gray-600 mb-6">
+            Create smart collections with AI assistance
           </p>
           
-          {/* AI Prompt Examples */}
+          {/* Quick Prompts */}
           <div className="mb-4">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <Sparkles className="h-3 w-3 text-primary" />
-              <span className="text-xs font-medium text-muted-foreground">Try these AI prompts:</span>
-            </div>
             <div className="flex flex-wrap justify-center gap-2">
               <Button 
                 size="sm" 
                 variant="outline" 
-                onClick={() => handlePromptClick("high-value assets requiring maintenance")}
-                className="h-7 px-3 text-xs bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 text-blue-700 hover:text-blue-800 border-blue-200 hover:border-blue-300 hover:scale-105 transition-all duration-200 shadow-sm hover:shadow-md font-medium cursor-pointer"
+                onClick={() => handleQuickPrompt("high-value assets requiring maintenance")}
+                className="h-7 px-3 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200 hover:border-blue-300"
               >
-                high-value assets requiring maintenance
+                High-value assets
               </Button>
               <Button 
                 size="sm" 
                 variant="outline" 
-                onClick={() => handlePromptClick("guest preferences and special requests")}
-                className="h-7 px-3 text-xs bg-gradient-to-r from-purple-50 to-pink-50 hover:from-purple-100 hover:to-pink-100 text-purple-700 hover:text-purple-800 border-purple-200 hover:border-purple-300 hover:scale-105 transition-all duration-200 shadow-sm hover:shadow-md font-medium cursor-pointer"
+                onClick={() => handleQuickPrompt("guest preferences and special requests")}
+                className="h-7 px-3 text-xs bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200 hover:border-purple-300"
               >
-                guest preferences and special requests
+                Guest preferences
+              </Button>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={() => handleQuickPrompt("active legal entities from 2024")}
+                className="h-7 px-3 text-xs bg-green-50 hover:bg-green-100 text-green-700 border-green-200 hover:border-green-300"
+              >
+                Legal entities 2024
+              </Button>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={() => handleQuickPrompt("recently updated items")}
+                className="h-7 px-3 text-xs bg-orange-50 hover:bg-orange-100 text-orange-700 border-orange-200 hover:border-orange-300"
+              >
+                Recent updates
+              </Button>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={() => handleQuickPrompt("items requiring attention")}
+                className="h-7 px-3 text-xs bg-red-50 hover:bg-red-100 text-red-700 border-red-200 hover:border-red-300"
+              >
+                Needs attention
+              </Button>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={() => handleQuickPrompt("financial documents and contracts")}
+                className="h-7 px-3 text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-200 hover:border-indigo-300"
+              >
+                Financial docs
               </Button>
             </div>
           </div>
           
-                 {/* Search Input */}
-                 <div className="relative mx-auto max-w-2xl">
-                   <div className="relative flex items-center bg-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 focus-within:shadow-xl">
-                     <Search className="absolute left-3 h-4 w-4 text-slate-400" />
-                     <input
-                       type="text"
-                       value={searchQuery}
-                       onChange={(e) => setSearchQuery(e.target.value)}
-                       placeholder="Search for items or ask AI to create a collection..."
-                       className="w-full rounded-lg bg-transparent px-10 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none"
-                     />
-                     <Button 
-                       size="sm" 
-                       onClick={handleAICreate}
-                       disabled={!searchQuery.trim()}
-                       className="absolute right-1 bg-gradient-to-r from-primary to-accent text-white hover:scale-105 transition-all duration-200 shadow-md h-7 px-3 disabled:opacity-50 disabled:cursor-not-allowed"
-                     >
-                       <Sparkles className="h-3 w-3 mr-1" />
-                       Ask AI to Create
-                     </Button>
-                   </div>
-                 </div>
+          {/* Search Input */}
+          <div className="relative mx-auto max-w-lg">
+            <div className="relative flex items-center bg-gray-50 rounded-lg border border-gray-200 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500">
+              <Search className="absolute left-3 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search for items or ask AI to create a collection..."
+                className="w-full rounded-lg bg-transparent px-10 py-3 text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none"
+              />
+              <Button 
+                size="sm" 
+                onClick={handleAICreate}
+                disabled={!searchQuery.trim()}
+                className="absolute right-1 bg-blue-600 text-white hover:bg-blue-700 h-8 px-4 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Sparkles className="h-3 w-3 mr-1" />
+                Ask AI
+              </Button>
+            </div>
+          </div>
         </div>
-        
-        {/* Decorative gradient orbs */}
-        <div className="absolute -right-20 -top-20 h-48 w-48 rounded-full bg-primary/20 blur-2xl" />
-        <div className="absolute -bottom-20 -left-20 h-48 w-48 rounded-full bg-accent/20 blur-2xl" />
       </div>
 
       {/* Stats Grid */}
@@ -277,6 +312,61 @@ export function CollectionsDashboard() {
         ))}
       </div>
 
+      {/* Created Collections Section */}
+      {collections.length > 0 && (
+        <div>
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-bold">Your Collections</h2>
+              <p className="text-xs text-muted-foreground">Collections you've created with AI assistance</p>
+            </div>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {collections.map((collection) => (
+              <div
+                key={collection.id}
+                className="group relative overflow-hidden rounded-xl border border-border bg-card p-6 shadow-sm transition-all hover:shadow-md"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500/20 to-purple-500/20">
+                        <Sparkles className="h-4 w-4 text-indigo-600" />
+                      </div>
+                      <h3 className="font-semibold text-sm">{collection.name}</h3>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
+                      {collection.description}
+                    </p>
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <Folder className="h-3 w-3" />
+                        {collection.itemCount} items
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {collection.createdAt.toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-4 flex gap-2">
+                  <Button size="sm" variant="outline" className="text-xs h-7">
+                    View
+                  </Button>
+                  <Button size="sm" variant="outline" className="text-xs h-7">
+                    Edit
+                  </Button>
+                  <Button size="sm" variant="outline" className="text-xs h-7 text-red-600 hover:text-red-700">
+                    Remove
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* AI Suggestions Section */}
       <div>
         <div className="mb-6 flex items-center justify-between">
@@ -289,12 +379,12 @@ export function CollectionsDashboard() {
           {aiSuggestionCards.map((suggestion) => (
             <Card
               key={suggestion.id}
-              className="group cursor-pointer overflow-hidden transition-all hover:shadow-lg p-0"
+              className="group cursor-pointer overflow-hidden transition-all hover:shadow-sm border border-gray-200 shadow-none bg-white p-0"
               onClick={() => handleAISuggestionClick(suggestion.id)}
             >
-        <div className={`h-24 bg-gradient-to-br ${suggestion.color} p-4`}>
+        <div className={`h-20 bg-gradient-to-br ${suggestion.color} p-4 border-b border-gray-100`}>
                 <div className="flex h-full items-center justify-center">
-            <suggestion.icon className="h-10 w-10 text-foreground/60 stroke-[1.5]" />
+            <suggestion.icon className="h-8 w-8 text-gray-500 stroke-[1]" />
                 </div>
               </div>
               <CardHeader className="pt-4">
@@ -306,20 +396,16 @@ export function CollectionsDashboard() {
                   <Badge variant="secondary">{suggestion.itemCount}</Badge>
                 </div>
               </CardHeader>
-              <CardContent className="pt-4 pb-4">
-                <div className="mt-4">
-                  <AICollectionDialog
-                    trigger={
-                      <Button
-                        className="w-full gap-2 opacity-0 transition-opacity group-hover:opacity-100"
-                        variant="secondary"
-                      >
-                        View Collection
-                        <ArrowRight className="h-4 w-4" />
-                      </Button>
-                    }
-                  />
-                </div>
+              <CardContent className="pt-2 pb-4">
+                <Button
+                  className="w-full gap-2 opacity-70 hover:opacity-100 transition-opacity"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => console.log("View Collection clicked")}
+                >
+                  View Collection
+                  <ArrowRight className="h-3 w-3" />
+                </Button>
               </CardContent>
             </Card>
           ))}
@@ -353,6 +439,7 @@ export function CollectionsDashboard() {
         open={previewDialogOpen}
         onOpenChange={setPreviewDialogOpen}
         collectionType={selectedCollectionType}
+        userPrompt={searchQuery}
       />
     </div>
   )

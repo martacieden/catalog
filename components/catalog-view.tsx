@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import {
   Search,
   Filter,
@@ -36,12 +37,14 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
-import { AICollectionDialog } from "@/components/ai-collection-dialog"
+import { ManualCollectionDialog } from "@/components/manual-collection-dialog"
 import { SearchToCollection } from "@/components/search-to-collection"
+import { getUnsplashImageUrl, getRandomUnsplashImage } from "@/lib/unsplash"
 import { ShareDialog } from "@/components/share-dialog"
 import { CollectionSettingsDialog } from "@/components/collection-settings-dialog"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { useCollections } from "@/contexts/collections-context"
 
 
 interface CatalogViewProps {
@@ -207,7 +210,62 @@ function getCategoryIcon(category: string) {
   return iconMap[category] || <FileText className="h-5 w-5" />
 }
 
+// Компонент для відображення в картковому вигляді (великий розмір)
+const CardItemThumbnail = ({ item }: { item: any }) => {
+  const CategoryIcon = getCategoryIcon(item.category)
+  
+  // Генеруємо Unsplash URL для цього об'єкта
+  const unsplashUrl = getUnsplashImageUrl(item.category, item.name)
+  
+  return (
+    <div className="relative h-24 w-full rounded-lg overflow-hidden">
+      <img 
+        src={unsplashUrl} 
+        alt={item.name}
+        className="h-full w-full object-cover"
+        onError={(e) => {
+          // Якщо Unsplash фото не завантажилося, показуємо fallback
+          e.currentTarget.style.display = 'none'
+          e.currentTarget.nextElementSibling?.classList.remove('hidden')
+        }}
+      />
+      <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-muted hidden">
+        <div className="h-12 w-12 flex items-center justify-center rounded-lg bg-muted/50">
+          {CategoryIcon}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Компонент для відображення в табличному вигляді (малий розмір)
+const TableItemThumbnail = ({ item }: { item: any }) => {
+  const CategoryIcon = getCategoryIcon(item.category)
+  
+  // Генеруємо Unsplash URL для цього об'єкта (менший розмір для таблиці)
+  const unsplashUrl = getUnsplashImageUrl(item.category, item.name).replace('400x300', '200x200')
+  
+  return (
+    <div className="relative h-12 w-12 rounded-lg overflow-hidden">
+      <img 
+        src={unsplashUrl} 
+        alt={item.name}
+        className="h-full w-full object-cover"
+        onError={(e) => {
+          // Якщо Unsplash фото не завантажилося, показуємо fallback
+          e.currentTarget.style.display = 'none'
+          e.currentTarget.nextElementSibling?.classList.remove('hidden')
+        }}
+      />
+      <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-muted hidden">
+        {CategoryIcon}
+      </div>
+    </div>
+  )
+}
+
 export function CatalogView({ activeView = "catalog" }: CatalogViewProps) {
+  const { collections, getCollectionById } = useCollections()
   const [searchQuery, setSearchQuery] = React.useState("")
   const [activeFilters, setActiveFilters] = React.useState(0)
   const [selectedItems, setSelectedItems] = React.useState<Set<string>>(new Set())
@@ -217,6 +275,12 @@ export function CatalogView({ activeView = "catalog" }: CatalogViewProps) {
   const getPageTitle = () => {
     if (!activeView) return "Catalog"
 
+    // Check if activeView is a collection ID
+    const collection = getCollectionById(activeView)
+    if (collection) {
+      return collection.name
+    }
+
     // Convert kebab-case to Title Case
     return activeView
       .split("-")
@@ -224,10 +288,54 @@ export function CatalogView({ activeView = "catalog" }: CatalogViewProps) {
       .join(" ")
   }
 
+  // Function to apply collection filters to items
+  const applyCollectionFilters = (items: any[], filters: any[]) => {
+    if (!filters || filters.length === 0) return items
+
+    return items.filter(item => {
+      return filters.every(filter => {
+        const { field, operator, value } = filter
+
+        switch (field) {
+          case "category":
+            return operator === "equals" && item.category === value
+          case "pinned":
+            return operator === "equals" && item.pinned === (value === "true")
+          case "sharedWith":
+            if (operator === "is_not_empty") {
+              return item.sharedWith && item.sharedWith.length > 0
+            }
+            return false
+          case "createdOn":
+            if (operator === "contains") {
+              return item.createdOn.includes(value)
+            }
+            return false
+          case "createdBy":
+            if (operator === "equals") {
+              return item.createdBy && item.createdBy.name === value
+            }
+            return false
+          default:
+            return true
+        }
+      })
+    })
+  }
+
   const getFilteredItems = () => {
     let filteredItems = items
 
-    if (activeView === "pinned") {
+    // Check if activeView is a collection ID
+    const collection = getCollectionById(activeView)
+    if (collection) {
+      // For AI-generated collections, use the items directly
+      if (collection.type === 'ai-generated' && collection.items) {
+        return collection.items
+      }
+      // For manual collections, apply collection filters
+      filteredItems = applyCollectionFilters(filteredItems, collection.filters)
+    } else if (activeView === "pinned") {
       return filteredItems.filter((item) => item.pinned)
     } else if (activeView === "all-objects") {
       return filteredItems
@@ -252,6 +360,8 @@ export function CatalogView({ activeView = "catalog" }: CatalogViewProps) {
       }
       return filteredItems
     }
+
+    return filteredItems
   }
 
   const filteredItems = getFilteredItems()
@@ -314,6 +424,11 @@ export function CatalogView({ activeView = "catalog" }: CatalogViewProps) {
               {items.length} total
             </Badge>
           )}
+          {getCollectionById(activeView) && (
+            <Badge variant="secondary" className="text-xs">
+              {filteredItems.length} items
+            </Badge>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
@@ -334,41 +449,6 @@ export function CatalogView({ activeView = "catalog" }: CatalogViewProps) {
               <DashboardView items={items} onCategoryClick={() => {}} />
             ) : (
         <>
-          {selectedCount > 0 && (
-            <div className="flex items-center justify-between border-b border-border bg-muted px-6 py-3">
-              <div className="flex items-center gap-4">
-                <span className="text-sm font-medium">
-                  {selectedCount} item{selectedCount > 1 ? "s" : ""} selected
-                </span>
-                <Button variant="ghost" size="sm" onClick={() => setSelectedItems(new Set())}>
-                  <X className="mr-2 h-4 w-4" />
-                  Clear selection
-                </Button>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={handlePinSelected}>
-                  <Pin className="mr-2 h-4 w-4" />
-                  Pin
-                </Button>
-                {activeView === "pinned" && (
-                  <Button variant="outline" size="sm" onClick={handleUnpinSelected}>
-                    <Pin className="mr-2 h-4 w-4" />
-                    Unpin
-                  </Button>
-                )}
-                <AICollectionDialog
-                  trigger={
-                    <Button size="sm">
-                      <Plus className="mr-2 h-4 w-4" />
-                      Create collection
-                    </Button>
-                  }
-                  selectedItems={Array.from(selectedItems)}
-                />
-              </div>
-            </div>
-          )}
-
           {/* Toolbar */}
           <div className="flex items-center justify-between border-b border-border bg-card px-6 py-3">
             <div className="flex items-center gap-2">
@@ -417,11 +497,11 @@ export function CatalogView({ activeView = "catalog" }: CatalogViewProps) {
                   <Square className="h-4 w-4" />
                 </Button>
               </div>
-              <AICollectionDialog
+              <ManualCollectionDialog
                 trigger={
                   <Button>
                     <Plus className="mr-2 h-4 w-4" />
-                    New item
+                    Add
                   </Button>
                 }
               />
@@ -441,9 +521,27 @@ export function CatalogView({ activeView = "catalog" }: CatalogViewProps) {
             )}
 
             {viewMode === "grid" ? (
-              <GridView items={filteredItems} selectedItems={selectedItems} onSelectItem={handleSelectItem} />
+              <GridView 
+                items={filteredItems} 
+                selectedItems={selectedItems} 
+                onSelectItem={handleSelectItem}
+                onPinSelected={handlePinSelected}
+                onUnpinSelected={handleUnpinSelected}
+                onCreateCollectionFromSelected={handleCreateCollectionFromSelected}
+                onClearSelection={() => setSelectedItems(new Set())}
+                activeView={activeView}
+              />
             ) : (
-              <CardView items={filteredItems} selectedItems={selectedItems} onSelectItem={handleSelectItem} />
+              <CardView 
+                items={filteredItems} 
+                selectedItems={selectedItems} 
+                onSelectItem={handleSelectItem}
+                onPinSelected={handlePinSelected}
+                onUnpinSelected={handleUnpinSelected}
+                onCreateCollectionFromSelected={handleCreateCollectionFromSelected}
+                onClearSelection={() => setSelectedItems(new Set())}
+                activeView={activeView}
+              />
             )}
             </div>
           </div>
@@ -521,7 +619,7 @@ function DashboardView({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Shared Objects</p>
-                <p className="mt-2 text-3xl font-bold">{items.filter((i) => i.sharedWith.length > 0).length}</p>
+                <p className="mt-2 text-3xl font-bold">{items.filter((i) => i.sharedWith && i.sharedWith.length > 0).length}</p>
               </div>
               <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
                 <Users className="h-6 w-6 text-primary" />
@@ -557,11 +655,11 @@ function DashboardView({
             <p className="mb-4 text-center text-xs text-muted-foreground/70">
               Create your first collection to organize your objects
             </p>
-            <AICollectionDialog
+            <ManualCollectionDialog
               trigger={
                 <Button size="sm">
                   <Plus className="mr-2 h-4 w-4" />
-                  Create collection
+                  Create
                 </Button>
               }
             />
@@ -576,22 +674,79 @@ function CardView({
   items,
   selectedItems,
   onSelectItem,
+  onPinSelected,
+  onUnpinSelected,
+  onCreateCollectionFromSelected,
+  onClearSelection,
+  activeView,
 }: {
   items: typeof mockItems
   selectedItems: Set<string>
   onSelectItem: (id: string, checked: boolean) => void
+  onPinSelected: () => void
+  onUnpinSelected: () => void
+  onCreateCollectionFromSelected: () => void
+  onClearSelection: () => void
+  activeView: string
 }) {
+  const selectedCount = selectedItems.size
+
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div>
+      {selectedCount > 0 && (
+        <div className="sticky top-0 z-10 -mt-2 mb-4 rounded-lg border border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 px-4 py-3 shadow-sm">
+          <div className="mx-auto max-w-6xl flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-medium">
+                {selectedCount} item{selectedCount > 1 ? "s" : ""} selected
+              </span>
+              <Button variant="ghost" size="sm" onClick={onClearSelection}>
+                <X className="mr-2 h-4 w-4" />
+                Clear selection
+              </Button>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={onPinSelected}>
+                <Pin className="mr-2 h-4 w-4" />
+                Pin
+              </Button>
+              {activeView === "pinned" && (
+                <Button variant="outline" size="sm" onClick={onUnpinSelected}>
+                  <Pin className="mr-2 h-4 w-4" />
+                  Unpin
+                </Button>
+              )}
+              <ManualCollectionDialog
+                trigger={
+                  <Button size="sm">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create
+                  </Button>
+                }
+                selectedItems={Array.from(selectedItems)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {items.map((item) => (
         <div
           key={item.id}
-          className={`group relative cursor-pointer rounded-lg border bg-card p-4 transition-all hover:shadow-md ${
+          className={`group relative cursor-pointer rounded-lg border border-gray-200 bg-white p-4 transition-all hover:shadow-sm ${
             selectedItems.has(item.id) ? "ring-2 ring-primary" : ""
           }`}
           onClick={() => onSelectItem(item.id, !selectedItems.has(item.id))}
         >
-          <div className="absolute left-4 top-4">
+          {/* Checkbox in top left (visible on hover or when selected) */}
+          <div
+            className={`absolute left-4 top-4 z-10 transition-opacity ${
+              selectedItems.has(item.id)
+                ? "opacity-100"
+                : "opacity-0 group-hover:opacity-100"
+            }`}
+          >
             <Checkbox
               checked={selectedItems.has(item.id)}
               onChange={(e) => {
@@ -601,20 +756,83 @@ function CardView({
             />
           </div>
           
-          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted ml-8">
-            {getCategoryIcon(item.category)}
+          {/* Actions menu in top right */}
+          <div className="absolute right-4 top-4 z-10">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <MoreVertical className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem>View Details</DropdownMenuItem>
+                <DropdownMenuItem>Edit</DropdownMenuItem>
+                <DropdownMenuItem>Share</DropdownMenuItem>
+                <DropdownMenuItem>Duplicate</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
           
-          <div className="mt-4">
-            <h3 className="font-semibold text-sm leading-tight">{item.name}</h3>
-            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{item.description}</p>
-            <div className="flex items-center justify-between mt-3">
-              <Badge variant="outline" className="text-xs">{item.category}</Badge>
-              {item.pinned && <Pin className="h-3 w-3 text-muted-foreground" />}
+          {/* Vertical layout with centered photo/icon */}
+          <div className="space-y-3 mt-2">
+            {/* Photo/Icon section */}
+            <CardItemThumbnail item={item} />
+            
+            {/* Main content */}
+            <div className="space-y-2 px-2">
+              {/* Title and ID */}
+              <div>
+                <Link 
+                  href={`/catalog/${item.id}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="font-semibold text-sm leading-tight text-foreground hover:underline"
+                >
+                  {item.name}
+                </Link>
+                <p className="text-xs text-muted-foreground font-mono">{item.id}</p>
+              </div>
+              
+              {/* Category */}
+              <div>
+                <Badge variant="outline" className="text-xs">{item.category}</Badge>
+                {item.pinned && <Pin className="inline h-3 w-3 text-muted-foreground ml-2" />}
+              </div>
+              
+              {/* Description if exists */}
+              {item.description && (
+                <p className="text-xs text-muted-foreground line-clamp-2">{item.description}</p>
+              )}
+              
+              {/* Bottom section with shared info and date */}
+              <div className="flex items-center justify-between pt-2">
+                {/* Shared with section */}
+                <div className="flex items-center gap-1">
+                  {item.sharedWith && item.sharedWith.slice(0, 3).map((user, i) => (
+                    <div
+                      key={i}
+                      className="flex h-4 w-4 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground"
+                    >
+                      {user.avatar}
+                    </div>
+                  ))}
+                  {item.sharedWith && item.sharedWith.length > 3 && (
+                    <span className="text-xs text-muted-foreground">+{item.sharedWith.length - 3}</span>
+                  )}
+                </div>
+                
+                {/* Date */}
+                <span className="text-xs text-muted-foreground">{item.createdOn}</span>
+              </div>
             </div>
           </div>
         </div>
       ))}
+    </div>
     </div>
   )
 }
@@ -623,12 +841,23 @@ function GridView({
   items,
   selectedItems,
   onSelectItem,
+  onPinSelected,
+  onUnpinSelected,
+  onCreateCollectionFromSelected,
+  onClearSelection,
+  activeView,
 }: {
   items: typeof mockItems
   selectedItems: Set<string>
   onSelectItem: (id: string, checked: boolean) => void
+  onPinSelected: () => void
+  onUnpinSelected: () => void
+  onCreateCollectionFromSelected: () => void
+  onClearSelection: () => void
+  activeView: string
 }) {
   const allSelected = items.length > 0 && selectedItems.size === items.length
+  const selectedCount = selectedItems.size
   
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -642,24 +871,65 @@ function GridView({
     <div className="rounded-lg border border-border bg-card">
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="border-b border-border bg-muted/50">
-            <tr>
-              <th className="w-12 p-4">
-                <Checkbox 
-                  checked={allSelected} 
-                  onCheckedChange={handleSelectAll}
-                  className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                />
-              </th>
-              <th className="p-4 text-left text-sm font-medium text-muted-foreground">Name</th>
-              <th className="p-4 text-left text-sm font-medium text-muted-foreground">ID</th>
-              <th className="p-4 text-left text-sm font-medium text-muted-foreground">Category</th>
-              <th className="p-4 text-left text-sm font-medium text-muted-foreground">Shared with</th>
-              <th className="p-4 text-left text-sm font-medium text-muted-foreground">Created by</th>
-              <th className="p-4 text-left text-sm font-medium text-muted-foreground">Created on</th>
-              <th className="p-4 text-left text-sm font-medium text-muted-foreground">Last update</th>
-            </tr>
-          </thead>
+          {selectedCount > 0 ? (
+            <thead className="border-b border-border bg-muted">
+              <tr>
+                <td colSpan={8} className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <span className="text-sm font-medium">
+                        {selectedCount} item{selectedCount > 1 ? "s" : ""} selected
+                      </span>
+                      <Button variant="ghost" size="sm" onClick={onClearSelection}>
+                        <X className="mr-2 h-4 w-4" />
+                        Clear selection
+                      </Button>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm" onClick={onPinSelected}>
+                        <Pin className="mr-2 h-4 w-4" />
+                        Pin
+                      </Button>
+                      {activeView === "pinned" && (
+                        <Button variant="outline" size="sm" onClick={onUnpinSelected}>
+                          <Pin className="mr-2 h-4 w-4" />
+                          Unpin
+                        </Button>
+                      )}
+                      <ManualCollectionDialog
+                        trigger={
+                          <Button size="sm">
+                            <Plus className="mr-2 h-4 w-4" />
+                            Create
+                          </Button>
+                        }
+                        selectedItems={Array.from(selectedItems)}
+                      />
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </thead>
+          ) : (
+            <thead className="border-b border-border bg-muted/50">
+              <tr>
+                <th className="w-12 p-4">
+                  <Checkbox 
+                    checked={allSelected} 
+                    onCheckedChange={handleSelectAll}
+                    className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                  />
+                </th>
+                <th className="p-4 text-left text-sm font-medium text-muted-foreground">Name</th>
+                <th className="p-4 text-left text-sm font-medium text-muted-foreground">ID</th>
+                <th className="p-4 text-left text-sm font-medium text-muted-foreground">Category</th>
+                <th className="p-4 text-left text-sm font-medium text-muted-foreground">Shared with</th>
+                <th className="p-4 text-left text-sm font-medium text-muted-foreground">Created by</th>
+                <th className="p-4 text-left text-sm font-medium text-muted-foreground">Created on</th>
+                <th className="p-4 text-left text-sm font-medium text-muted-foreground">Last update</th>
+              </tr>
+            </thead>
+          )}
           <tbody>
             {items.map((item) => (
               <tr
@@ -675,10 +945,10 @@ function GridView({
                 </td>
                 <td className="p-4">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                      {getCategoryIcon(item.category)}
-                    </div>
-                    <span className="font-medium">{item.name}</span>
+                    <TableItemThumbnail item={item} />
+                    <Link href={`/catalog/${item.id}`} className="font-medium hover:underline">
+                      {item.name}
+                    </Link>
                   </div>
                 </td>
                 <td className="p-4">
@@ -693,23 +963,23 @@ function GridView({
                 </td>
                 <td className="p-4">
                   <div className="flex items-center gap-1">
-                    {item.sharedWith.slice(0, 3).map((user, i) => (
+                    {item.sharedWith && item.sharedWith.slice(0, 3).map((user, i) => (
                       <span key={i} className="text-xs font-medium text-muted-foreground">
                         {user.avatar}
                       </span>
                     ))}
-                    {item.sharedWith.length > 3 && (
+                    {item.sharedWith && item.sharedWith.length > 3 && (
                       <span className="text-xs text-muted-foreground">+{item.sharedWith.length - 3}</span>
                     )}
-                    {item.sharedWith.length === 0 && <span className="text-xs text-muted-foreground">No shares</span>}
+                    {(!item.sharedWith || item.sharedWith.length === 0) && <span className="text-xs text-muted-foreground">No shares</span>}
                   </div>
                 </td>
                 <td className="p-4">
                   <div className="flex items-center gap-2">
                     <Avatar className="h-6 w-6">
-                      <AvatarFallback className="text-xs">{item.createdBy.avatar}</AvatarFallback>
+                      <AvatarFallback className="text-xs">{item.createdBy?.avatar || '?'}</AvatarFallback>
                     </Avatar>
-                    <span className="text-sm">{item.createdBy.name}</span>
+                    <span className="text-sm">{item.createdBy?.name || 'Unknown'}</span>
                   </div>
                 </td>
                 <td className="p-4 text-sm text-muted-foreground">{item.createdOn}</td>
@@ -767,11 +1037,11 @@ function TableView({
                 </td>
                 <td className="p-4">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                      {getCategoryIcon(item.category)}
-                    </div>
+                    <TableItemThumbnail item={item} />
                     <div className="flex items-center gap-2">
-                      <span className="font-medium">{item.name}</span>
+                      <Link href={`/catalog/${item.id}`} className="font-medium hover:underline">
+                        {item.name}
+                      </Link>
                       {item.pinned && <Pin className="h-3 w-3 text-primary" />}
                     </div>
                   </div>
@@ -783,7 +1053,7 @@ function TableView({
                 </td>
                 <td className="p-4 text-sm text-muted-foreground">{item.category}</td>
                 <td className="p-4">
-                  {item.sharedWith.length > 0 ? (
+                  {item.sharedWith && item.sharedWith.length > 0 ? (
                     <div className="flex -space-x-2">
                       {item.sharedWith.slice(0, 3).map((user, i) => (
                         <Avatar key={i} className="h-6 w-6 border-2 border-card">
@@ -803,9 +1073,9 @@ function TableView({
                 <td className="p-4">
                   <div className="flex items-center gap-2">
                     <Avatar className="h-6 w-6">
-                      <AvatarFallback className="text-xs">{item.createdBy.avatar}</AvatarFallback>
+                      <AvatarFallback className="text-xs">{item.createdBy?.avatar || '?'}</AvatarFallback>
                     </Avatar>
-                    <span className="text-sm">{item.createdBy.name}</span>
+                    <span className="text-sm">{item.createdBy?.name || 'Unknown'}</span>
                   </div>
                 </td>
                 <td className="p-4 text-sm text-muted-foreground">{item.createdOn}</td>
@@ -838,7 +1108,7 @@ function TableView({
                           </DropdownMenuItem>
                         }
                       />
-                      <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                      <DropdownMenuItem className="text-destructive">Remove</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </td>
@@ -896,12 +1166,12 @@ function BoardView({ items }: { items: typeof mockItems }) {
                 <p className="mb-3 text-xs text-muted-foreground">{item.category}</p>
                 <div className="flex items-center justify-between">
                   <div className="flex -space-x-2">
-                    {item.sharedWith.slice(0, 2).map((user, i) => (
+                    {item.sharedWith && item.sharedWith.slice(0, 2).map((user, i) => (
                       <Avatar key={i} className="h-5 w-5 border-2 border-background">
                         <AvatarFallback className="text-xs">{user.avatar}</AvatarFallback>
                       </Avatar>
                     ))}
-                    {item.sharedWith.length > 2 && (
+                    {item.sharedWith && item.sharedWith.length > 2 && (
                       <div className="flex h-5 w-5 items-center justify-center rounded-full border-2 border-background bg-muted text-xs">
                         +{item.sharedWith.length - 2}
                       </div>

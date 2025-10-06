@@ -13,14 +13,46 @@ import {
   ChevronRight,
   Sparkles,
   Users,
+  Building2,
+  Building,
+  Briefcase,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { CollectionSettingsDialog } from "@/components/collection-settings-dialog"
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { AICollectionDialog } from "@/components/ai-collection-dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { ManualCollectionDialog } from "@/components/manual-collection-dialog"
 import { Badge } from "@/components/ui/badge"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { useCollections } from "@/contexts/collections-context"
+
+// Import icons for collection display
+const ALL_ICONS = [
+  { name: "Layers", icon: Folder },
+  { name: "FolderOpen", icon: Folder },
+  { name: "FileText", icon: Folder },
+  { name: "Tag", icon: Folder },
+  { name: "Star", icon: Folder },
+  { name: "Heart", icon: Folder },
+  { name: "Zap", icon: Folder },
+  { name: "Shield", icon: Folder },
+  { name: "Globe", icon: Folder },
+  { name: "Target", icon: Folder },
+  { name: "Award", icon: Folder },
+  { name: "Trophy", icon: Folder },
+  { name: "Building2", icon: Building2 },
+  { name: "Home", icon: Folder },
+  { name: "Car", icon: Folder },
+  { name: "Plane", icon: Folder },
+  { name: "Ship", icon: Folder },
+  { name: "Calendar", icon: Folder },
+  { name: "PawPrint", icon: Folder },
+  { name: "Users", icon: Users },
+  { name: "Settings", icon: Settings },
+  { name: "Briefcase", icon: Briefcase },
+]
 
 interface Collection {
   id: string
@@ -30,6 +62,22 @@ interface Collection {
   description?: string
   isAI?: boolean
   sharedBy?: string
+}
+
+interface Organization {
+  id: string
+  name: string
+  description?: string
+  icon?: React.ReactNode
+  color: string
+  theme: string
+  stats: {
+    totalObjects: number
+    categories: number
+    collections: number
+    pinnedItems: number
+  }
+  characteristics: string[]
 }
 
 const mockItems = [
@@ -95,24 +143,102 @@ const mockItems = [
   },
 ]
 
-const collections: Collection[] = []
+// Remove this line - we'll use context instead
+
+const organizations: Organization[] = [
+  {
+    id: "onb",
+    name: "ONB",
+    description: "Oil Nut Bay",
+    icon: <Building2 className="h-4 w-4" />,
+    color: "blue",
+    theme: "luxury-resort",
+    stats: {
+      totalObjects: 156,
+      categories: 12,
+      collections: 24,
+      pinnedItems: 18
+    },
+    characteristics: ["Luxury Villas", "Marina Village", "Beach Club", "Real Estate", "Dining", "Water Sports", "Spa Services"]
+  },
+  {
+    id: "tech-innovations",
+    name: "Tech Innovations Inc",
+    description: "Technology Solutions",
+    icon: <Database className="h-4 w-4" />,
+    color: "green",
+    theme: "technology",
+    stats: {
+      totalObjects: 28,
+      categories: 6,
+      collections: 8,
+      pinnedItems: 7
+    },
+    characteristics: ["Software Development", "AI Research", "Cloud Infrastructure", "Innovation Labs"]
+  },
+  {
+    id: "sapphire-holdings",
+    name: "Sapphire Holdings LLC",
+    description: "Investment Management",
+    icon: <Building className="h-4 w-4" />,
+    color: "purple",
+    theme: "investment",
+    stats: {
+      totalObjects: 67,
+      categories: 10,
+      collections: 15,
+      pinnedItems: 12
+    },
+    characteristics: ["Portfolio Management", "Real Estate", "Private Equity", "Asset Valuation"]
+  },
+  {
+    id: "starlight-philanthropies",
+    name: "Starlight Philanthropies",
+    description: "Charitable Foundation",
+    icon: <Users className="h-4 w-4" />,
+    color: "gold",
+    theme: "philanthropy",
+    stats: {
+      totalObjects: 23,
+      categories: 5,
+      collections: 6,
+      pinnedItems: 2
+    },
+    characteristics: ["Charitable Programs", "Grant Management", "Community Outreach", "Impact Measurement"]
+  }
+]
 
 interface CatalogSidebarProps {
   activeView?: string
   onViewChange?: (view: string) => void
+  onOrganizationChange?: (organizationId: string) => void
 }
 
-export function CatalogSidebar({ activeView = "dashboard", onViewChange }: CatalogSidebarProps) {
+export function CatalogSidebar({ activeView = "dashboard", onViewChange, onOrganizationChange }: CatalogSidebarProps) {
+  const { collections } = useCollections()
   const [collectionsExpanded, setCollectionsExpanded] = React.useState(true)
   const [sharedExpanded, setSharedExpanded] = React.useState(true)
+  const [selectedOrganization, setSelectedOrganization] = React.useState("onb")
 
   const handleCollectionClick = (collectionId: string) => {
     onViewChange?.(collectionId)
   }
 
+  const handleOrganizationChange = (organizationId: string) => {
+    setSelectedOrganization(organizationId)
+    onOrganizationChange?.(organizationId)
+  }
+
   const aiSuggestions: any[] = []
 
   const sharedCollections: any[] = []
+
+  const currentOrganization = organizations.find(org => org.id === selectedOrganization) || organizations[0]
+  
+  // Debug logs
+  console.log("Organizations:", organizations)
+  console.log("Selected organization:", selectedOrganization)
+  console.log("Current organization:", currentOrganization)
 
   return (
     <div className="flex h-screen w-56 min-w-[200px] max-w-[240px] flex-col border-r border-sidebar-border bg-sidebar">
@@ -123,20 +249,26 @@ export function CatalogSidebar({ activeView = "dashboard", onViewChange }: Catal
 
       <ScrollArea className="flex-1">
         <div className="space-y-1 p-2">
-          {/* Organization Dropdown */}
+          {/* Organization Select */}
           <div className="mb-3 px-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="w-full justify-between bg-transparent">
-                  ONB
-                  <ChevronDown className="ml-2 h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56">
-                <DropdownMenuItem>ONB</DropdownMenuItem>
-                <DropdownMenuItem>All Categories</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Select value={selectedOrganization} onValueChange={handleOrganizationChange}>
+              <SelectTrigger className="w-full">
+                <div className="flex items-center gap-2">
+                  {currentOrganization.icon}
+                  <span className="font-medium truncate">{currentOrganization.name}</span>
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                {organizations.map((org) => (
+                  <SelectItem key={org.id} value={org.id} className="truncate">
+                    {org.name}
+                  </SelectItem>
+                ))}
+                <SelectItem value="all-organizations" className="truncate">
+                  All Organizations
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Dashboard Tab */}
@@ -196,7 +328,7 @@ export function CatalogSidebar({ activeView = "dashboard", onViewChange }: Catal
                   <div className="px-2 py-6 text-center">
                     <Folder className="mx-auto mb-2 h-8 w-8 text-muted-foreground/50" />
                     <p className="mb-1 text-sm font-medium text-muted-foreground">No collections yet</p>
-                    <p className="mb-4 text-xs text-muted-foreground/70">Create collections to organize your objects</p>
+                    <p className="mb-4 text-xs text-muted-foreground/70">Group items into collections to organize your objects</p>
                   </div>
                 ) : (
                   <div className="space-y-1">
@@ -212,18 +344,14 @@ export function CatalogSidebar({ activeView = "dashboard", onViewChange }: Catal
                 )}
 
                 <div className="mt-2 space-y-1">
-                  <AICollectionDialog
+                  <ManualCollectionDialog
                     trigger={
                       <Button variant="outline" className="w-full justify-start text-sm font-normal border-primary/20 hover:border-primary/40">
-                        <Sparkles className="mr-2 h-4 w-4" />
-                        AI Create Collection
+                        <Plus className="mr-2 h-4 w-4" />
+                        New collection
                       </Button>
                     }
                   />
-                  <Button variant="outline" className="w-full justify-start text-sm font-normal border-primary/20 hover:border-primary/40">
-                    <Plus className="mr-2 h-4 w-4" />
-                    New collection
-                  </Button>
                 </div>
               </>
             )}
@@ -286,11 +414,28 @@ function CollectionItem({
   activeView,
   onCollectionClick,
 }: {
-  collection: Collection
+  collection: any // Using any for now since we're mixing old and new interfaces
   activeView?: string
   onCollectionClick?: (id: string) => void
 }) {
   const isActive = activeView === collection.id
+
+  // Get icon component based on collection data
+  const getIcon = () => {
+    if (collection.customImage) {
+      return <img src={collection.customImage} alt="Custom" className="h-4 w-4 rounded object-cover" />
+    }
+    
+    // Find icon by name
+    const iconData = ALL_ICONS.find(icon => icon.name === collection.icon)
+    if (iconData) {
+      const IconComponent = iconData.icon
+      return <IconComponent className="h-4 w-4" />
+    }
+    
+    // Fallback to folder icon
+    return <Folder className="h-4 w-4" />
+  }
 
   return (
     <ContextMenu>
@@ -300,9 +445,20 @@ function CollectionItem({
           className="w-full justify-start text-sm font-normal"
           onClick={() => onCollectionClick?.(collection.id)}
         >
-          {collection.icon}
-          <span className="ml-2">{collection.name}</span>
-          <span className="ml-auto text-xs text-muted-foreground">{collection.count}</span>
+          {getIcon()}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="ml-2 flex-1 text-left overflow-hidden pr-2" style={{ minWidth: 0, width: 0 }}>
+                  <span className="block overflow-hidden text-ellipsis whitespace-nowrap !text-ellipsis !overflow-hidden !whitespace-nowrap">{collection.name}</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="right" align="start">
+                <p className="max-w-xs break-words">{collection.name}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <span className="ml-auto text-xs text-muted-foreground flex-shrink-0">{collection.itemCount || 0}</span>
         </Button>
       </ContextMenuTrigger>
       <ContextMenuContent>
@@ -317,7 +473,7 @@ function CollectionItem({
           }
         />
         <ContextMenuItem>Rename</ContextMenuItem>
-        <ContextMenuItem className="text-destructive">Delete</ContextMenuItem>
+        <ContextMenuItem className="text-destructive">Remove Collection</ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
   )
