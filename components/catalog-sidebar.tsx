@@ -17,12 +17,16 @@ import {
   Building2,
   Building,
   Briefcase,
+  MoreVertical,
+  Eye,
+  Edit3,
+  Trash2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { CollectionSettingsDialog } from "@/components/collection-settings-dialog"
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ManualCollectionDialog } from "@/components/manual-collection-dialog"
 import { Badge } from "@/components/ui/badge"
@@ -496,7 +500,7 @@ function CollectionItem({
       <ContextMenuTrigger>
         <Button
           variant={isSelected ? "secondary" : "ghost"}
-          className="w-full justify-start text-sm font-normal"
+          className="w-full justify-start text-sm font-normal group"
           onClick={() => {
             if (onCollectionSelect) {
               onCollectionSelect(isSelected ? null : collection.id)
@@ -521,7 +525,56 @@ function CollectionItem({
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          <span className="ml-auto text-xs text-muted-foreground flex-shrink-0">{collection.itemCount || 0}</span>
+          {/* Show count by default, show actions on hover */}
+          <span className="ml-auto text-xs text-muted-foreground flex-shrink-0 group-hover:hidden">{collection.itemCount || 0}</span>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="ml-auto h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <MoreVertical className="h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" side="right">
+              <DropdownMenuItem onClick={(e) => {
+                e.stopPropagation()
+                if (onCollectionSelect) {
+                  onCollectionSelect(collection.id)
+                } else if (onCollectionClick) {
+                  onCollectionClick(collection.id)
+                } else {
+                  router.push(`/collections/${collection.id}`)
+                }
+              }}>
+                <Eye className="mr-2 h-4 w-4" />
+                Open
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+                <Edit3 className="mr-2 h-4 w-4" />
+                Rename
+              </DropdownMenuItem>
+              <CollectionSettingsDialog
+                collectionName={collection.name}
+                trigger={
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    Settings
+                  </DropdownMenuItem>
+                }
+              />
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                className="text-destructive"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Remove Collection
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </Button>
       </ContextMenuTrigger>
       <ContextMenuContent>
