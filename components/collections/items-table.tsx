@@ -212,7 +212,7 @@ export function ItemsTable({
         {/* Bulk Actions Row */}
         {selectedIds.size > 0 && (
           <TableRow className="bg-blue-50 border-b-2 border-blue-200">
-            <TableCell colSpan={showSelection ? (showActions ? 9 : 8) : (showActions ? 8 : 7)} className="p-4">
+            <TableCell colSpan={showSelection ? (showActions ? 10 : 9) : (showActions ? 9 : 8)} className="p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <span className="text-sm font-medium">
