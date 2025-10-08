@@ -189,7 +189,7 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
 
   // ==================== Collection CRUD ====================
   
-  const addCollection = useCallback((collectionData: Omit<Collection, "id" | "createdAt" | "itemCount">) => {
+  const addCollection = useCallback((collectionData: Omit<Collection, "id" | "createdAt" | "itemCount">): Collection => {
     const now = new Date()
     const newCollection: Collection = {
       ...collectionData,
@@ -207,6 +207,7 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
       version: 1,
     } as Collection
     setCollections(prev => [...prev, newCollection])
+    return newCollection
   }, [currentUser])
 
   const addAICollection = useCallback((name: string, description: string, items: CollectionItem[]) => {

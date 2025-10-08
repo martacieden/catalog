@@ -32,7 +32,7 @@ interface AddItemModalProps {
   item?: CollectionItem
 }
 
-export function AddItemModalNew({ 
+export function AddItemModal({ 
   open, 
   onOpenChange, 
   collectionId, 
