@@ -1299,7 +1299,7 @@ export function AICollectionPreviewDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[1172px] max-h-[70vh] w-[98vw] bg-white flex flex-col p-0 animate-in fade-in-0 zoom-in-95 duration-300 [&_[data-slot=dialog-close]]:hidden" style={{ margin: '24px', maxWidth: 'calc(100vw - 48px)', maxHeight: 'calc(70vh - 48px)', width: 'calc(100vw - 48px)' }}>
+      <DialogContent className="max-w-[1172px] max-h-[calc(100vh-48px)] w-[98vw] bg-white flex flex-col p-0 animate-in fade-in-0 zoom-in-95 duration-300 [&_[data-slot=dialog-close]]:hidden" style={{ margin: '24px', maxWidth: 'calc(100vw - 48px)', maxHeight: 'calc(100vh - 48px)', width: 'calc(100vw - 48px)' }}>
         <DialogHeader className="flex-shrink-0 px-8 py-3">
           <div className="flex items-center gap-3 mb-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500/20 to-blue-500/20 shadow-sm">
