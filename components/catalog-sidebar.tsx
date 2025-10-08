@@ -520,7 +520,7 @@ function CollectionItem({
                   <span className="block overflow-hidden text-ellipsis whitespace-nowrap !text-ellipsis !overflow-hidden !whitespace-nowrap">{collection.name}</span>
                 </div>
               </TooltipTrigger>
-              <TooltipContent side="right" align="start">
+              <TooltipContent side="top" align="center">
                 <p className="max-w-xs break-words">{collection.name}</p>
               </TooltipContent>
             </Tooltip>
