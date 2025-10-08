@@ -219,25 +219,10 @@ function getCategoryIcon(category: string) {
 const CardItemThumbnail = ({ item }: { item: any }) => {
   const CategoryIcon = getCategoryIcon(item.category)
   
-  // Генеруємо Unsplash URL для цього об'єкта
-  const unsplashUrl = getUnsplashImageUrl(item.category, item.name)
-  
   return (
-    <div className="relative h-24 w-full rounded-lg overflow-hidden">
-      <img 
-        src={unsplashUrl} 
-        alt={item.name}
-        className="h-full w-full object-cover"
-        onError={(e) => {
-          // Якщо Unsplash фото не завантажилося, показуємо fallback
-          e.currentTarget.style.display = 'none'
-          e.currentTarget.nextElementSibling?.classList.remove('hidden')
-        }}
-      />
-      <div className="absolute inset-0 flex items-center justify-center rounded-lg hidden" style={{ backgroundColor: '#DEE7F3' }}>
-        <div className="h-12 w-12 flex items-center justify-center rounded-lg">
-          {CategoryIcon}
-        </div>
+    <div className="relative h-24 w-full rounded-lg overflow-hidden flex items-center justify-center" style={{ backgroundColor: '#DEE7F3' }}>
+      <div className="h-12 w-12 flex items-center justify-center rounded-lg">
+        {CategoryIcon}
       </div>
     </div>
   )
@@ -247,22 +232,9 @@ const CardItemThumbnail = ({ item }: { item: any }) => {
 const TableItemThumbnail = ({ item }: { item: any }) => {
   const CategoryIcon = getCategoryIcon(item.category)
   
-  // Генеруємо Unsplash URL для цього об'єкта (менший розмір для таблиці)
-  const unsplashUrl = getUnsplashImageUrl(item.category, item.name).replace('400x300', '200x200')
-  
   return (
-    <div className="relative h-12 w-12 rounded-lg overflow-hidden">
-      <img 
-        src={unsplashUrl} 
-        alt={item.name}
-        className="h-full w-full object-cover"
-        onError={(e) => {
-          // Якщо Unsplash фото не завантажилося, показуємо fallback
-          e.currentTarget.style.display = 'none'
-          e.currentTarget.nextElementSibling?.classList.remove('hidden')
-        }}
-      />
-      <div className="absolute inset-0 flex items-center justify-center rounded-lg hidden" style={{ backgroundColor: '#DEE7F3' }}>
+    <div className="relative h-12 w-12 rounded-lg overflow-hidden flex items-center justify-center" style={{ backgroundColor: '#DEE7F3' }}>
+      <div className="h-6 w-6 flex items-center justify-center rounded-lg">
         {CategoryIcon}
       </div>
     </div>
@@ -295,7 +267,7 @@ export function CatalogView({ activeView = "catalog", onPinnedCountChange }: Cat
   const [activeFilters, setActiveFilters] = React.useState(0)
   const [selectedItems, setSelectedItems] = React.useState<Set<string>>(new Set())
   const [items, setItems] = React.useState(mockItems)
-  const [viewMode, setViewMode] = React.useState<"grid" | "card">("grid")
+  const [viewMode, setViewMode] = React.useState<"grid" | "card">("card")
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false)
   const [addItemModalOpen, setAddItemModalOpen] = React.useState(false)
 
