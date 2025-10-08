@@ -569,12 +569,12 @@ function CollectionItem({
             Open
           </DropdownMenuItem>
           <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
-            <Edit3 className="mr-2 h-4 w-4" />
-            Rename
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
             <Share2 className="mr-2 h-4 w-4" />
             Share
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+            <Edit3 className="mr-2 h-4 w-4" />
+            Rename
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem 
