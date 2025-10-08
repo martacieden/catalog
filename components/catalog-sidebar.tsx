@@ -496,101 +496,105 @@ function CollectionItem({
   }
 
   return (
-    <ContextMenu>
-      <ContextMenuTrigger>
-        <Button
-          variant={isSelected ? "secondary" : "ghost"}
-          className="w-full justify-start text-sm font-normal group"
-          onClick={() => {
+    <div className="relative group">
+      <ContextMenu>
+        <ContextMenuTrigger>
+          <Button
+            variant={isSelected ? "secondary" : "ghost"}
+            className="w-full justify-start text-sm font-normal"
+            onClick={() => {
+              if (onCollectionSelect) {
+                onCollectionSelect(isSelected ? null : collection.id)
+              } else if (onCollectionClick) {
+                onCollectionClick(collection.id)
+              } else {
+                // Fallback to old navigation
+                router.push(`/collections/${collection.id}`)
+              }
+            }}
+          >
+            {getIcon()}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="ml-2 flex-1 text-left overflow-hidden pr-2" style={{ minWidth: 0, width: 0 }}>
+                    <span className="block overflow-hidden text-ellipsis whitespace-nowrap !text-ellipsis !overflow-hidden !whitespace-nowrap">{collection.name}</span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="top" align="center">
+                  <p className="max-w-xs break-words">{collection.name}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            {/* Show count by default, show actions on hover */}
+            <span className="ml-auto text-xs text-muted-foreground flex-shrink-0 group-hover:hidden">{collection.itemCount || 0}</span>
+          </Button>
+        </ContextMenuTrigger>
+        <ContextMenuContent>
+          <ContextMenuItem>Open</ContextMenuItem>
+          <CollectionSettingsDialog
+            collectionName={collection.name}
+            trigger={
+              <ContextMenuItem onSelect={(e) => e.preventDefault()}>
+                <Settings className="mr-2 h-4 w-4" />
+                Settings
+              </ContextMenuItem>
+            }
+          />
+          <ContextMenuItem>Rename</ContextMenuItem>
+          <ContextMenuItem className="text-destructive">Remove Collection</ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>
+      
+      {/* Hover Actions Menu */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <MoreVertical className="h-3 w-3" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" side="right">
+          <DropdownMenuItem onClick={(e) => {
+            e.stopPropagation()
             if (onCollectionSelect) {
-              onCollectionSelect(isSelected ? null : collection.id)
+              onCollectionSelect(collection.id)
             } else if (onCollectionClick) {
               onCollectionClick(collection.id)
             } else {
-              // Fallback to old navigation
               router.push(`/collections/${collection.id}`)
             }
-          }}
-        >
-          {getIcon()}
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="ml-2 flex-1 text-left overflow-hidden pr-2" style={{ minWidth: 0, width: 0 }}>
-                  <span className="block overflow-hidden text-ellipsis whitespace-nowrap !text-ellipsis !overflow-hidden !whitespace-nowrap">{collection.name}</span>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="top" align="center">
-                <p className="max-w-xs break-words">{collection.name}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          {/* Show count by default, show actions on hover */}
-          <span className="ml-auto text-xs text-muted-foreground flex-shrink-0 group-hover:hidden">{collection.itemCount || 0}</span>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="ml-auto h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <MoreVertical className="h-3 w-3" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" side="right">
-              <DropdownMenuItem onClick={(e) => {
-                e.stopPropagation()
-                if (onCollectionSelect) {
-                  onCollectionSelect(collection.id)
-                } else if (onCollectionClick) {
-                  onCollectionClick(collection.id)
-                } else {
-                  router.push(`/collections/${collection.id}`)
-                }
-              }}>
-                <Eye className="mr-2 h-4 w-4" />
-                Open
+          }}>
+            <Eye className="mr-2 h-4 w-4" />
+            Open
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+            <Edit3 className="mr-2 h-4 w-4" />
+            Rename
+          </DropdownMenuItem>
+          <CollectionSettingsDialog
+            collectionName={collection.name}
+            trigger={
+              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                <Settings className="mr-2 h-4 w-4" />
+                Settings
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
-                <Edit3 className="mr-2 h-4 w-4" />
-                Rename
-              </DropdownMenuItem>
-              <CollectionSettingsDialog
-                collectionName={collection.name}
-                trigger={
-                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                    <Settings className="mr-2 h-4 w-4" />
-                    Settings
-                  </DropdownMenuItem>
-                }
-              />
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                className="text-destructive"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Remove Collection
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </Button>
-      </ContextMenuTrigger>
-      <ContextMenuContent>
-        <ContextMenuItem>Open</ContextMenuItem>
-        <CollectionSettingsDialog
-          collectionName={collection.name}
-          trigger={
-            <ContextMenuItem onSelect={(e) => e.preventDefault()}>
-              <Settings className="mr-2 h-4 w-4" />
-              Settings
-            </ContextMenuItem>
-          }
-        />
-        <ContextMenuItem>Rename</ContextMenuItem>
-        <ContextMenuItem className="text-destructive">Remove Collection</ContextMenuItem>
-      </ContextMenuContent>
-    </ContextMenu>
+            }
+          />
+          <DropdownMenuSeparator />
+          <DropdownMenuItem 
+            className="text-destructive"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Remove Collection
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   )
 }
