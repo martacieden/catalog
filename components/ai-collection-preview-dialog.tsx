@@ -14,6 +14,8 @@ import {
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
 import {
   Table,
   TableBody,
@@ -65,13 +67,21 @@ import {
   Loader2,
   Undo2,
   Search,
+  Zap,
+  X,
+  Trash2,
 } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import type { FilterRule } from "@/types/rule"
+import { applyFilterRules } from "@/lib/rule-engine"
 
 interface AICollectionPreviewDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   collectionType: string
   userPrompt?: string
+  mode?: 'items' | 'rules' // items = традиційний режим з готовими елементами, rules = AI генерує правила
 }
 
 const getCollectionInfo = (type: string) => {
@@ -102,14 +112,14 @@ const getCollectionInfo = (type: string) => {
         name: "Guest Experiences",
         description: "Activities, events, excursions, and personalized service records",
         icon: Users,
-        color: "from-purple-500/20 to-pink-500/20",
+        color: "from-blue-500/20 to-cyan-500/20",
       }
     case "ai-custom":
       return {
         name: "AI Generated Collection",
         description: "Collection created based on your AI query",
         icon: Sparkles,
-        color: "from-indigo-500/20 to-purple-500/20",
+        color: "from-indigo-500/20 to-blue-500/20",
       }
     default:
       return {
@@ -277,6 +287,132 @@ const getSuggestedItems = (type: string) => {
           createdOn: "Dec 29, 2024",
           sharedWith: []
         },
+        { 
+          id: "6", 
+          name: "Luxury Penthouse Zeta", 
+          type: "Properties", 
+          category: "Properties",
+          location: "Manhattan", 
+          status: "Available", 
+          idCode: "PROP-002", 
+          people: 2, 
+          date: "Jan 5",
+          value: 4500000,
+          guestRating: 4.9,
+          lastUpdated: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: true,
+          documents: [
+            { type: "Contract", name: "Lease Agreement" }
+          ],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Jan 5, 2025",
+          sharedWith: []
+        },
+        { 
+          id: "7", 
+          name: "Mountain Villa Eta", 
+          type: "Properties", 
+          category: "Properties",
+          location: "Aspen", 
+          status: "Available", 
+          idCode: "PROP-003", 
+          people: 4, 
+          date: "Jan 12",
+          value: 3200000,
+          guestRating: 4.6,
+          lastUpdated: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: false,
+          documents: [],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Jan 12, 2025",
+          sharedWith: []
+        },
+        { 
+          id: "8", 
+          name: "Beach House Theta", 
+          type: "Properties", 
+          category: "Properties",
+          location: "Malibu", 
+          status: "Available", 
+          idCode: "PROP-004", 
+          people: 3, 
+          date: "Jan 18",
+          value: 1800000,
+          guestRating: 4.4,
+          lastUpdated: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: true,
+          documents: [
+            { type: "Contract", name: "Rental Agreement" }
+          ],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Jan 18, 2025",
+          sharedWith: []
+        },
+        { 
+          id: "9", 
+          name: "City Loft Iota", 
+          type: "Properties", 
+          category: "Properties",
+          location: "San Francisco", 
+          status: "Available", 
+          idCode: "PROP-005", 
+          people: 2, 
+          date: "Jan 25",
+          value: 2200000,
+          guestRating: 4.7,
+          lastUpdated: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: false,
+          documents: [],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Jan 25, 2025",
+          sharedWith: []
+        },
+        { 
+          id: "10", 
+          name: "Ranch Estate Kappa", 
+          type: "Properties", 
+          category: "Properties",
+          location: "Texas", 
+          status: "Available", 
+          idCode: "PROP-006", 
+          people: 6, 
+          date: "Feb 1",
+          value: 5500000,
+          guestRating: 4.8,
+          lastUpdated: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: true,
+          documents: [
+            { type: "Contract", name: "Purchase Agreement" }
+          ],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Feb 1, 2025",
+          sharedWith: []
+        },
+        { 
+          id: "11", 
+          name: "Lakeside Cabin Lambda", 
+          type: "Properties", 
+          category: "Properties",
+          location: "Lake Tahoe", 
+          status: "Available", 
+          idCode: "PROP-007", 
+          people: 4, 
+          date: "Feb 8",
+          value: 1200000,
+          guestRating: 4.3,
+          lastUpdated: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: false,
+          documents: [],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Feb 8, 2025",
+          sharedWith: []
+        },
       ]
     default:
       return []
@@ -367,6 +503,7 @@ export function AICollectionPreviewDialog({
   onOpenChange,
   collectionType,
   userPrompt = "",
+  mode = 'items', // default до традиційного режиму
 }: AICollectionPreviewDialogProps) {
   const [selectedItems, setSelectedItems] = React.useState<Set<string>>(new Set())
   const [itemStatuses, setItemStatuses] = React.useState<Record<string, string>>({})
@@ -374,6 +511,18 @@ export function AICollectionPreviewDialog({
   const [isProcessingQuery, setIsProcessingQuery] = React.useState<boolean>(false)
   const [queryResult, setQueryResult] = React.useState<string>("")
   const [suggestedItems, setSuggestedItems] = React.useState<any[]>([])
+  
+  // ===== NEW: Rules-based mode states =====
+  const [workingMode, setWorkingMode] = React.useState<'items' | 'rules'>(mode)
+  const [proposedRules, setProposedRules] = React.useState<FilterRule[]>([])
+  const [collectionName, setCollectionName] = React.useState("")
+  const [collectionDescription, setCollectionDescription] = React.useState("")
+  const [showRulesConfirmation, setShowRulesConfirmation] = React.useState(false)
+  const [rulePreviewCount, setRulePreviewCount] = React.useState(0)
+  // Mock data pool - в реальному застосунку це буде з API/context
+  const [allAvailableItems, setAllAvailableItems] = React.useState<any[]>(getSuggestedItems('ai-custom'))
+  // Additional items added by AI in Rules mode
+  const [additionalItems, setAdditionalItems] = React.useState<any[]>([])
   const [undoHistory, setUndoHistory] = React.useState<Array<{
     items: any[]
     selected: Set<string>
@@ -401,6 +550,190 @@ export function AICollectionPreviewDialog({
   // Collections context and toast
   const { addAICollection } = useCollections()
   const { toast } = useToast()
+  
+  // ===== NEW: Rules Generation Functions =====
+  const generateRulesFromPrompt = React.useCallback((prompt: string): FilterRule[] => {
+    const lowerPrompt = prompt.toLowerCase()
+    const rules: FilterRule[] = []
+    
+    if (lowerPrompt.includes('active legal entities from 2024')) {
+      rules.push({
+        id: `rule-${Date.now()}-1`,
+        field: 'type',
+        operator: 'equals',
+        value: 'Legal entities'
+      })
+      rules.push({
+        id: `rule-${Date.now()}-2`,
+        field: 'status',
+        operator: 'equals',
+        value: 'Active'
+      })
+    } else if (lowerPrompt.includes('high-value assets above 1m')) {
+      rules.push({
+        id: `rule-${Date.now()}-1`,
+        field: 'value',
+        operator: 'greater_than',
+        value: 1000000
+      })
+    } else if (lowerPrompt.includes('available properties for rent')) {
+      rules.push({
+        id: `rule-${Date.now()}-1`,
+        field: 'type',
+        operator: 'equals',
+        value: 'Properties'
+      })
+      rules.push({
+        id: `rule-${Date.now()}-2`,
+        field: 'status',
+        operator: 'equals',
+        value: 'Available'
+      })
+    } else {
+      rules.push({
+        id: `rule-${Date.now()}-1`,
+        field: 'name',
+        operator: 'contains',
+        value: prompt.slice(0, 20)
+      })
+    }
+    
+    return rules
+  }, [])
+  
+  const generateCollectionName = React.useCallback((prompt: string): string => {
+    const lowerPrompt = prompt.toLowerCase()
+    
+    if (lowerPrompt.includes('legal')) return 'Active Legal Entities 2024'
+    if (lowerPrompt.includes('high-value')) return 'High-Value Assets'
+    if (lowerPrompt.includes('properties')) return 'Properties Collection'
+    if (lowerPrompt.includes('vehicle')) return 'Vehicles Collection'
+    
+    return prompt.slice(0, 50) + (prompt.length > 50 ? '...' : '')
+  }, [])
+  
+  // ===== NEW: Initialize Rules Mode =====
+  React.useEffect(() => {
+    if (open && workingMode === 'rules' && userPrompt) {
+      const generatedRules = generateRulesFromPrompt(userPrompt)
+      const generatedName = generateCollectionName(userPrompt)
+      
+      setProposedRules(generatedRules)
+      setCollectionName(generatedName)
+      setCollectionDescription(`Collection created based on AI analysis: "${userPrompt}". This collection will automatically include objects that match the defined filtering criteria.`)
+      setShowRulesConfirmation(true)
+    }
+  }, [open, workingMode, userPrompt, generateRulesFromPrompt, generateCollectionName])
+  
+  // ===== NEW: Update rule preview count =====
+  React.useEffect(() => {
+    if (workingMode === 'rules' && proposedRules.length > 0) {
+      // Combine original items with additional items added by AI
+      const combinedItems = [...allAvailableItems, ...additionalItems]
+      const matched = applyFilterRules(combinedItems, proposedRules)
+      setRulePreviewCount(matched.length)
+    } else if (workingMode === 'rules') {
+      setRulePreviewCount(0)
+    }
+  }, [proposedRules, workingMode, allAvailableItems, additionalItems])
+
+  // ===== NEW: Auto-chat messages for rule changes =====
+  const addAutoChatMessage = React.useCallback((message: string, type: 'user' | 'ai' = 'user') => {
+    const newMessage = {
+      id: `${type}-${Date.now()}`,
+      type,
+      content: message,
+      timestamp: new Date()
+    }
+    setChatMessages(prev => [...prev, newMessage])
+  }, [])
+
+  // Track previous rules to detect significant changes only
+  const prevRulesRef = React.useRef<FilterRule[]>([])
+  const rulesChangeTimeoutRef = React.useRef<NodeJS.Timeout>()
+  
+  React.useEffect(() => {
+    if (workingMode === 'rules' && proposedRules.length > 0) {
+      // Clear previous timeout
+      if (rulesChangeTimeoutRef.current) {
+        clearTimeout(rulesChangeTimeoutRef.current)
+      }
+      
+      // Debounce rule changes to avoid logging every keystroke
+      rulesChangeTimeoutRef.current = setTimeout(() => {
+        const prevRules = prevRulesRef.current
+        
+        // Only log significant structural changes (adding/removing rules, not editing values)
+        if (prevRules.length > 0) {
+          // Check if rules were added (significant change)
+          if (proposedRules.length > prevRules.length) {
+            const newRules = proposedRules.filter(rule => !prevRules.some(prevRule => prevRule.id === rule.id))
+            if (newRules.length > 0) {
+              addAutoChatMessage(`🔧 Added ${newRules.length} new filter rule${newRules.length > 1 ? 's' : ''} to refine collection criteria.`)
+            }
+          }
+          
+          // Check if rules were removed (significant change)
+          if (proposedRules.length < prevRules.length) {
+            const removedRules = prevRules.filter(prevRule => !proposedRules.some(rule => rule.id === prevRule.id))
+            if (removedRules.length > 0) {
+              addAutoChatMessage(`🗑️ Removed ${removedRules.length} filter rule${removedRules.length > 1 ? 's' : ''} from collection criteria.`)
+            }
+          }
+        }
+        
+        prevRulesRef.current = [...proposedRules]
+      }, 1000) // Wait 1 second after last change
+    }
+  }, [proposedRules, workingMode, addAutoChatMessage])
+
+  // Track previous selected items to detect significant changes only
+  const prevSelectedItemsRef = React.useRef<Set<string>>(new Set())
+  const selectionChangeTimeoutRef = React.useRef<NodeJS.Timeout>()
+  
+  React.useEffect(() => {
+    if (workingMode === 'rules') {
+      // Clear previous timeout
+      if (selectionChangeTimeoutRef.current) {
+        clearTimeout(selectionChangeTimeoutRef.current)
+      }
+      
+      // Debounce selection changes to avoid logging every click
+      selectionChangeTimeoutRef.current = setTimeout(() => {
+        const prevSelected = prevSelectedItemsRef.current
+        const currentSelected = selectedItems
+        
+        // Only log if there was a previous selection to compare
+        if (prevSelected.size > 0 || currentSelected.size > 0) {
+          // Check if items were removed (significant change)
+          const removedItems = Array.from(prevSelected).filter(id => !currentSelected.has(id))
+          if (removedItems.length > 0) {
+            addAutoChatMessage(`❌ Removed ${removedItems.length} item${removedItems.length > 1 ? 's' : ''} from collection preview.`)
+          }
+          
+          // Check if items were added (significant change)
+          const addedItems = Array.from(currentSelected).filter(id => !prevSelected.has(id))
+          if (addedItems.length > 0) {
+            addAutoChatMessage(`✅ Added ${addedItems.length} item${addedItems.length > 1 ? 's' : ''} to collection preview.`)
+          }
+        }
+        
+        prevSelectedItemsRef.current = new Set(currentSelected)
+      }, 500) // Wait 0.5 seconds after last change
+    }
+  }, [selectedItems, workingMode, addAutoChatMessage])
+
+  // Cleanup timeouts on unmount
+  React.useEffect(() => {
+    return () => {
+      if (rulesChangeTimeoutRef.current) {
+        clearTimeout(rulesChangeTimeoutRef.current)
+      }
+      if (selectionChangeTimeoutRef.current) {
+        clearTimeout(selectionChangeTimeoutRef.current)
+      }
+    }
+  }, [])
   
   // Auto-scroll to bottom when new messages arrive
   const scrollToBottom = React.useCallback(() => {
@@ -468,14 +801,15 @@ export function AICollectionPreviewDialog({
   const handleCreateCollection = React.useCallback(() => {
     const selectedItemsList = suggestedItems.filter(item => selectedItems.has(item.id))
     
-    if (selectedItemsList.length === 0) {
-      toast({
-        title: "No items selected",
-        description: "Please select at least one item to create a collection.",
-        variant: "destructive"
-      })
-      return
-    }
+    // Allow creating empty collections - items can be added later manually or via rules
+    // if (selectedItemsList.length === 0) {
+    //   toast({
+    //     title: "No items selected",
+    //     description: "Please select at least one item to create a collection.",
+    //     variant: "destructive"
+    //   })
+    //   return
+    // }
     
     // Create collection name based on user prompt or collection type
     const collectionName = userPrompt 
@@ -490,9 +824,12 @@ export function AICollectionPreviewDialog({
     addAICollection(collectionName, collectionDescription, selectedItemsList)
     
     // Show success toast
+    const itemsMessage = selectedItemsList.length > 0 
+      ? `with ${selectedItemsList.length} items`
+      : `(empty - you can add items later)`
     toast({
       title: "Collection created successfully! 🎉",
-      description: `"${collectionName}" has been added to your collections with ${selectedItemsList.length} items.`,
+      description: `"${collectionName}" has been added to your collections ${itemsMessage}.`,
     })
     
     // Close dialog
@@ -622,20 +959,20 @@ export function AICollectionPreviewDialog({
   // Initialize chat with user prompt
   React.useEffect(() => {
     if (userPrompt && open) {
-      setChatMessages([
-        {
-          id: 'user-1',
-          type: 'user',
-          content: userPrompt,
-          timestamp: new Date()
-        },
-        {
-          id: 'ai-1',
-          type: 'ai',
-          content: `I've analyzed your request "${userPrompt}" and created this custom collection based on your specific criteria. The items have been intelligently grouped to meet your needs.`,
-          timestamp: new Date()
-        }
-      ])
+          setChatMessages([
+            {
+              id: 'user-1',
+              type: 'user',
+              content: userPrompt,
+              timestamp: new Date()
+            },
+            {
+              id: 'ai-1',
+              type: 'ai',
+              content: `I've analyzed your request "${userPrompt}" and created this custom collection based on your specific criteria. The items have been intelligently grouped to meet your needs.`,
+              timestamp: new Date()
+            }
+          ])
       setFirstAIResponseId('ai-1') // Set first AI response ID
       setShowFollowUpActions(true) // Reset follow-up actions for new conversation
     }
@@ -690,57 +1027,129 @@ export function AICollectionPreviewDialog({
       
       setChatMessages(prev => [...prev, userMessage])
       
-      // Save current state to undo history before making changes
-      setUndoHistory(prev => [...prev, {
-        items: [...suggestedItems],
-        selected: new Set(selectedItems),
-        queryResult: queryResult
-      }])
-      
       // Show loading state
       setIsProcessingQuery(true)
       
-      // Simulate realistic AI processing with step-by-step thinking
-      setTimeout(() => {
-        // Step 1: AI thinking message
-        const thinkingMessage = {
-          id: `ai-thinking-${Date.now()}`,
-          type: 'ai' as const,
-          content: `🤔 Analyzing your request: "${aiQuery}"... Let me process this step by step.`,
-          timestamp: new Date()
-        }
-        setChatMessages(prev => [...prev, thinkingMessage])
-        
-        // Step 2: AI processing message (after 1 second)
+      // Different logic for Rules mode vs Items mode
+      if (workingMode === 'rules') {
+        // Rules mode: AI adds items to the available pool
         setTimeout(() => {
-          const processingMessage = {
-            id: `ai-processing-${Date.now()}`,
+          const thinkingMessage = {
+            id: `ai-thinking-${Date.now()}`,
             type: 'ai' as const,
-            content: `🔍 Understanding the context... I need to remove 1 item from the collection.`,
+            content: `🤔 Analyzing your request: "${aiQuery}"... Let me add items to your collection.`,
             timestamp: new Date()
           }
-          setChatMessages(prev => [...prev, processingMessage])
+          setChatMessages(prev => [...prev, thinkingMessage])
           
-          // Step 3: AI action message (after another 1 second)
           setTimeout(() => {
-        const modifiedItems = processAIQuery(aiQuery, suggestedItems)
-        setSuggestedItems(modifiedItems)
-        setSelectedItems(new Set(modifiedItems.map(item => item.id)))
-        
+            // Generate new items based on the query
+            const newItems = generateItemsForRulesMode(aiQuery)
+            setAdditionalItems(prev => [...prev, ...newItems])
+            
             const actionMessage = {
               id: `ai-action-${Date.now()}`,
               type: 'ai' as const,
-              content: `✅ Done! ${getAIExplanation(aiQuery, modifiedItems.length)}`,
+              content: `✅ I've added ${newItems.length} new items to your collection: "${newItems.map(item => item.name).join('", "')}". The collection now has ${allAvailableItems.length + additionalItems.length + newItems.length} items total.`,
               timestamp: new Date()
             }
             setChatMessages(prev => [...prev, actionMessage])
-        
-        setAiQuery("")
-        setIsProcessingQuery(false)
+            
+            setAiQuery("")
+            setIsProcessingQuery(false)
           }, 1000)
         }, 1000)
-      }, 1000)
+      } else {
+        // Original Items mode logic
+        setUndoHistory(prev => [...prev, {
+          items: [...suggestedItems],
+          selected: new Set(selectedItems),
+          queryResult: queryResult
+        }])
+        
+        setTimeout(() => {
+          const thinkingMessage = {
+            id: `ai-thinking-${Date.now()}`,
+            type: 'ai' as const,
+            content: `🤔 Analyzing your request: "${aiQuery}"... Let me process this step by step.`,
+            timestamp: new Date()
+          }
+          setChatMessages(prev => [...prev, thinkingMessage])
+          
+          setTimeout(() => {
+            const processingMessage = {
+              id: `ai-processing-${Date.now()}`,
+              type: 'ai' as const,
+              content: `🔍 Understanding the context... I need to remove 1 item from the collection.`,
+              timestamp: new Date()
+            }
+            setChatMessages(prev => [...prev, processingMessage])
+            
+            setTimeout(() => {
+              const modifiedItems = processAIQuery(aiQuery, suggestedItems)
+              setSuggestedItems(modifiedItems)
+              setSelectedItems(new Set(modifiedItems.map(item => item.id)))
+              
+              const actionMessage = {
+                id: `ai-action-${Date.now()}`,
+                type: 'ai' as const,
+                content: `✅ Done! ${getAIExplanation(aiQuery, modifiedItems.length)}`,
+                timestamp: new Date()
+              }
+              setChatMessages(prev => [...prev, actionMessage])
+              
+              setAiQuery("")
+              setIsProcessingQuery(false)
+            }, 1000)
+          }, 1000)
+        }, 1000)
+      }
     }
+  }
+
+  // Generate items for Rules mode based on AI query
+  const generateItemsForRulesMode = (query: string) => {
+    const timestamp = Date.now()
+    const baseItems = [
+      {
+        id: `ai-added-${timestamp}-1`,
+        name: "Additional Property Alpha",
+        type: "Properties",
+        status: "Available",
+        location: "Coastal Area",
+        value: 850000,
+        people: [{ name: "John Smith", avatar: "JS" }],
+        createdAt: new Date().toISOString(),
+        flagged: false,
+        hasFinancialDocs: true,
+        documents: [
+          { type: "Contract", name: "Rental Agreement" }
+        ],
+        createdBy: { name: "AI Assistant", avatar: "AI" },
+        createdOn: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+        sharedWith: []
+      },
+      {
+        id: `ai-added-${timestamp}-2`,
+        name: "Additional Vehicle Beta",
+        type: "Vehicles",
+        status: "Available",
+        location: "Garage A",
+        value: 45000,
+        people: [{ name: "Sarah Johnson", avatar: "SJ" }],
+        createdAt: new Date().toISOString(),
+        flagged: false,
+        hasFinancialDocs: true,
+        documents: [
+          { type: "Invoice", name: "Purchase Receipt" }
+        ],
+        createdBy: { name: "AI Assistant", avatar: "AI" },
+        createdOn: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+        sharedWith: []
+      }
+    ]
+    
+    return baseItems
   }
 
   const getAIExplanation = (query: string, itemCount: number) => {
@@ -890,26 +1299,373 @@ export function AICollectionPreviewDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[98vw] sm:max-w-[1172px] max-h-[95vh] w-[98vw] bg-white flex flex-col p-0 animate-in fade-in-0 zoom-in-95 duration-300">
+      <DialogContent className="max-w-[1172px] max-h-[95vh] w-[98vw] bg-white flex flex-col p-0 animate-in fade-in-0 zoom-in-95 duration-300 [&_[data-slot=dialog-close]]:hidden" style={{ margin: '24px', maxWidth: 'calc(100vw - 48px)', maxHeight: 'calc(100vh - 48px)', width: 'calc(100vw - 48px)' }}>
         <DialogHeader className="flex-shrink-0 px-8 py-3">
           <div className="flex items-center gap-3 mb-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500/20 to-purple-500/20 shadow-sm">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500/20 to-blue-500/20 shadow-sm">
               <Sparkles className="h-5 w-5 text-indigo-600" />
             </div>
             <div>
-              <DialogTitle className="text-lg font-semibold">AI Generated Collection</DialogTitle>
+              <DialogTitle className="text-lg font-semibold">
+                {workingMode === 'rules' ? 'Collection' : 'AI Generated Collection'}
+              </DialogTitle>
               <DialogDescription className="text-sm text-muted-foreground">
-                Collection created based on your AI query
+                {workingMode === 'rules' 
+                  ? 'AI generates filtering rules, you review and customize them' 
+                  : 'Collection created based on your AI query'
+                }
               </DialogDescription>
             </div>
           </div>
-          
-
         </DialogHeader>
 
         <div className="flex-1 flex min-h-0 border-t border-gray-200 -mt-2">
-          {/* Left Section - Data Table */}
+          {/* Left Section - Data Table or Rules Builder */}
           <div className="flex-1 flex flex-col min-h-0 border-r border-gray-200">
+            
+            {/* ===== NEW: Compact Rules Mode UI ===== */}
+            {workingMode === 'rules' && showRulesConfirmation ? (
+              <div className="flex-1 flex flex-col min-h-0">
+                {/* All Content with Scroll */}
+                <div className="flex-1 min-h-0 overflow-auto p-4">
+                  <div className="space-y-4">
+                    {/* Collection Name and Description */}
+                    <div className="space-y-3">
+                      <div>
+                        <Label className="text-sm font-medium">Name</Label>
+                    <Input
+                      value={collectionName}
+                      onChange={(e) => setCollectionName(e.target.value)}
+                      placeholder="Enter collection name..."
+                          className="mt-1"
+                    />
+                  </div>
+                  
+                      <div>
+                        <Label className="text-sm font-medium">Description</Label>
+                        <Textarea
+                          value={collectionDescription || userPrompt || collectionInfo.description}
+                          onChange={(e) => setCollectionDescription(e.target.value)}
+                          placeholder="Enter collection description..."
+                          className="mt-1 resize-none"
+                          rows={2}
+                        />
+                </div>
+                          </div>
+                    
+                    {/* Filter Criteria */}
+                    <div className="space-y-3">
+                      <Label className="text-sm font-medium">Filter criteria</Label>
+                          
+                          {proposedRules.map((rule, index) => (
+                        <div key={rule.id} className="flex items-center gap-2 py-1">
+                                <Select
+                                  value={rule.field}
+                                  onValueChange={(value) => {
+                                    const newRules = [...proposedRules]
+                                    newRules[index] = { ...rule, field: value }
+                                    setProposedRules(newRules)
+                                  }}
+                                >
+                                  <SelectTrigger className="flex-1">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="type">Category</SelectItem>
+                                    <SelectItem value="status">Status</SelectItem>
+                                    <SelectItem value="location">Location</SelectItem>
+                                    <SelectItem value="value">Value</SelectItem>
+                                    <SelectItem value="flagged">Flagged</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              
+                                <Select
+                                  value={rule.operator}
+                                  onValueChange={(value) => {
+                                    const newRules = [...proposedRules]
+                                    newRules[index] = { ...rule, operator: value as any }
+                                    setProposedRules(newRules)
+                                  }}
+                                >
+                                  <SelectTrigger className="flex-1">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="equals">Is any of</SelectItem>
+                                    <SelectItem value="contains">Contains</SelectItem>
+                                    <SelectItem value="greater_than">Greater than</SelectItem>
+                                    <SelectItem value="less_than">Less than</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              
+                                <Input
+                                  type="text"
+                                  value={Array.isArray(rule.value) ? rule.value.join(', ') : String(rule.value)}
+                                  onChange={(e) => {
+                                    const newRules = [...proposedRules]
+                                    newRules[index] = { ...rule, value: e.target.value }
+                                    setProposedRules(newRules)
+                                  }}
+                                  placeholder="Value"
+                                  className="flex-1"
+                                />
+                              
+                              <button
+                                onClick={() => {
+                                  const newRules = proposedRules.filter((_, i) => i !== index)
+                                  setProposedRules(newRules)
+                                }}
+                            className="p-1 text-gray-400 hover:text-red-600 rounded"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                          ))}
+                          
+                          <div className="flex items-center justify-between">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const newRule: FilterRule = {
+                                  id: `rule-${Date.now()}`,
+                                  field: 'type',
+                                  operator: 'equals',
+                                  value: ''
+                                }
+                                setProposedRules([...proposedRules, newRule])
+                              }}
+                              className="text-sm"
+                            >
+                          <Plus className="h-4 w-4 mr-1" />
+                              Add filter
+                            </Button>
+                            
+                            <button 
+                              onClick={() => setProposedRules([])}
+                              className="text-sm text-red-600 hover:text-red-700 hover:underline"
+                            >
+                              Clear all
+                            </button>
+                          </div>
+                        </div>
+                        
+                    {/* Preview Results */}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">Preview Results:</span>
+                        {rulePreviewCount > 0 ? (
+                              <span className="text-sm text-green-600 font-medium">{rulePreviewCount} items match</span>
+                        ) : (
+                          <span className="text-sm text-orange-600 font-medium">No items found</span>
+                        )}
+                            </div>
+                            
+                      <div className="rounded-lg border border-border bg-card">
+                        <div className="overflow-x-auto">
+                          <table className="w-full">
+                            <thead className="border-b border-border bg-muted/50">
+                                  <tr>
+                              <th className="w-12 p-4">
+                                <Checkbox
+                                  checked={selectedItems.size === applyFilterRules([...allAvailableItems, ...additionalItems], proposedRules).length && applyFilterRules([...allAvailableItems, ...additionalItems], proposedRules).length > 0}
+                                  onCheckedChange={(checked) => {
+                                    if (checked) {
+                                      const allItems = applyFilterRules([...allAvailableItems, ...additionalItems], proposedRules)
+                                      setSelectedItems(new Set(allItems.map(item => item.id)))
+                                    } else {
+                                      setSelectedItems(new Set())
+                                    }
+                                  }}
+                                  className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                                />
+                              </th>
+                              <th className="p-4 text-left text-sm font-medium">
+                                <div className="flex items-center justify-between">
+                                  <span>Name</span>
+                                  {selectedItems.size > 0 && (
+                                    <div className="flex items-center gap-1">
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                          // Remove selected items by creating exclusion rules
+                                          const selectedItemIds = Array.from(selectedItems)
+                                          const exclusionRules = selectedItemIds.map(id => ({
+                                            id: `exclude-${id}-${Date.now()}`,
+                                            field: 'id',
+                                            operator: 'not_equals' as const,
+                                            value: id,
+                                            label: `Exclude item ${id}`
+                                          }))
+                                          setProposedRules(prev => [...prev, ...exclusionRules])
+                                          setSelectedItems(new Set())
+                                          
+                                          // Add auto-chat message
+                                          addAutoChatMessage(`🗑️ Excluded ${selectedItemIds.length} item${selectedItemIds.length > 1 ? 's' : ''} from collection by adding exclusion rules.`)
+                                        }}
+                                        className="h-6 px-2 text-xs"
+                                      >
+                                        {selectedItems.size > 0 ? `Remove (${selectedItems.size})` : 'Remove'}
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => {
+                                          setSelectedItems(new Set())
+                                          addAutoChatMessage(`🧹 Cleared selection in collection preview.`)
+                                        }}
+                                        className="h-6 px-2 text-xs"
+                                      >
+                                        Clear
+                                      </Button>
+                                    </div>
+                                  )}
+                                </div>
+                              </th>
+                              <th className="p-4 text-left text-sm font-medium">ID</th>
+                              <th className="p-4 text-left text-sm font-medium">Category</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                            {rulePreviewCount > 0 ? (
+                              applyFilterRules([...allAvailableItems, ...additionalItems], proposedRules).map((item) => {
+                                const ItemIcon = getItemIcon(item.type)
+                                const isSelected = selectedItems.has(item.id)
+                                
+                                return (
+                                  <tr key={item.id} className={`border-b border-border hover:bg-muted/50 ${isSelected ? 'bg-muted/40' : ''}`}>
+                                    <td className="p-4">
+                                      <Checkbox
+                                        checked={isSelected}
+                                        onCheckedChange={(checked) => {
+                                          const newSelected = new Set(selectedItems)
+                                          if (checked) {
+                                            newSelected.add(item.id)
+                                          } else {
+                                            newSelected.delete(item.id)
+                                          }
+                                          setSelectedItems(newSelected)
+                                        }}
+                                        className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                                      />
+                                    </td>
+                                    <td className="p-4">
+                                      <div className="flex items-center gap-2">
+                                        <ItemIcon className="h-4 w-4 text-muted-foreground" />
+                                        <span className="font-medium">{item.name}</span>
+                                      </div>
+                                    </td>
+                                    <td className="p-4">
+                                      <Badge variant="outline" className="text-xs">
+                                        {item.idCode}
+                                      </Badge>
+                                    </td>
+                                    <td className="p-4">
+                                      <Badge variant="secondary" className="text-xs">
+                                        {item.type}
+                                      </Badge>
+                                    </td>
+                                  </tr>
+                                )
+                              })
+                            ) : (
+                              <tr>
+                                <td colSpan={4} className="p-4 text-center text-sm text-muted-foreground">
+                                  No objects found matching the current filter criteria. 
+                                  The collection will be created for future objects that match these rules.
+                                </td>
+                              </tr>
+                            )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                          </div>
+                    </div>
+                </div>
+                
+                {/* Action Buttons */}
+                <div className="flex-shrink-0 px-4 py-3 bg-white border-t border-gray-200">
+                  <div className="flex justify-between items-center gap-3">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setShowRulesConfirmation(false)
+                        setProposedRules([])
+                      }}
+                      className="text-gray-600"
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Cancel
+                    </Button>
+                    
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        onClick={() => onOpenChange(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          // Create collection logic
+                          // If no rules, use empty array for matching (allows manual collection)
+                          const matchedItems = proposedRules.length > 0 
+                            ? applyFilterRules([...allAvailableItems, ...additionalItems], proposedRules)
+                            : []
+                          
+                          const itemsToInclude = selectedItems.size > 0 
+                            ? matchedItems.filter(item => selectedItems.has(item.id))
+                            : matchedItems
+                          
+                          // Allow creating collection even if no items/rules are found
+                          let finalDescription = collectionDescription
+                          if (proposedRules.length === 0 && itemsToInclude.length === 0) {
+                            finalDescription = `${collectionDescription} This is a manual collection - you can add objects later.`
+                          } else if (itemsToInclude.length === 0) {
+                            finalDescription = `${collectionDescription} This collection will automatically include future objects that match these rules.`
+                          }
+                          
+                          addAICollection(collectionName, finalDescription, itemsToInclude)
+                          
+                          if (proposedRules.length === 0 && itemsToInclude.length === 0) {
+                            toast({
+                              title: "Collection Created! 🎉",
+                              description: `"${collectionName}" created as manual collection. Add objects anytime!`,
+                            })
+                          } else if (itemsToInclude.length === 0) {
+                            toast({
+                              title: "Collection Created! 🎉",
+                              description: `"${collectionName}" created for future objects that match the rules.`,
+                            })
+                          } else {
+                            toast({
+                              title: "Collection Created! 🎉",
+                              description: `"${collectionName}" added with ${itemsToInclude.length} objects.`,
+                            })
+                          }
+                          onOpenChange(false)
+                        }}
+                        disabled={!collectionName}
+                        className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white"
+                      >
+                        <Zap className="h-4 w-4 mr-2" />
+                        Create Collection
+                        {rulePreviewCount > 0 && (
+                          <Badge className="ml-2 bg-white/20 text-white border-white/30">
+                              {rulePreviewCount} items
+                            </Badge>
+                          )}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* ===== Original Items Table Mode ===== */
+              <>
             <div className="flex-shrink-0 px-6 py-3 bg-gray-50 border-b border-gray-200 space-y-3">
               <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -1011,7 +1767,7 @@ export function AICollectionPreviewDialog({
                         <Badge 
                           variant="secondary" 
                           className={`text-xs ${
-                            item.type === 'Legal entities' ? 'bg-purple-100 text-purple-700 border-purple-200' :
+                            item.type === 'Legal entities' ? 'bg-blue-100 text-blue-700 border-blue-200' :
                             item.type === 'Properties' ? 'bg-green-100 text-green-700 border-green-200' :
                             item.type === 'Vehicles' ? 'bg-orange-100 text-orange-700 border-orange-200' :
                             item.type === 'Aviation' ? 'bg-sky-100 text-sky-700 border-sky-200' :
@@ -1070,12 +1826,14 @@ export function AICollectionPreviewDialog({
             </Button>
           </div>
             </div>
+            </>
+            )}
           </div>
 
           {/* Right Section - AI Assistant Panel */}
           <div className="w-80 bg-gray-50 flex flex-col">
             <div className="flex items-center gap-2 p-4 border-b border-gray-200 bg-white">
-              <div className="w-6 h-6 rounded bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
+              <div className="w-6 h-6 rounded bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
                 <Sparkles className="h-3 w-3 text-white" />
               </div>
               <span className="font-medium text-gray-900">AI Assistant</span>
@@ -1105,7 +1863,7 @@ export function AICollectionPreviewDialog({
                           <div className={`max-w-[80%] rounded-lg px-3 py-2 ${
                             message.type === 'user' 
                               ? 'bg-blue-600 text-white' 
-                              : `bg-gray-100 text-gray-900 ${isNewMessage ? 'ring-2 ring-blue-200 bg-blue-50' : ''}`
+                              : 'bg-gray-100 text-gray-900'
                           }`}>
                             <p className="text-sm leading-relaxed">{message.content}</p>
                             <p className={`text-xs mt-1 ${
@@ -1148,38 +1906,6 @@ export function AICollectionPreviewDialog({
                       </div>
                     )}
                     
-                    {/* Follow-up Actions - only show after first AI response and before any user follow-up */}
-                    {firstAIResponseId && showFollowUpActions && (
-                      <div className="space-y-2">
-                        <div className="text-xs font-medium text-gray-600 mb-2">Follow-up actions:</div>
-                        <div className="flex flex-wrap gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleFollowUpAction("Add more items")}
-                            className="text-xs h-7 px-3 hover:bg-blue-50 border-blue-200 text-blue-700"
-                          >
-                            Add more items
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleFollowUpAction("Rename collection")}
-                            className="text-xs h-7 px-3 hover:bg-green-50 border-green-200 text-green-700"
-                          >
-                            Rename collection
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleFollowUpAction("Export list")}
-                            className="text-xs h-7 px-3 hover:bg-purple-50 border-purple-200 text-purple-700"
-                          >
-                            Export list
-                          </Button>
-                        </div>
-                      </div>
-                    )}
                     
                     {/* New messages indicator */}
                     {showNewMessagesIndicator && newMessagesCount > 0 && (

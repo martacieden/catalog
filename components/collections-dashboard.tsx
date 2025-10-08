@@ -2,6 +2,8 @@
 
 import * as React from "react"
 import { useCollections } from "@/contexts/collections-context"
+import { CollectionCard } from "@/components/collections/collection-card"
+import { CollectionEditDialog } from "@/components/collections/collection-edit-dialog"
 import {
   Sparkles,
   Clock,
@@ -18,6 +20,8 @@ import {
   Building,
   Calendar,
   Dog,
+  AlertTriangle,
+  Star,
   FileText,
   Anchor,
   Waves,
@@ -34,15 +38,24 @@ import {
   Database,
   Search,
   TrendingDown,
-  AlertTriangle,
   CheckCircle,
   User,
   ChevronRight,
+  MoreHorizontal,
+  Eye,
+  Edit3,
+  Trash2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { AICollectionPreviewDialog } from "@/components/ai-collection-preview-dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 const mockItems = [
   {
@@ -117,15 +130,14 @@ const categoryCounts = mockItems.reduce(
 )
 
 const stats = [
-  { label: "Total Collections", value: "0", icon: Folder, trend: "Create your first" },
+  { label: "Total Collections", value: "0", icon: Folder },
   {
     label: "Total Objects",
     value: totalItems.toString(),
     icon: TrendingUp,
-    trend: `${Object.keys(categoryCounts).length} categories`,
   },
-  { label: "Categories", value: Object.keys(categoryCounts).length.toString(), icon: Building2, trend: "Organized" },
-  { label: "Pinned Items", value: "0", icon: Clock, trend: "Pin important items" },
+  { label: "Categories", value: Object.keys(categoryCounts).length.toString(), icon: Building2 },
+  { label: "Pinned Items", value: "0", icon: Clock },
 ]
 
 
@@ -134,54 +146,126 @@ export function CollectionsDashboard() {
   const [selectedCollectionType, setSelectedCollectionType] = React.useState<string>("")
   const { collections } = useCollections()
   const [searchQuery, setSearchQuery] = React.useState<string>("")
+  const [editingCollection, setEditingCollection] = React.useState<any>(null)
+  const [viewLayout, setViewLayout] = React.useState<"grid" | "list">("grid")
 
-  // Calculate real item counts for AI suggestions based on actual data
+  // AI-powered collection suggestions based on data analysis
   const getAISuggestionCards = () => {
-    const propertiesCount = mockItems.filter(item => item.category === "Properties").length
-    const maritimeCount = mockItems.filter(item => item.category === "Maritime").length
-    const eventsCount = mockItems.filter(item => item.category === "Events").length
-    const petsCount = mockItems.filter(item => item.category === "Pets").length
+    // Analyze current data to generate intelligent suggestions
+    const properties = mockItems.filter(item => item.category === "Properties")
+    const maritime = mockItems.filter(item => item.category === "Maritime")
+    const events = mockItems.filter(item => item.category === "Events")
+    const pets = mockItems.filter(item => item.category === "Pets")
+    const vehicles = mockItems.filter(item => item.category === "Vehicles")
+    const aviation = mockItems.filter(item => item.category === "Aviation")
+    const legal = mockItems.filter(item => item.category === "Legal entities")
+    
+    // Calculate maintenance needs
+    const maintenanceItems = mockItems.filter((item: any) => 
+      item.status?.toLowerCase().includes('maintenance') || 
+      item.status?.toLowerCase().includes('repair') ||
+      item.status?.toLowerCase().includes('attention')
+    )
+    
+    // Calculate high-value assets
+    const highValueItems = mockItems.filter(item => 
+      item.category === "Properties" || 
+      item.category === "Aviation" || 
+      item.category === "Maritime"
+    )
+    
+    // Calculate recent updates (last 30 days)
+    const recentItems = mockItems.filter((item: any) => {
+      const itemDate = new Date(item.date || '')
+      const thirtyDaysAgo = new Date()
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+      return itemDate > thirtyDaysAgo
+    })
 
-    return [
-      {
+    const suggestions = []
+
+    // Only suggest collections that have meaningful data
+    if (properties.length > 0) {
+      suggestions.push({
         id: "luxury-villas",
         name: "Luxury Villas & Properties",
         description: "Beachfront estates, hillside villas, and vacation rental properties",
-        itemCount: propertiesCount,
+        itemCount: properties.length,
         icon: ResortIcon,
         color: "from-blue-50 to-cyan-50",
-      },
-      {
+        priority: "high"
+      })
+    }
+
+    if (maritime.length > 0) {
+      suggestions.push({
         id: "marina-assets",
         name: "Marina Village Assets",
         description: "Private marina, boats, water sports equipment, and marine facilities",
-        itemCount: maritimeCount,
+        itemCount: maritime.length,
         icon: MarinaIcon,
-        color: "from-teal-50 to-blue-50",
-      },
-      {
+        color: "from-blue-50 to-cyan-50",
+        priority: "medium"
+      })
+    }
+
+    if (maintenanceItems.length > 2) {
+      suggestions.push({
+        id: "maintenance-urgent",
+        name: "Needs Attention",
+        description: "Assets requiring immediate maintenance or repair",
+        itemCount: maintenanceItems.length,
+        icon: AlertTriangle,
+        color: "from-blue-50 to-cyan-50",
+        priority: "urgent"
+      })
+    }
+
+    if (highValueItems.length > 3) {
+      suggestions.push({
+        id: "high-value-assets",
+        name: "High-Value Assets",
+        description: "Premium properties, aircraft, and marine vessels",
+        itemCount: highValueItems.length,
+        icon: Star,
+        color: "from-blue-50 to-cyan-50",
+        priority: "high"
+      })
+    }
+
+    if (recentItems.length > 2) {
+      suggestions.push({
+        id: "recent-updates",
+        name: "Recent Updates",
+        description: "Recently updated or modified items",
+        itemCount: recentItems.length,
+        icon: Clock,
+        color: "from-blue-50 to-cyan-50",
+        priority: "medium"
+      })
+    }
+
+    if (events.length > 0) {
+      suggestions.push({
         id: "resort-amenities",
         name: "Resort Amenities",
         description: "Spa facilities, dining venues, beach club, and recreational activities",
-        itemCount: eventsCount,
+        itemCount: events.length,
         icon: AmenitiesIcon,
-        color: "from-green-50 to-emerald-50",
-      },
-      {
-        id: "guest-experiences",
-        name: "Guest Experiences",
-        description: "Activities, events, excursions, and personalized service records",
-        itemCount: petsCount,
-        icon: ExperienceIcon,
-        color: "from-purple-50 to-pink-50",
-      },
-    ]
+        color: "from-blue-50 to-cyan-50",
+        priority: "low"
+      })
+    }
+
+    // Sort by priority: urgent > high > medium > low
+    const priorityOrder: Record<string, number> = { urgent: 0, high: 1, medium: 2, low: 3 }
+    return suggestions.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority])
   }
 
   const aiSuggestionCards = getAISuggestionCards()
 
   const handleAISuggestionClick = (suggestionId: string) => {
-    // Open preview dialog with AI suggested items
+    // Open preview dialog with AI suggested rules
     setSelectedCollectionType(suggestionId)
     setPreviewDialogOpen(true)
   }
@@ -192,8 +276,8 @@ export function CollectionsDashboard() {
 
   const handleAICreate = () => {
     if (searchQuery.trim()) {
-      // Simulate AI processing and open dialog with modified collection
-      console.log("AI Creating collection with query:", searchQuery)
+      // Open AI Rules-Based dialog for custom prompts
+      console.log("AI Creating rules-based collection with query:", searchQuery)
       setSelectedCollectionType("ai-custom")
       setPreviewDialogOpen(true)
     }
@@ -202,6 +286,30 @@ export function CollectionsDashboard() {
   const handleQuickPrompt = (prompt: string) => {
     setSearchQuery(prompt)
     // Only populate the search field, don't auto-open dialog
+  }
+
+  const handleCollectionAction = (action: string, collectionId: string) => {
+    const collection = collections.find(c => c.id === collectionId)
+    if (!collection) return
+    
+    switch (action) {
+      case 'view':
+        // Will be implemented with routing in Phase 3
+        console.log('View collection:', collectionId)
+        break
+      case 'edit':
+        setEditingCollection(collection)
+        break
+      case 'remove':
+        // Handled by CollectionCard component
+        break
+      default:
+        break
+    }
+  }
+
+  const handleCardEdit = (collection: any) => {
+    setEditingCollection(collection)
   }
 
   return (
@@ -214,59 +322,59 @@ export function CollectionsDashboard() {
           </h1>
           
           <p className="text-sm text-gray-600 mb-6">
-            Create smart collections with AI assistance
+            AI generates filtering rules, you review and customize them
           </p>
           
-          {/* Quick Prompts */}
+          {/* AI Rules-Based Quick Prompts */}
           <div className="mb-4">
             <div className="flex flex-wrap justify-center gap-2">
               <Button 
                 size="sm" 
                 variant="outline" 
-                onClick={() => handleQuickPrompt("high-value assets requiring maintenance")}
-                className="h-7 px-3 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200 hover:border-blue-300"
+                onClick={() => handleQuickPrompt("high-value assets above 1M")}
+                className="h-7 px-3 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 hover:text-blue-800 border-blue-200 hover:border-blue-300"
               >
-                High-value assets
-              </Button>
-              <Button 
-                size="sm" 
-                variant="outline" 
-                onClick={() => handleQuickPrompt("guest preferences and special requests")}
-                className="h-7 px-3 text-xs bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200 hover:border-purple-300"
-              >
-                Guest preferences
+                💎 High-value assets
               </Button>
               <Button 
                 size="sm" 
                 variant="outline" 
                 onClick={() => handleQuickPrompt("active legal entities from 2024")}
-                className="h-7 px-3 text-xs bg-green-50 hover:bg-green-100 text-green-700 border-green-200 hover:border-green-300"
+                className="h-7 px-3 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 hover:text-blue-800 border-blue-200 hover:border-blue-300"
               >
-                Legal entities 2024
+                🏢 Legal entities 2024
               </Button>
               <Button 
                 size="sm" 
                 variant="outline" 
-                onClick={() => handleQuickPrompt("recently updated items")}
-                className="h-7 px-3 text-xs bg-orange-50 hover:bg-orange-100 text-orange-700 border-orange-200 hover:border-orange-300"
+                onClick={() => handleQuickPrompt("available properties for rent")}
+                className="h-7 px-3 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 hover:text-blue-800 border-blue-200 hover:border-blue-300"
               >
-                Recent updates
+                🏠 Available properties
               </Button>
               <Button 
                 size="sm" 
                 variant="outline" 
-                onClick={() => handleQuickPrompt("items requiring attention")}
-                className="h-7 px-3 text-xs bg-red-50 hover:bg-red-100 text-red-700 border-red-200 hover:border-red-300"
+                onClick={() => handleQuickPrompt("recently updated items in last 30 days")}
+                className="h-7 px-3 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 hover:text-blue-800 border-blue-200 hover:border-blue-300"
               >
-                Needs attention
+                📅 Recent updates
               </Button>
               <Button 
                 size="sm" 
                 variant="outline" 
-                onClick={() => handleQuickPrompt("financial documents and contracts")}
-                className="h-7 px-3 text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-200 hover:border-indigo-300"
+                onClick={() => handleQuickPrompt("all flagged items that need attention")}
+                className="h-7 px-3 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 hover:text-blue-800 border-blue-200 hover:border-blue-300"
               >
-                Financial docs
+                🚩 Needs attention
+              </Button>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={() => handleQuickPrompt("items with financial documents")}
+                className="h-7 px-3 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 hover:text-blue-800 border-blue-200 hover:border-blue-300"
+              >
+                💰 Financial docs
               </Button>
             </div>
           </div>
@@ -279,7 +387,7 @@ export function CollectionsDashboard() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search for items or ask AI to create a collection..."
+                placeholder="Ask AI to create rules-based collections..."
                 className="w-full rounded-lg bg-transparent px-10 py-3 text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none"
               />
               <Button 
@@ -302,89 +410,38 @@ export function CollectionsDashboard() {
           <Card key={index}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">{stat.label}</CardTitle>
-              <stat.icon className="h-4 w-4 text-muted-foreground" />
+              <stat.icon className={`h-4 w-4 ${
+                index === 0 ? 'text-blue-500' :
+                index === 1 ? 'text-green-500' :
+                index === 2 ? 'text-blue-500' :
+                'text-orange-500'
+              }`} />
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-2">
               <div className="text-2xl font-bold">{stat.value}</div>
-              <p className="text-xs text-muted-foreground">{stat.trend}</p>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      {/* Created Collections Section */}
-      {collections.length > 0 && (
-        <div>
-          <div className="mb-6 flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-bold">Your Collections</h2>
-              <p className="text-xs text-muted-foreground">Collections you've created with AI assistance</p>
-            </div>
-          </div>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {collections.map((collection) => (
-              <div
-                key={collection.id}
-                className="group relative overflow-hidden rounded-xl border border-border bg-card p-6 shadow-sm transition-all hover:shadow-md"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500/20 to-purple-500/20">
-                        <Sparkles className="h-4 w-4 text-indigo-600" />
-                      </div>
-                      <h3 className="font-semibold text-sm">{collection.name}</h3>
-                    </div>
-                    <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
-                      {collection.description}
-                    </p>
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Folder className="h-3 w-3" />
-                        {collection.itemCount} items
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {collection.createdAt.toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-4 flex gap-2">
-                  <Button size="sm" variant="outline" className="text-xs h-7">
-                    View
-                  </Button>
-                  <Button size="sm" variant="outline" className="text-xs h-7">
-                    Edit
-                  </Button>
-                  <Button size="sm" variant="outline" className="text-xs h-7 text-red-600 hover:text-red-700">
-                    Remove
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* AI Suggestions Section */}
-      <div>
+      <div className="mt-8">
         <div className="mb-6 flex items-center justify-between">
           <div>
                   <h2 className="text-lg font-bold">AI Suggested Collections</h2>
-            <p className="text-xs text-muted-foreground">AI-powered collections tailored for Oil Nut Bay Resort</p>
+            <p className="text-xs text-muted-foreground">AI-generated rule sets for smart collections</p>
           </div>
         </div>
                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {aiSuggestionCards.map((suggestion) => (
             <Card
               key={suggestion.id}
-              className="group cursor-pointer overflow-hidden transition-all hover:shadow-sm border border-gray-200 shadow-none bg-white p-0"
+              className="group cursor-pointer overflow-hidden transition-all hover:shadow-lg hover:scale-105 border border-gray-200 shadow-none bg-white p-0"
               onClick={() => handleAISuggestionClick(suggestion.id)}
             >
-        <div className={`h-20 bg-gradient-to-br ${suggestion.color} p-4 border-b border-gray-100`}>
+        <div className={`h-20 bg-gradient-to-br ${suggestion.color} p-4 border-b border-gray-100 group-hover:opacity-90 transition-opacity`}>
                 <div className="flex h-full items-center justify-center">
-            <suggestion.icon className="h-8 w-8 text-gray-500 stroke-[1]" />
+            <suggestion.icon className="h-8 w-8 text-gray-500 stroke-[1] group-hover:scale-110 transition-transform" />
                 </div>
               </div>
               <CardHeader className="pt-4">
@@ -397,21 +454,50 @@ export function CollectionsDashboard() {
                 </div>
               </CardHeader>
               <CardContent className="pt-2 pb-4">
-                <Button
-                  className="w-full gap-2 opacity-70 hover:opacity-100 transition-opacity"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => console.log("View Collection clicked")}
-                >
-                  View Collection
-                  <ArrowRight className="h-3 w-3" />
-                </Button>
+                {/* Button removed - card is now clickable */}
               </CardContent>
             </Card>
           ))}
         </div>
       </div>
 
+      {/* Created Collections Section */}
+      {collections.length > 0 && (
+        <div>
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-bold">Recent Collections</h2>
+              <p className="text-xs text-muted-foreground">Collections you've created with AI assistance</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant={viewLayout === "grid" ? "secondary" : "ghost"}
+                size="sm"
+                onClick={() => setViewLayout("grid")}
+              >
+                Grid
+              </Button>
+              <Button
+                variant={viewLayout === "list" ? "secondary" : "ghost"}
+                size="sm"
+                onClick={() => setViewLayout("list")}
+              >
+                List
+              </Button>
+            </div>
+          </div>
+          <div className={viewLayout === "grid" ? "grid gap-4 md:grid-cols-2 lg:grid-cols-3" : "space-y-3"}>
+            {collections.map((collection) => (
+              <CollectionCard
+                key={collection.id}
+                collection={collection}
+                layout={viewLayout}
+                onEdit={handleCardEdit}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       <Card>
         <CardHeader>
@@ -440,7 +526,17 @@ export function CollectionsDashboard() {
         onOpenChange={setPreviewDialogOpen}
         collectionType={selectedCollectionType}
         userPrompt={searchQuery}
+        mode="rules"  // 🔥 Use Rules Mode for all AI prompts
       />
+
+      {/* Collection Edit Dialog */}
+      {editingCollection && (
+        <CollectionEditDialog
+          collection={editingCollection}
+          open={!!editingCollection}
+          onOpenChange={(open) => !open && setEditingCollection(null)}
+        />
+      )}
     </div>
   )
 }

@@ -4,7 +4,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Updated color scheme inspired by design brief - dark theme with blue/purple accents */
+  /* Updated color scheme inspired by design brief - dark theme with blue accents */
   --background: oklch(0.98 0 0);
   --foreground: oklch(0.15 0 0);
   --card: oklch(1 0 0);

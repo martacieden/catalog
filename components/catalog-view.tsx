@@ -38,17 +38,22 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ManualCollectionDialog } from "@/components/manual-collection-dialog"
+import { AddSelectedToCollectionDialog } from "@/components/collections/add-selected-to-collection-dialog"
+import { AddItemModalNew as AddItemModal } from "@/components/collections/add-item-modal"
+import { AICollectionPreviewDialog } from "@/components/ai-collection-preview-dialog"
 import { SearchToCollection } from "@/components/search-to-collection"
 import { getUnsplashImageUrl, getRandomUnsplashImage } from "@/lib/unsplash"
 import { ShareDialog } from "@/components/share-dialog"
 import { CollectionSettingsDialog } from "@/components/collection-settings-dialog"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useCollections } from "@/contexts/collections-context"
+import { useToast } from "@/hooks/use-toast"
 
 
 interface CatalogViewProps {
   activeView?: string
+  onPinnedCountChange?: (count: number) => void
 }
 
 const mockItems = [
@@ -229,8 +234,8 @@ const CardItemThumbnail = ({ item }: { item: any }) => {
           e.currentTarget.nextElementSibling?.classList.remove('hidden')
         }}
       />
-      <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-muted hidden">
-        <div className="h-12 w-12 flex items-center justify-center rounded-lg bg-muted/50">
+      <div className="absolute inset-0 flex items-center justify-center rounded-lg hidden" style={{ backgroundColor: '#DEE7F3' }}>
+        <div className="h-12 w-12 flex items-center justify-center rounded-lg">
           {CategoryIcon}
         </div>
       </div>
@@ -257,20 +262,72 @@ const TableItemThumbnail = ({ item }: { item: any }) => {
           e.currentTarget.nextElementSibling?.classList.remove('hidden')
         }}
       />
-      <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-muted hidden">
+      <div className="absolute inset-0 flex items-center justify-center rounded-lg hidden" style={{ backgroundColor: '#DEE7F3' }}>
         {CategoryIcon}
       </div>
     </div>
   )
 }
 
-export function CatalogView({ activeView = "catalog" }: CatalogViewProps) {
-  const { collections, getCollectionById } = useCollections()
+function AddOrCreateButton({ selectedIds, size = "sm", variant = "outline", label = "Add to collection" }: { selectedIds: string[]; size?: any; variant?: any; label?: string }) {
+  const { collections } = useCollections()
+  
+  if (collections.length === 0) {
+    return (
+      <ManualCollectionDialog
+        trigger={<Button variant={variant} size={size}><Plus className="mr-2 h-4 w-4" />Create new collection</Button>}
+        selectedItems={selectedIds}
+      />
+    )
+  }
+  return (
+    <AddSelectedToCollectionDialog
+      trigger={<Button variant={variant} size={size}><Plus className="mr-2 h-4 w-4" />{label}</Button>}
+      selectedItemIds={selectedIds}
+    />
+  )
+}
+
+export function CatalogView({ activeView = "catalog", onPinnedCountChange }: CatalogViewProps) {
+  const { collections, getCollectionById, allItems, bulkRemoveItems } = useCollections()
+  const { toast } = useToast()
   const [searchQuery, setSearchQuery] = React.useState("")
   const [activeFilters, setActiveFilters] = React.useState(0)
   const [selectedItems, setSelectedItems] = React.useState<Set<string>>(new Set())
   const [items, setItems] = React.useState(mockItems)
   const [viewMode, setViewMode] = React.useState<"grid" | "card">("grid")
+  const [showDeleteDialog, setShowDeleteDialog] = React.useState(false)
+  const [addItemModalOpen, setAddItemModalOpen] = React.useState(false)
+
+  // Update items when allItems or activeView changes - filter by collection if needed
+  React.useEffect(() => {
+    let itemsToShow = allItems
+    
+    // If we're viewing a specific collection, filter items by that collection
+    const collection = getCollectionById(activeView)
+    if (collection && collection.items) {
+      // Get only items that belong to this collection
+      const collectionItemIds = collection.items.map(item => item.id)
+      itemsToShow = allItems.filter(item => collectionItemIds.includes(item.id))
+    }
+    
+    // Convert CollectionItem to mockItems format, preserving pinned status
+    const convertedItems = itemsToShow.map(item => {
+      // Find existing item to preserve pinned status
+      const existingItem = items.find(existing => existing.id === item.id)
+      return {
+        id: item.id,
+        name: item.name,
+        category: item.category,
+        sharedWith: [],
+        createdBy: { name: "System", avatar: "S" },
+        createdOn: new Date().toLocaleDateString(),
+        lastUpdate: new Date().toLocaleDateString(),
+        pinned: existingItem?.pinned || false, // Preserve existing pinned status
+      }
+    })
+    setItems(convertedItems)
+  }, [allItems, activeView, getCollectionById])
 
   const getPageTitle = () => {
     if (!activeView) return "Catalog"
@@ -286,6 +343,11 @@ export function CatalogView({ activeView = "catalog" }: CatalogViewProps) {
       .split("-")
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(" ")
+  }
+
+  // Визначаємо, чи це колекція для правильного відображення дій
+  const isCollectionView = () => {
+    return getCollectionById(activeView) !== undefined
   }
 
   // Function to apply collection filters to items
@@ -331,10 +393,20 @@ export function CatalogView({ activeView = "catalog" }: CatalogViewProps) {
     if (collection) {
       // For AI-generated collections, use the items directly
       if (collection.type === 'ai-generated' && collection.items) {
-        return collection.items
+        // Convert CollectionItem[] to mockItems format
+        return collection.items.map(item => ({
+          id: item.id,
+          name: item.name,
+          category: item.category,
+          sharedWith: [],
+          createdBy: { name: "System", avatar: "S" },
+          createdOn: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+          lastUpdate: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+          pinned: false,
+        }))
       }
       // For manual collections, apply collection filters
-      filteredItems = applyCollectionFilters(filteredItems, collection.filters)
+      filteredItems = applyCollectionFilters(filteredItems, collection.filters || [])
     } else if (activeView === "pinned") {
       return filteredItems.filter((item) => item.pinned)
     } else if (activeView === "all-objects") {
@@ -395,13 +467,27 @@ export function CatalogView({ activeView = "catalog" }: CatalogViewProps) {
   }
 
   const handlePinSelected = () => {
+    const pinnedCount = selectedItems.size
     setItems((prevItems) => prevItems.map((item) => (selectedItems.has(item.id) ? { ...item, pinned: true } : item)))
     setSelectedItems(new Set())
+    
+    // Показати toast нотифікацію
+    toast({
+      title: "Items pinned successfully",
+      description: `${pinnedCount} ${pinnedCount === 1 ? 'item' : 'items'} pinned`,
+    })
   }
 
   const handleUnpinSelected = () => {
+    const unpinnedCount = selectedItems.size
     setItems((prevItems) => prevItems.map((item) => (selectedItems.has(item.id) ? { ...item, pinned: false } : item)))
     setSelectedItems(new Set())
+    
+    // Показати toast нотифікацію
+    toast({
+      title: "Items unpinned successfully",
+      description: `${unpinnedCount} ${unpinnedCount === 1 ? 'item' : 'items'} unpinned`,
+    })
   }
 
   const handleCreateCollectionFromSelected = () => {
@@ -412,6 +498,46 @@ export function CatalogView({ activeView = "catalog" }: CatalogViewProps) {
 
   const selectedCount = selectedItems.size
   const allSelected = filteredItems.length > 0 && selectedItems.size === filteredItems.length
+  const indeterminate = selectedItems.size > 0 && selectedItems.size < filteredItems.length
+  
+  // Підрахунок закріплених елементів
+  const pinnedCount = items.filter(item => item.pinned).length
+  
+  // Відправляємо оновлений лічильник вгору
+  React.useEffect(() => {
+    onPinnedCountChange?.(pinnedCount)
+  }, [pinnedCount, onPinnedCountChange])
+
+  const handleDeleteSelected = () => {
+    if (isCollectionView()) {
+      // Для колекцій - видаляємо з колекції
+      const collection = getCollectionById(activeView)
+      if (collection) {
+        bulkRemoveItems(collection.id, Array.from(selectedItems))
+        toast({
+          title: "Items removed from collection",
+          description: `${selectedItems.size} item(s) have been removed from "${collection.name}".`,
+        })
+      }
+    } else {
+      // Для All Items - видаляємо назавжди
+      setItems((prevItems) => prevItems.filter((item) => !selectedItems.has(item.id)))
+      toast({
+        title: "Items deleted",
+        description: `${selectedItems.size} item(s) have been permanently deleted.`,
+      })
+    }
+    setSelectedItems(new Set())
+    setShowDeleteDialog(false)
+  }
+
+  const handleDeleteClick = () => {
+    setShowDeleteDialog(true)
+  }
+
+  const handleClearSelection = () => {
+    setSelectedItems(new Set())
+  }
 
   return (
     <div className="flex h-full flex-col">
@@ -497,16 +623,13 @@ export function CatalogView({ activeView = "catalog" }: CatalogViewProps) {
                   <Square className="h-4 w-4" />
                 </Button>
               </div>
-              <ManualCollectionDialog
-                trigger={
-                  <Button>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add
-                  </Button>
-                }
-              />
+              <Button onClick={() => setAddItemModalOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add
+              </Button>
             </div>
           </div>
+
 
           <div className="flex-1 overflow-auto bg-background p-6">
             <div className="mx-auto max-w-6xl">
@@ -525,11 +648,15 @@ export function CatalogView({ activeView = "catalog" }: CatalogViewProps) {
                 items={filteredItems} 
                 selectedItems={selectedItems} 
                 onSelectItem={handleSelectItem}
+                onSelectAll={handleSelectAll}
+                allSelected={allSelected}
                 onPinSelected={handlePinSelected}
                 onUnpinSelected={handleUnpinSelected}
                 onCreateCollectionFromSelected={handleCreateCollectionFromSelected}
                 onClearSelection={() => setSelectedItems(new Set())}
+                onDeleteClick={handleDeleteClick}
                 activeView={activeView}
+                isCollectionView={isCollectionView()}
               />
             ) : (
               <CardView 
@@ -540,13 +667,53 @@ export function CatalogView({ activeView = "catalog" }: CatalogViewProps) {
                 onUnpinSelected={handleUnpinSelected}
                 onCreateCollectionFromSelected={handleCreateCollectionFromSelected}
                 onClearSelection={() => setSelectedItems(new Set())}
+                onDeleteClick={handleDeleteClick}
                 activeView={activeView}
+                isCollectionView={isCollectionView()}
               />
             )}
             </div>
           </div>
         </>
       )}
+
+      {/* Delete/Remove Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {isCollectionView() ? 'Remove' : 'Delete'} {selectedCount} {selectedCount === 1 ? 'item' : 'items'}?
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-muted-foreground">
+              {isCollectionView() ? (
+                <>Removing these items from <strong>{getCollectionById(activeView)?.name}</strong> will unlink them from this collection. The items will remain in the system and other collections.</>
+              ) : (
+                <>Deleting these <strong>Items</strong> will remove them permanently from All Items, their Category, and any Collections they belong to. This action cannot be undone.</>
+              )}
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteSelected}>
+              {isCollectionView() ? 'Remove from collection' : 'Delete'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Item Modal */}
+      <AddItemModal
+        open={addItemModalOpen}
+        onOpenChange={setAddItemModalOpen}
+        collectionId={null}
+        onItemCreated={() => {
+          // Items will be automatically updated via context
+        }}
+      />
 
     </div>
   )
@@ -678,7 +845,9 @@ function CardView({
   onUnpinSelected,
   onCreateCollectionFromSelected,
   onClearSelection,
+  onDeleteClick,
   activeView,
+  isCollectionView,
 }: {
   items: typeof mockItems
   selectedItems: Set<string>
@@ -687,7 +856,9 @@ function CardView({
   onUnpinSelected: () => void
   onCreateCollectionFromSelected: () => void
   onClearSelection: () => void
+  onDeleteClick: () => void
   activeView: string
+  isCollectionView: boolean
 }) {
   const selectedCount = selectedItems.size
 
@@ -706,25 +877,21 @@ function CardView({
               </Button>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={onPinSelected}>
-                <Pin className="mr-2 h-4 w-4" />
-                Pin
-              </Button>
-              {activeView === "pinned" && (
+              <AddOrCreateButton selectedIds={Array.from(selectedItems)} />
+              {activeView === "pinned" ? (
                 <Button variant="outline" size="sm" onClick={onUnpinSelected}>
                   <Pin className="mr-2 h-4 w-4" />
-                  Unpin
+                  Unpin items
+                </Button>
+              ) : (
+                <Button variant="outline" size="sm" onClick={onPinSelected}>
+                  <Pin className="mr-2 h-4 w-4" />
+                  Pin items
                 </Button>
               )}
-              <ManualCollectionDialog
-                trigger={
-                  <Button size="sm">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Create
-                  </Button>
-                }
-                selectedItems={Array.from(selectedItems)}
-              />
+              <Button variant="destructive" size="sm" onClick={onDeleteClick}>
+                {isCollectionView ? 'Remove items' : 'Delete items'}
+              </Button>
             </div>
           </div>
         </div>
@@ -749,9 +916,8 @@ function CardView({
           >
             <Checkbox
               checked={selectedItems.has(item.id)}
-              onChange={(e) => {
-                e.stopPropagation()
-                onSelectItem(item.id, e.target.checked)
+              onCheckedChange={(checked) => {
+                onSelectItem(item.id, checked as boolean)
               }}
             />
           </div>
@@ -803,10 +969,7 @@ function CardView({
                 {item.pinned && <Pin className="inline h-3 w-3 text-muted-foreground ml-2" />}
               </div>
               
-              {/* Description if exists */}
-              {item.description && (
-                <p className="text-xs text-muted-foreground line-clamp-2">{item.description}</p>
-              )}
+              {/* Description if exists - removed as item doesn't have description property */}
               
               {/* Bottom section with shared info and date */}
               <div className="flex items-center justify-between pt-2">
@@ -841,39 +1004,56 @@ function GridView({
   items,
   selectedItems,
   onSelectItem,
+  onSelectAll,
+  allSelected,
   onPinSelected,
   onUnpinSelected,
   onCreateCollectionFromSelected,
   onClearSelection,
+  onDeleteClick,
   activeView,
+  isCollectionView,
 }: {
   items: typeof mockItems
   selectedItems: Set<string>
   onSelectItem: (id: string, checked: boolean) => void
+  onSelectAll: (checked: boolean) => void
+  allSelected: boolean
   onPinSelected: () => void
   onUnpinSelected: () => void
   onCreateCollectionFromSelected: () => void
   onClearSelection: () => void
+  onDeleteClick: () => void
   activeView: string
+  isCollectionView: boolean
 }) {
-  const allSelected = items.length > 0 && selectedItems.size === items.length
+  const indeterminate = selectedItems.size > 0 && selectedItems.size < items.length
   const selectedCount = selectedItems.size
-  
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      items.forEach((item) => onSelectItem(item.id, true))
-    } else {
-      items.forEach((item) => onSelectItem(item.id, false))
-    }
-  }
 
   return (
     <div className="rounded-lg border border-border bg-card">
       <div className="overflow-x-auto">
         <table className="w-full">
-          {selectedCount > 0 ? (
-            <thead className="border-b border-border bg-muted">
-              <tr>
+          <thead className="border-b border-border bg-muted/50">
+            <tr>
+              <th className="w-12 p-4">
+                <Checkbox 
+                  checked={indeterminate ? "indeterminate" : allSelected} 
+                  onCheckedChange={onSelectAll}
+                  className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                />
+              </th>
+              <th className="p-4 text-left text-sm font-medium text-muted-foreground">Name</th>
+              <th className="p-4 text-left text-sm font-medium text-muted-foreground">ID</th>
+              <th className="p-4 text-left text-sm font-medium text-muted-foreground">Category</th>
+              <th className="p-4 text-left text-sm font-medium text-muted-foreground">Shared with</th>
+              <th className="p-4 text-left text-sm font-medium text-muted-foreground">Created by</th>
+              <th className="p-4 text-left text-sm font-medium text-muted-foreground">Created on</th>
+              <th className="p-4 text-left text-sm font-medium text-muted-foreground">Last update</th>
+              <th className="w-12 p-4"></th>
+            </tr>
+            {selectedCount > 0 && (
+              <tr className="border-b border-border bg-muted">
                 <td colSpan={8} className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
@@ -886,50 +1066,27 @@ function GridView({
                       </Button>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm" onClick={onPinSelected}>
-                        <Pin className="mr-2 h-4 w-4" />
-                        Pin
-                      </Button>
-                      {activeView === "pinned" && (
+                      <AddOrCreateButton selectedIds={Array.from(selectedItems)} />
+                      {activeView === "pinned" ? (
                         <Button variant="outline" size="sm" onClick={onUnpinSelected}>
                           <Pin className="mr-2 h-4 w-4" />
-                          Unpin
+                          Unpin items
+                        </Button>
+                      ) : (
+                        <Button variant="outline" size="sm" onClick={onPinSelected}>
+                          <Pin className="mr-2 h-4 w-4" />
+                          Pin items
                         </Button>
                       )}
-                      <ManualCollectionDialog
-                        trigger={
-                          <Button size="sm">
-                            <Plus className="mr-2 h-4 w-4" />
-                            Create
-                          </Button>
-                        }
-                        selectedItems={Array.from(selectedItems)}
-                      />
+                      <Button variant="destructive" size="sm" onClick={onDeleteClick}>
+                        {isCollectionView ? 'Remove items' : 'Delete items'}
+                      </Button>
                     </div>
                   </div>
                 </td>
               </tr>
-            </thead>
-          ) : (
-            <thead className="border-b border-border bg-muted/50">
-              <tr>
-                <th className="w-12 p-4">
-                  <Checkbox 
-                    checked={allSelected} 
-                    onCheckedChange={handleSelectAll}
-                    className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                  />
-                </th>
-                <th className="p-4 text-left text-sm font-medium text-muted-foreground">Name</th>
-                <th className="p-4 text-left text-sm font-medium text-muted-foreground">ID</th>
-                <th className="p-4 text-left text-sm font-medium text-muted-foreground">Category</th>
-                <th className="p-4 text-left text-sm font-medium text-muted-foreground">Shared with</th>
-                <th className="p-4 text-left text-sm font-medium text-muted-foreground">Created by</th>
-                <th className="p-4 text-left text-sm font-medium text-muted-foreground">Created on</th>
-                <th className="p-4 text-left text-sm font-medium text-muted-foreground">Last update</th>
-              </tr>
-            </thead>
-          )}
+            )}
+          </thead>
           <tbody>
             {items.map((item) => (
               <tr
@@ -1006,6 +1163,8 @@ function TableView({
   onSelectAll: (checked: boolean) => void
   allSelected: boolean
 }) {
+  const indeterminate = selectedItems.size > 0 && selectedItems.size < items.length
+  
   return (
     <div className="rounded-lg border border-border bg-card">
       <div className="overflow-x-auto">
@@ -1013,7 +1172,10 @@ function TableView({
           <thead className="border-b border-border bg-muted/50">
             <tr>
               <th className="w-12 p-4">
-                <Checkbox checked={allSelected} onCheckedChange={onSelectAll} />
+                <Checkbox 
+                  checked={indeterminate ? "indeterminate" : allSelected} 
+                  onCheckedChange={onSelectAll} 
+                />
               </th>
               <th className="p-4 text-left text-sm font-medium">Name</th>
               <th className="p-4 text-left text-sm font-medium">ID</th>
@@ -1108,7 +1270,9 @@ function TableView({
                           </DropdownMenuItem>
                         }
                       />
-                      <DropdownMenuItem className="text-destructive">Remove</DropdownMenuItem>
+                      <DropdownMenuItem className="text-destructive">
+                        Remove
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </td>

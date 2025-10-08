@@ -1,6 +1,7 @@
 "use client"
 
 import React from "react"
+import { useRouter } from "next/navigation"
 import {
   Folder,
   Plus,
@@ -181,7 +182,7 @@ const organizations: Organization[] = [
     name: "Sapphire Holdings LLC",
     description: "Investment Management",
     icon: <Building className="h-4 w-4" />,
-    color: "purple",
+    color: "blue",
     theme: "investment",
     stats: {
       totalObjects: 67,
@@ -212,9 +213,19 @@ interface CatalogSidebarProps {
   activeView?: string
   onViewChange?: (view: string) => void
   onOrganizationChange?: (organizationId: string) => void
+  pinnedCount?: number
+  onCollectionSelect?: (collectionId: string | null) => void
+  selectedCollectionId?: string | null
 }
 
-export function CatalogSidebar({ activeView = "dashboard", onViewChange, onOrganizationChange }: CatalogSidebarProps) {
+export function CatalogSidebar({ 
+  activeView = "dashboard", 
+  onViewChange, 
+  onOrganizationChange, 
+  pinnedCount = 0,
+  onCollectionSelect,
+  selectedCollectionId
+}: CatalogSidebarProps) {
   const { collections } = useCollections()
   const [collectionsExpanded, setCollectionsExpanded] = React.useState(true)
   const [sharedExpanded, setSharedExpanded] = React.useState(true)
@@ -306,21 +317,41 @@ export function CatalogSidebar({ activeView = "dashboard", onViewChange, onOrgan
           >
             <Pin className="mr-2 h-4 w-4 flex-shrink-0" />
             <span className="truncate">Pinned</span>
+            {pinnedCount > 0 && (
+              <Badge variant="secondary" className="ml-auto text-xs">
+                {pinnedCount}
+              </Badge>
+            )}
           </Button>
 
           {/* Collections Section */}
           <div className="mt-4">
-            <button
-              onClick={() => setCollectionsExpanded(!collectionsExpanded)}
-              className="mb-3 flex w-full items-center justify-between px-2 hover:bg-accent/50 rounded-md py-1 transition-colors"
-            >
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Collections</h3>
-              {collectionsExpanded ? (
-                <ChevronDown className="h-3 w-3 text-muted-foreground" />
-              ) : (
-                <ChevronRight className="h-3 w-3 text-muted-foreground" />
-              )}
-            </button>
+            <div className="mb-3 flex w-full items-center justify-between px-2 hover:bg-accent/50 rounded-md py-1 transition-colors group">
+              <button
+                onClick={() => setCollectionsExpanded(!collectionsExpanded)}
+                className="flex items-center gap-2 flex-1"
+              >
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Collections</h3>
+                {collectionsExpanded ? (
+                  <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                ) : (
+                  <ChevronRight className="h-3 w-3 text-muted-foreground" />
+                )}
+              </button>
+              <ManualCollectionDialog
+                trigger={
+                  <button
+                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-accent rounded-sm"
+                    title="Create new collection"
+                  >
+                    <Plus className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                  </button>
+                }
+                onCollectionCreated={() => {
+                  // Колекція буде автоматично оновлена через контекст
+                }}
+              />
+            </div>
 
             {collectionsExpanded && (
               <>
@@ -338,6 +369,8 @@ export function CatalogSidebar({ activeView = "dashboard", onViewChange, onOrgan
                         collection={collection}
                         activeView={activeView}
                         onCollectionClick={handleCollectionClick}
+                        onCollectionSelect={onCollectionSelect}
+                        selectedCollectionId={selectedCollectionId}
                       />
                     ))}
                   </div>
@@ -359,20 +392,35 @@ export function CatalogSidebar({ activeView = "dashboard", onViewChange, onOrgan
 
           {/* Shared with You Section */}
           <div className="mt-6">
-            <button
-              onClick={() => setSharedExpanded(!sharedExpanded)}
-              className="mb-2 flex w-full items-center justify-between px-2 hover:bg-accent/50 rounded-md py-1 transition-colors"
-            >
-              <h3 className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                <Users className="h-3 w-3" />
-                Shared with You
-              </h3>
-              {sharedExpanded ? (
-                <ChevronDown className="h-3 w-3 text-muted-foreground" />
-              ) : (
-                <ChevronRight className="h-3 w-3 text-muted-foreground" />
-              )}
-            </button>
+            <div className="mb-2 flex w-full items-center justify-between px-2 hover:bg-accent/50 rounded-md py-1 transition-colors group">
+              <button
+                onClick={() => setSharedExpanded(!sharedExpanded)}
+                className="flex items-center gap-2 flex-1"
+              >
+                <h3 className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <Users className="h-3 w-3" />
+                  Shared with You
+                </h3>
+                {sharedExpanded ? (
+                  <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                ) : (
+                  <ChevronRight className="h-3 w-3 text-muted-foreground" />
+                )}
+              </button>
+              <ManualCollectionDialog
+                trigger={
+                  <button
+                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-accent rounded-sm"
+                    title="Create new collection"
+                  >
+                    <Plus className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                  </button>
+                }
+                onCollectionCreated={() => {
+                  // Колекція буде автоматично оновлена через контекст
+                }}
+              />
+            </div>
 
             {sharedExpanded && (
               <>
@@ -413,12 +461,18 @@ function CollectionItem({
   collection,
   activeView,
   onCollectionClick,
+  onCollectionSelect,
+  selectedCollectionId,
 }: {
   collection: any // Using any for now since we're mixing old and new interfaces
   activeView?: string
   onCollectionClick?: (id: string) => void
+  onCollectionSelect?: (collectionId: string | null) => void
+  selectedCollectionId?: string | null
 }) {
+  const router = useRouter()
   const isActive = activeView === collection.id
+  const isSelected = selectedCollectionId === collection.id
 
   // Get icon component based on collection data
   const getIcon = () => {
@@ -441,9 +495,18 @@ function CollectionItem({
     <ContextMenu>
       <ContextMenuTrigger>
         <Button
-          variant={isActive ? "secondary" : "ghost"}
+          variant={isSelected ? "secondary" : "ghost"}
           className="w-full justify-start text-sm font-normal"
-          onClick={() => onCollectionClick?.(collection.id)}
+          onClick={() => {
+            if (onCollectionSelect) {
+              onCollectionSelect(isSelected ? null : collection.id)
+            } else if (onCollectionClick) {
+              onCollectionClick(collection.id)
+            } else {
+              // Fallback to old navigation
+              router.push(`/collections/${collection.id}`)
+            }
+          }}
         >
           {getIcon()}
           <TooltipProvider>

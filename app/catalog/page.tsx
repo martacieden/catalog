@@ -5,10 +5,14 @@ import { AppSidebar } from "@/components/app-sidebar"
 import { CatalogSidebar } from "@/components/catalog-sidebar"
 import { CatalogView } from "@/components/catalog-view"
 import { CollectionsDashboard } from "@/components/collections-dashboard"
+import { CollectionDetailPanel } from "@/components/collection-detail-panel"
+import { CollectionsProvider } from "@/contexts/collections-context"
 
 export default function CatalogPage() {
   const [activeView, setActiveView] = useState("dashboard")
   const [selectedOrganization, setSelectedOrganization] = useState("onb")
+  const [pinnedCount, setPinnedCount] = useState(0)
+  const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null)
 
   const handleOrganizationChange = (organizationId: string) => {
     setSelectedOrganization(organizationId)
@@ -33,7 +37,7 @@ export default function CatalogPage() {
       "sapphire-holdings": {
         name: "Sapphire Holdings LLC",
         theme: "investment", 
-        color: "purple",
+        color: "blue",
         stats: { totalObjects: 67, categories: 10, collections: 15, pinnedItems: 12 },
         characteristics: ["Portfolio Management", "Real Estate", "Private Equity", "Asset Valuation"]
       },
@@ -63,22 +67,35 @@ export default function CatalogPage() {
   }
 
   return (
-    <div className="flex h-screen">
-      <AppSidebar />
-      <CatalogSidebar 
-        activeView={activeView} 
-        onViewChange={setActiveView}
-        onOrganizationChange={handleOrganizationChange}
-      />
-      <main className="flex-1 overflow-hidden">
-        {activeView === "dashboard" ? (
-          <div className="h-full overflow-auto bg-background p-6">
-            <CollectionsDashboard />
-          </div>
-        ) : (
-          <CatalogView activeView={activeView} />
-        )}
-      </main>
-    </div>
+    <CollectionsProvider>
+      <div className="flex h-screen">
+        <AppSidebar />
+        <CatalogSidebar 
+          activeView={activeView} 
+          onViewChange={setActiveView}
+          onOrganizationChange={handleOrganizationChange}
+          pinnedCount={pinnedCount}
+          onCollectionSelect={setSelectedCollectionId}
+          selectedCollectionId={selectedCollectionId}
+        />
+        <main className="flex-1 overflow-hidden">
+          {selectedCollectionId ? (
+            <CollectionDetailPanel 
+              collectionId={selectedCollectionId}
+              onClose={() => setSelectedCollectionId(null)}
+            />
+          ) : activeView === "dashboard" ? (
+            <div className="h-full overflow-auto bg-background p-6">
+              <CollectionsDashboard />
+            </div>
+          ) : (
+            <CatalogView 
+              activeView={activeView} 
+              onPinnedCountChange={setPinnedCount}
+            />
+          )}
+        </main>
+      </div>
+    </CollectionsProvider>
   )
 }

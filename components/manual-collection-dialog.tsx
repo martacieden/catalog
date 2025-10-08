@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { Plus, Trash2, FolderOpen, Sparkles, Wand2, Layers, Building2, Home, Car, Plane, Ship, Calendar, PawPrint, ScrollText, Tag, Users, FileText, Star, Heart, Zap, Shield, Globe, Lock, Unlock, CreditCard, Wallet, DollarSign, TrendingUp, Banknote, Coins, PiggyBank, Briefcase, Key, MapPin, Landmark, Hospital, Gift, Smile, MessageCircle, Wrench, Settings, BarChart3, PieChart, Target, Award, Trophy, Crown, Gem, Diamond, Leaf, TreePine, Mountain, Waves, Sun, Moon, Cloud, Umbrella, Camera, Image, Upload } from "lucide-react"
+import { AICollectionDialog } from "./collections/ai-collection-dialog"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -14,22 +15,22 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+// Removed Textarea import as AI prompt will use Input with fixed height
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { useCollections } from "@/contexts/collections-context"
+import { useToast } from "@/hooks/use-toast"
+import { useRouter } from "next/navigation"
+import type { FilterRule } from "@/types/rule"
+import type { CollectionItem } from "@/types/collection"
 
-interface FilterRule {
-  id: string
-  field: string
-  operator: string
-  value: string
-}
+// Use shared FilterRule type from types/rule
 
 interface ManualCollectionDialogProps {
   trigger?: React.ReactNode
   selectedItems?: string[]
+  onCollectionCreated?: () => void
 }
 
 const AVAILABLE_FIELDS = [
@@ -42,15 +43,15 @@ const AVAILABLE_FIELDS = [
   { value: "sharedWith", label: "Shared with" },
 ]
 
-const OPERATORS = [
-  { value: "equals", label: "is" },
-  { value: "not_equals", label: "is not" },
-  { value: "contains", label: "contains" },
-  { value: "not_contains", label: "does not contain" },
-  { value: "starts_with", label: "starts with" },
-  { value: "ends_with", label: "ends with" },
-  { value: "is_empty", label: "is empty" },
-  { value: "is_not_empty", label: "is not empty" },
+const OPERATORS: { value: FilterRule["operator"]; label: string }[] = [
+  { value: 'equals', label: 'is' },
+  { value: 'not_equals', label: 'is not' },
+  { value: 'contains', label: 'contains' },
+  { value: 'not_contains', label: 'does not contain' },
+  { value: 'starts_with', label: 'starts with' },
+  { value: 'ends_with', label: 'ends with' },
+  { value: 'is_empty', label: 'is empty' },
+  { value: 'is_not_empty', label: 'is not empty' },
 ]
 
 const CATEGORY_OPTIONS = [
@@ -170,30 +171,26 @@ const ALL_ICONS = COLLECTION_ICON_CATEGORIES.flatMap(category =>
   category.icons.map(icon => ({ ...icon, category: category.name }))
 )
 
-export function ManualCollectionDialog({ trigger, selectedItems = [] }: ManualCollectionDialogProps) {
-  const { addCollection, updateCollectionItemCount } = useCollections()
+export function ManualCollectionDialog({ trigger, selectedItems = [], onCollectionCreated }: ManualCollectionDialogProps) {
+  const { addCollection, allItems } = useCollections()
+  const { toast } = useToast()
+  const router = useRouter()
   const [open, setOpen] = React.useState(false)
   const [collectionName, setCollectionName] = React.useState("New")
   const [filters, setFilters] = React.useState<FilterRule[]>([])
   const [isCreating, setIsCreating] = React.useState(false)
   const [aiPrompt, setAiPrompt] = React.useState("")
   const [isGenerating, setIsGenerating] = React.useState(false)
+  const [aiDialogOpen, setAiDialogOpen] = React.useState(false)
   const [selectedIcon, setSelectedIcon] = React.useState(ALL_ICONS[0]) // Layers as default
   const [customImage, setCustomImage] = React.useState<string | null>(null)
   const [isUploading, setIsUploading] = React.useState(false)
+  const [description, setDescription] = React.useState("")
 
   // Initialize with selected items if provided
   React.useEffect(() => {
     if (open && selectedItems.length > 0) {
       setCollectionName(`Collection from ${selectedItems.length} items`)
-      // Pre-populate with category filter if all selected items have same category
-      // This is a simplified example - in real app you'd analyze the selected items
-      setFilters([{
-        id: `filter-${Date.now()}`,
-        field: "category",
-        operator: "equals",
-        value: "Legal entities"
-      }])
     }
   }, [open, selectedItems])
 
@@ -247,8 +244,8 @@ export function ManualCollectionDialog({ trigger, selectedItems = [] }: ManualCo
   const addFilter = () => {
     const newFilter: FilterRule = {
       id: `filter-${Date.now()}`,
-      field: "name",
-      operator: "contains",
+      field: 'name',
+      operator: 'contains',
       value: ""
     }
     setFilters([...filters, newFilter])
@@ -258,7 +255,7 @@ export function ManualCollectionDialog({ trigger, selectedItems = [] }: ManualCo
     setFilters(filters.filter(f => f.id !== filterId))
   }
 
-  const updateFilter = (filterId: string, field: keyof FilterRule, value: string) => {
+  const updateFilter = (filterId: string, field: keyof FilterRule, value: any) => {
     setFilters(filters.map(f => 
       f.id === filterId ? { ...f, [field]: value } : f
     ))
@@ -282,7 +279,7 @@ export function ManualCollectionDialog({ trigger, selectedItems = [] }: ManualCo
     
     if (fieldOptions.length > 0) {
       return (
-        <Select value={filter.value} onValueChange={(value) => updateFilter(filter.id, "value", value)}>
+        <Select value={String(filter.value ?? "")} onValueChange={(value) => updateFilter(filter.id, "value", value)}>
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Select value" />
           </SelectTrigger>
@@ -297,12 +294,25 @@ export function ManualCollectionDialog({ trigger, selectedItems = [] }: ManualCo
     
     return (
       <Input
-        value={filter.value}
+        value={String(filter.value ?? "")}
         onChange={(e) => updateFilter(filter.id, "value", e.target.value)}
         placeholder="Enter value"
         className="w-full"
       />
     )
+  }
+
+  const handleAICreate = () => {
+    if (selectedItems.length === 0) {
+      toast({
+        title: "No items selected",
+        description: "Please select items first to create an AI collection.",
+        variant: "destructive"
+      })
+      return
+    }
+    
+    setAiDialogOpen(true)
   }
 
   const handleCreate = async () => {
@@ -311,33 +321,63 @@ export function ManualCollectionDialog({ trigger, selectedItems = [] }: ManualCo
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000))
     
+    // Отримати вибрані items з allItems контексту
+    const selectedItemObjects = allItems.filter(item => selectedItems.includes(item.id))
+    
     // Add collection to context
     const newCollection = {
       name: collectionName,
       icon: customImage ? "custom" : selectedIcon.name,
-      customImage,
+      customImage: customImage || undefined,
       filters,
-      description: `Collection created from ${selectedItems.length} selected items`
+      description: description || (selectedItems.length > 0 
+        ? `Collection created from ${selectedItems.length} selected items` 
+        : undefined),
+      type: 'manual' as const,
+      tags: [],
+      items: selectedItemObjects, // Додаємо вибрані items
+      autoSync: false,
+      isPublic: false,
+      sharedWith: [],
+      viewCount: 0,
+      // Satisfy type requirements; provider will overwrite createdBy/updatedAt
+      createdBy: { id: "temp", name: "", email: "", avatar: "" },
+      updatedAt: new Date(),
     }
     
-    addCollection(newCollection)
+    const createdCollection = addCollection(newCollection)
     
-    // Update item count after collection is created
-    setTimeout(() => {
-      // This would need access to all items, but for now we'll just set a placeholder
-      // In a real app, you'd pass the items array or get it from context
-    }, 100)
+    // Показуємо успішне повідомлення
+    toast({
+      title: "Колекцію створено успішно! 🎉",
+      description: selectedItemObjects.length > 0 
+        ? `"${collectionName}" створено з ${selectedItemObjects.length} вибраними елементами.`
+        : `"${collectionName}" створено.`,
+    })
     
     console.log("Collection created:", {
       name: collectionName,
       icon: customImage ? "custom" : selectedIcon.name,
       customImage,
       filters,
-      selectedItems
+      itemsCount: selectedItemObjects.length
     })
     
     setIsCreating(false)
     setOpen(false)
+    
+    // Викликаємо callback після створення колекції
+    onCollectionCreated?.()
+    
+    // Автоматично переходимо до створеної колекції
+    if (selectedItems.length > 0) {
+      // Отримуємо ID останньої створеної колекції
+      const collections = JSON.parse(localStorage.getItem('collections') || '[]')
+      const lastCollection = collections[collections.length - 1]
+      if (lastCollection && lastCollection.id) {
+        router.push(`/catalog?collection=${lastCollection.id}`)
+      }
+    }
     
     // Reset state
     setCollectionName("New")
@@ -358,7 +398,7 @@ export function ManualCollectionDialog({ trigger, selectedItems = [] }: ManualCo
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-[1400px] max-h-[90vh] flex flex-col">
+      <DialogContent className="sm:max-w-[940px] max-w-[1400px] max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {customImage ? (
@@ -378,7 +418,7 @@ export function ManualCollectionDialog({ trigger, selectedItems = [] }: ManualCo
         </DialogHeader>
 
         <div className="flex-1 space-y-6 py-4 overflow-y-auto">
-          {/* Collection Name and Icon */}
+          {/* Collection Name, Icon and Description */}
           <div className="space-y-2">
             <Label htmlFor="collection-name" className="text-sm font-medium">
               Name *
@@ -478,7 +518,7 @@ export function ManualCollectionDialog({ trigger, selectedItems = [] }: ManualCo
                               variant={selectedIcon.name === iconOption.name ? "default" : "ghost"}
                               size="icon"
                               className="h-10 w-10"
-                              onClick={() => setSelectedIcon(iconOption)}
+                              onClick={() => setSelectedIcon({ ...iconOption, category: category.name })}
                               title={iconOption.description}
                             >
                               <iconOption.icon className="h-4 w-4" />
@@ -498,6 +538,17 @@ export function ManualCollectionDialog({ trigger, selectedItems = [] }: ManualCo
                 className="flex-1"
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="collection-description" className="text-sm font-medium">
+                Description
+              </Label>
+              <Input
+                id="collection-description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Add an optional description"
+              />
+            </div>
           </div>
 
           {/* AI Generation Section */}
@@ -507,12 +558,11 @@ export function ManualCollectionDialog({ trigger, selectedItems = [] }: ManualCo
             <div className="flex gap-2">
               <div className="relative flex-1">
                 <Sparkles className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Textarea
+                <Input
                   value={aiPrompt}
                   onChange={(e) => setAiPrompt(e.target.value)}
                   placeholder="Describe rules using plain language..."
-                  className="pl-10 resize-none"
-                  rows={2}
+                  className="pl-10 h-9"
                 />
               </div>
               <Button
@@ -555,8 +605,8 @@ export function ManualCollectionDialog({ trigger, selectedItems = [] }: ManualCo
             </div>
 
             {filters.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <FolderOpen className="mx-auto h-12 w-12 mb-4 opacity-50" />
+              <div className="text-center py-4 text-muted-foreground">
+                <FolderOpen className="mx-auto h-8 w-8 mb-2 opacity-50" />
                 <p className="text-sm">No rules added yet</p>
                 <p className="text-xs">Click "Add rule" to create your first filter, or leave empty for all items</p>
               </div>
@@ -630,6 +680,16 @@ export function ManualCollectionDialog({ trigger, selectedItems = [] }: ManualCo
           <Button variant="outline" onClick={() => setOpen(false)}>
             Cancel
           </Button>
+          {selectedItems.length > 0 && (
+            <Button 
+              variant="outline" 
+              onClick={handleAICreate}
+              className="bg-gradient-to-r from-indigo-50 to-blue-50 hover:from-indigo-100 hover:to-blue-100 border-indigo-200 text-indigo-700"
+            >
+              <Sparkles className="h-4 w-4 mr-2" />
+              AI Assistant
+            </Button>
+          )}
           <Button 
             onClick={handleCreate} 
             disabled={!canCreate || isCreating}
@@ -643,12 +703,23 @@ export function ManualCollectionDialog({ trigger, selectedItems = [] }: ManualCo
             ) : (
               <>
                 <FolderOpen className="h-4 w-4" />
-                Create
+                Create collection
               </>
             )}
           </Button>
         </DialogFooter>
       </DialogContent>
+      
+      {/* AI Collection Dialog */}
+      <AICollectionDialog
+        open={aiDialogOpen}
+        onOpenChange={setAiDialogOpen}
+        selectedItems={selectedItems.map(id => allItems.find(item => item.id === id)).filter(Boolean) as CollectionItem[]}
+        onCollectionCreated={() => {
+          onCollectionCreated?.()
+          setOpen(false)
+        }}
+      />
     </Dialog>
   )
 }
