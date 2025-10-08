@@ -21,6 +21,7 @@ import {
   Eye,
   Edit3,
   Trash2,
+  Share2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -532,15 +533,10 @@ function CollectionItem({
         </ContextMenuTrigger>
         <ContextMenuContent>
           <ContextMenuItem>Open</ContextMenuItem>
-          <CollectionSettingsDialog
-            collectionName={collection.name}
-            trigger={
-              <ContextMenuItem onSelect={(e) => e.preventDefault()}>
-                <Settings className="mr-2 h-4 w-4" />
-                Settings
-              </ContextMenuItem>
-            }
-          />
+          <ContextMenuItem>
+            <Share2 className="mr-2 h-4 w-4" />
+            Share
+          </ContextMenuItem>
           <ContextMenuItem>Rename</ContextMenuItem>
           <ContextMenuItem className="text-destructive">Remove Collection</ContextMenuItem>
         </ContextMenuContent>
@@ -576,15 +572,10 @@ function CollectionItem({
             <Edit3 className="mr-2 h-4 w-4" />
             Rename
           </DropdownMenuItem>
-          <CollectionSettingsDialog
-            collectionName={collection.name}
-            trigger={
-              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                <Settings className="mr-2 h-4 w-4" />
-                Settings
-              </DropdownMenuItem>
-            }
-          />
+          <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+            <Share2 className="mr-2 h-4 w-4" />
+            Share
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem 
             className="text-destructive"
