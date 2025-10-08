@@ -1321,7 +1321,7 @@ export function AICollectionPreviewDialog({
 
         <div className="flex-1 flex min-h-0 border-t border-gray-200 -mt-2">
           {/* Left Section - Data Table or Rules Builder */}
-          <div className="flex-1 flex flex-col min-h-0 border-r border-gray-200">
+          <div className="flex-[1_0_calc(100%-420px)] flex flex-col min-h-0 border-r border-gray-200">
             
             {/* ===== NEW: Compact Rules Mode UI ===== */}
             {workingMode === 'rules' && showRulesConfirmation ? (

@@ -288,20 +288,11 @@ export function CollectionDetailsBlock({ collection, items, onOpenAIAssistant, o
                 {aiInsights.map((insight, index) => (
                   <div 
                     key={index} 
-                    className={`flex flex-col gap-2 p-3 rounded-lg transition-colors min-h-[90px] cursor-pointer ${
-                      insight.actionType !== 'none' ? 'hover:shadow-md' : ''
-                    } ${
-                      insight.type === 'warning' ? 'bg-amber-50 border border-amber-200 hover:bg-amber-100' :
-                      insight.type === 'info' ? 'bg-blue-50 border border-blue-200 hover:bg-blue-100' :
-                      'bg-green-50 border border-green-200 hover:bg-green-100'
+                    className={`flex flex-col gap-2 p-3 rounded-lg transition-colors min-h-[90px] ${
+                      insight.type === 'warning' ? 'bg-amber-50 border border-amber-200' :
+                      insight.type === 'info' ? 'bg-blue-50 border border-blue-200' :
+                      'bg-green-50 border border-green-200'
                     }`}
-                    onClick={() => {
-                      if (insight.actionType === 'ai_assistant' && onOpenAIAssistant) {
-                        onOpenAIAssistant()
-                      } else if (insight.actionType === 'filter' && onInsightClick) {
-                        onInsightClick(insight.actionType, insight.data)
-                      }
-                    }}
                   >
                     <div className="flex items-center gap-2">
                       <insight.icon className={`h-4 w-4 ${
