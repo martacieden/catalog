@@ -22,6 +22,7 @@ import {
   List,
   FileText,
   RotateCcw,
+  Share2,
 } from "lucide-react"
 
 interface CollectionDetailPanelProps {
@@ -207,7 +208,7 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
               Add Items
             </Button>
             <Button variant="outline" size="sm" onClick={() => setShareModalOpen(true)}>
-              <Settings className="h-4 w-4" />
+              <Share2 className="h-4 w-4" />
             </Button>
             <Button variant="outline" size="sm" onClick={() => setRulesModalOpen(true)}>
               <FileText className="h-4 w-4" />
