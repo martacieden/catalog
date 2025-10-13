@@ -54,7 +54,19 @@ function SearchResultsContent() {
   const [totalResults, setTotalResults] = useState(0)
   const [collectionCount, setCollectionCount] = useState(0)
 
-  const searchQuery = searchParams.get('q') || '*'
+  const searchQuery = searchParams?.get('q') || '*'
+
+  // Early return if searchParams is not available (during SSR)
+  if (!searchParams) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading search results...</p>
+        </div>
+      </div>
+    )
+  }
 
   useEffect(() => {
     // Mock search results - replace with real search logic
@@ -151,7 +163,7 @@ function SearchResultsContent() {
     router.push('/catalog')
   }
 
-  const [currentSearchQuery, setCurrentSearchQuery] = useState(searchQuery)
+  const [currentSearchQuery, setCurrentSearchQuery] = useState(searchQuery || '*')
 
   const handleSearchSubmit = () => {
     if (currentSearchQuery.trim()) {
@@ -233,7 +245,7 @@ function SearchResultsContent() {
                 </div>
                 <Button 
                   onClick={handleSearchSubmit}
-                  disabled={currentSearchQuery === searchQuery}
+                  disabled={currentSearchQuery === (searchQuery || '*')}
                   className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
                 >
                   Search
@@ -250,7 +262,7 @@ function SearchResultsContent() {
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-blue-700">Search query:</span>
                 <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">
-                  {searchQuery}
+                  {searchQuery || '*'}
                 </span>
                 <button
                   onClick={handleClearSearch}
@@ -286,7 +298,7 @@ function SearchResultsContent() {
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <p className="text-sm text-blue-800 mb-2">
-                      Based on your search <span className="font-semibold">"{searchQuery}"</span> I suggest this collection:
+                      Based on your search <span className="font-semibold">"{searchQuery || '*'}"</span> I suggest this collection:
                     </p>
                     <div className="flex items-center gap-3">
                       <div className="flex items-center gap-2 bg-white rounded-lg px-3 py-2 border border-blue-200 shadow-sm">
@@ -330,80 +342,12 @@ function SearchResultsContent() {
                   </div>
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No results found</h3>
                   <p className="text-sm text-gray-500 text-center max-w-md">
-                    We couldn't find any items matching "{searchQuery}". Try adjusting your search terms or filters.
+                    We couldn't find any items matching "{searchQuery || '*'}". Try adjusting your search terms or filters.
                   </p>
                 </div>
               )}
             </div>
 
-            {/* Fixed Collection Suggestions */}
-            {(() => {
-              // Generate suggestions based on search query
-              const getSuggestions = (query: string) => {
-                const lowerQuery = query.toLowerCase()
-                
-                if (lowerQuery.includes('value') || lowerQuery.includes('expensive') || lowerQuery.includes('luxury') || lowerQuery.includes('high')) {
-                  return [
-                    { name: "High-Value Properties", count: 12, description: "Luxury real estate over $1M" }
-                  ]
-                }
-                
-                if (lowerQuery.includes('updated') || lowerQuery.includes('recent') || lowerQuery.includes('week') || lowerQuery.includes('new')) {
-                  return [
-                    { name: "Recently Updated", count: 8, description: "Items modified in the last 30 days" }
-                  ]
-                }
-                
-                if (lowerQuery.includes('property') || lowerQuery.includes('real estate') || lowerQuery.includes('building')) {
-                  return [
-                    { name: "All Properties", count: 45, description: "Residential and commercial real estate" },
-                    { name: "Commercial Assets", count: 8, description: "Office buildings and retail spaces" }
-                  ]
-                }
-                
-                if (lowerQuery.includes('marina') || lowerQuery.includes('boat') || lowerQuery.includes('yacht')) {
-                  return [
-                    { name: "Marina Assets", count: 6, description: "Boats, slips, and marina facilities" }
-                  ]
-                }
-                
-                if (lowerQuery.includes('development') || lowerQuery.includes('project') || lowerQuery.includes('construction')) {
-                  return [
-                    { name: "Development Projects", count: 15, description: "Active development and construction" }
-                  ]
-                }
-                
-                // Default suggestions for general queries
-                return [
-                  { name: "All Collections", count: 103, description: "Browse all available collections" }
-                ]
-              }
-              
-              const suggestions = getSuggestions(searchQuery)
-              
-              return suggestions.length > 0 ? (
-                <div className="sticky bottom-0 bg-background border-t border-border p-3">
-                  <div className="mb-2">
-                    <h3 className="text-sm font-semibold text-foreground">Suggested Collections</h3>
-                    <p className="text-xs text-muted-foreground mt-0.5">Based on your search, you might be interested in these collections</p>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    {suggestions.map((collection, index) => (
-                      <div 
-                        key={index}
-                        className="p-2 bg-gray-50 rounded border border-gray-200 hover:border-gray-300 cursor-pointer transition-colors"
-                      >
-                        <div className="flex items-center justify-between mb-0.5">
-                          <h4 className="text-sm font-medium text-gray-900">{collection.name}</h4>
-                          <span className="text-xs text-gray-500">{collection.count} items</span>
-                        </div>
-                        <p className="text-xs text-gray-600">{collection.description}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : null
-            })()}
 
           </div>
         </div>
