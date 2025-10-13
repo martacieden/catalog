@@ -202,7 +202,38 @@ const generateAISummary = (collection: Collection, items: CollectionItem[]) => {
 }
 
 export function CollectionDetailsBlock({ collection, items, onOpenAIAssistant, onInsightClick }: CollectionDetailsBlockProps) {
-  const aiInsights = React.useMemo(() => generateAISummary(collection, items), [collection, items])
+  // UNIFIED AI INSIGHTS - всі колекції показують однакові insights
+  const staticInsights: Array<{
+    type: 'success' | 'info' | 'warning'
+    icon: any
+    title: string
+    message: string
+    actionType: 'none' | 'filter' | 'ai_assistant'
+    data?: any
+  }> = [
+    {
+      type: 'success',
+      icon: CheckCircle,
+      title: 'Premium Collection',
+      message: 'Great! This collection has 4 high-value items and is well-organized.',
+      actionType: 'none'
+    },
+    {
+      type: 'info',
+      icon: TrendingUp,
+      title: 'Mixed Categories',
+      message: 'Collection spans Properties, Aviation, and Maritime categories for diversified portfolio.',
+      actionType: 'filter',
+      data: { categories: ['Properties', 'Aviation', 'Maritime'] }
+    },
+    {
+      type: 'success',
+      icon: CheckCircle,
+      title: 'Smart Collection',
+      message: 'Collection uses 4 filter rules for automatic organization based on value and ratings.',
+      actionType: 'none'
+    },
+  ]
   
   return (
     <Card className="mb-6">
@@ -248,8 +279,8 @@ export function CollectionDetailsBlock({ collection, items, onOpenAIAssistant, o
           </>
         )}
         
-        {/* AI Summary - Compact */}
-        {aiInsights.length > 0 && (
+        {/* AI Summary - Compact (Static for unified view) */}
+        {staticInsights.length > 0 && (
           <>
             {(collection.description || (collection.filters && collection.filters.length > 0)) && <Separator />}
             <div>
@@ -260,7 +291,7 @@ export function CollectionDetailsBlock({ collection, items, onOpenAIAssistant, o
                 </h4>
                 <div className="flex items-center gap-2">
                   <Badge variant="secondary" className="text-xs px-2 py-0.5">
-                    {aiInsights.length} insight{aiInsights.length > 1 ? 's' : ''}
+                    {staticInsights.length} insight{staticInsights.length > 1 ? 's' : ''}
                   </Badge>
                   <Button 
                     variant="outline" 
@@ -274,7 +305,7 @@ export function CollectionDetailsBlock({ collection, items, onOpenAIAssistant, o
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                {aiInsights.map((insight, index) => (
+                {staticInsights.map((insight, index) => (
                   <div 
                     key={index} 
                     className={`flex flex-col gap-2 p-3 rounded-lg transition-colors min-h-[90px] ${

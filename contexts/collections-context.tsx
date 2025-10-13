@@ -129,31 +129,37 @@ interface CollectionsContextType {
 const CollectionsContext = createContext<CollectionsContextType | undefined>(undefined)
 
 export function CollectionsProvider({ children }: { children: ReactNode }) {
-  const [collections, setCollections] = useState<Collection[]>(() => {
+  const [collections, setCollections] = useState<Collection[]>([])
+  const [isHydrated, setIsHydrated] = useState(false)
+
+  // Hydrate from localStorage after component mounts
+  React.useEffect(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem(COLLECTIONS_KEY)
-      return saved ? JSON.parse(saved) : []
+      setCollections(saved ? JSON.parse(saved) : [])
+      setIsHydrated(true)
     }
-    return []
-  })
+  }, [])
   const [syncHistoryMap, setSyncHistoryMap] = useState<Map<string, SyncHistory[]>>(new Map())
   
   // AI Recommendations state
-  const [aiRecommendations, setAiRecommendations] = useState<AIRecommendation[]>(() => {
-    // Initialize with high-value assets recommendation
+  const [aiRecommendations, setAiRecommendations] = useState<AIRecommendation[]>([highValueAssetsRecommendation])
+  const [showAIBanner, setShowAIBanner] = useState<boolean>(true)
+
+  // Hydrate AI recommendations from localStorage after component mounts
+  React.useEffect(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem(AI_RECOMMENDATIONS_KEY)
-      return saved ? JSON.parse(saved) : [highValueAssetsRecommendation]
+      const savedRecommendations = localStorage.getItem(AI_RECOMMENDATIONS_KEY)
+      const savedBannerState = localStorage.getItem(AI_BANNER_STATE_KEY)
+      
+      if (savedRecommendations) {
+        setAiRecommendations(JSON.parse(savedRecommendations))
+      }
+      if (savedBannerState) {
+        setShowAIBanner(JSON.parse(savedBannerState))
+      }
     }
-    return [highValueAssetsRecommendation]
-  })
-  const [showAIBanner, setShowAIBanner] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem(AI_BANNER_STATE_KEY)
-      return saved ? JSON.parse(saved) : true
-    }
-    return true
-  })
+  }, [])
 
   // Mock current user - in real app, get from auth context
   const currentUser: User = {
@@ -411,7 +417,12 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
     console.log('🔍 All collection IDs:', collections.map(c => ({ id: c.id, name: c.name })))
     
     const found = collections.find(collection => collection.id === id)
-    console.log('🔍 Found collection:', found ? { id: found.id, name: found.name } : 'null')
+    console.log('🔍 Found collection:', found ? { 
+      id: found.id, 
+      name: found.name, 
+      itemCount: found.itemCount,
+      type: found.type 
+    } : 'null')
     
     return found
   }, [collections])
@@ -943,7 +954,8 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
       console.log('🔍 New collection details:', { 
         id: newCollection.id, 
         name: newCollection.name, 
-        itemCount: newCollection.itemCount 
+        itemCount: newCollection.itemCount,
+        items: newCollection.items?.length || 0
       })
       saveCollectionsToStorage(updated) // STABLE RULE: Always save to localStorage
       return updated

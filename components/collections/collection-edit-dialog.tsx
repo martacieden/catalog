@@ -277,7 +277,7 @@ export function CollectionEditDialog({
                   <div>
                     <span className="text-muted-foreground">Created:</span>
                     <span className="ml-2 font-medium">
-                      {new Date(collection.createdAt).toLocaleDateString()}
+                      {collection.createdAt ? new Date(collection.createdAt).toLocaleDateString() : '—'}
                     </span>
                   </div>
                   <div>

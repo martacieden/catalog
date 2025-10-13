@@ -3,7 +3,6 @@
 import * as React from "react"
 import { Collection, CollectionAIInsight } from "@/types/collection"
 import { useCollections } from "@/contexts/collections-context"
-import { generateInsights, generateQuickActions, generateContextualResponse } from "@/lib/ai-insights-generator"
 import { AIChat } from "@/components/ai-chat"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -16,24 +15,8 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import {
   Sparkles,
   X,
-  Lightbulb,
-  AlertCircle,
-  Info,
-  CheckCircle,
-  Plus,
-  RefreshCw,
-  BarChart,
-  Download,
-  TrendingUp,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
@@ -67,130 +50,25 @@ export function CollectionAIAssistant({
   const collection = getCollectionById(collectionId)
   const stats = getCollectionStats(collectionId)
 
-  // Генерація інсайтів
-  const insights = React.useMemo(() => {
-    if (!collection) return []
-    return generateInsights(collection, stats)
-  }, [collection, stats])
-
-  // Генерація швидких дій
-  const quickActions = React.useMemo(() => {
-    if (!collection) return []
-    return generateQuickActions(collection)
-  }, [collection])
-
   // AI message processing
   const handleAIMessage = (message: string) => {
-    // AI message processing logic
-    // TODO: Implement AI message handling
-  }
-
-  const handleInsightAction = (insight: CollectionAIInsight) => {
-    if (insight.onAction) {
-      insight.onAction()
-    } else {
-      // Default actions based on insight type
-      switch (insight.id) {
-        case "enable-autosync":
-          // TODO: Enable auto-sync
-          toast({
-            title: "Coming soon",
-            description: "This functionality will be available soon",
-          })
-          break
-        case "add-rules":
-          onSuggestRules?.()
-          break
-        case "empty-collection":
-        case "few-items":
-          onAddItems?.()
-          break
-        default:
-          break
-      }
-    }
-  }
-
-  const handleQuickAction = (actionId: string) => {
-    switch (actionId) {
-      case "add-items":
-        onAddItems?.()
-        break
-      case "sync-now":
-        onSyncNow?.()
-        break
-      case "analyze":
-        onAnalyze?.()
-        break
-      case "suggest-rules":
-        onSuggestRules?.()
-        break
-      case "export":
-        onExport?.()
-        break
-      default:
-        toast({
-          title: "Coming soon",
-          description: "This functionality will be available soon",
-        })
-    }
-  }
-
-  const getInsightIcon = (type: CollectionAIInsight["type"]) => {
-    switch (type) {
-      case "suggestion":
-        return <Lightbulb className="h-5 w-5 text-yellow-600" />
-      case "warning":
-        return <AlertCircle className="h-5 w-5 text-orange-600" />
-      case "info":
-        return <Info className="h-5 w-5 text-blue-600" />
-      case "success":
-        return <CheckCircle className="h-5 w-5 text-green-600" />
-      default:
-        return <Info className="h-5 w-5 text-gray-600" />
-    }
-  }
-
-  const getInsightBgColor = (type: CollectionAIInsight["type"]) => {
-    switch (type) {
-      case "suggestion":
-        return "bg-yellow-50 border-yellow-200"
-      case "warning":
-        return "bg-orange-50 border-orange-200"
-      case "info":
-        return "bg-blue-50 border-blue-200"
-      case "success":
-        return "bg-green-50 border-green-200"
-      default:
-        return "bg-gray-50 border-gray-200"
-    }
-  }
-
-  const getActionIcon = (iconName: string) => {
-    const icons = {
-      Plus,
-      RefreshCw,
-      BarChart,
-      Sparkles,
-      Download,
-    }
-    const IconComponent = icons[iconName as keyof typeof icons] || Plus
-    return <IconComponent className="h-4 w-4" />
+    // Simple AI message handling
+    console.log('AI message:', message)
   }
 
   if (!collection) return null
 
-  // Підготовка початкових повідомлень для чату
+  // Initial messages for chat
   const initialMessages = [
     {
       id: "welcome",
       type: "ai" as const,
-      content: `Вітаю! Я AI асистент для колекції "${collection.name}". Я можу допомогти вам проаналізувати колекцію, запропонувати правила для автоматичного наповнення, знайти та додати нові елементи. Як я можу допомогти?`,
+      content: `Hi! I'm your AI assistant for "${collection.name}". How can I help you today?`,
       timestamp: new Date(),
       suggestions: [
-        "Проаналізувати колекцію",
-        "Запропонувати правила",
-        "Показати статистику",
+        "Analyze collection",
+        "Suggest rules",
+        "Show stats",
       ],
     },
   ]
@@ -206,7 +84,7 @@ export function CollectionAIAssistant({
                 <Sparkles className="h-5 w-5 text-indigo-600" />
               </div>
               <div>
-                <SheetTitle>AI Асистент</SheetTitle>
+                <SheetTitle>AI Assistant</SheetTitle>
                 <SheetDescription>{collection.name}</SheetDescription>
               </div>
             </div>
@@ -223,125 +101,32 @@ export function CollectionAIAssistant({
 
         {/* Content */}
         <div className="flex-1 overflow-hidden flex flex-col">
-          {/* Collection Stats */}
+          {/* AI Welcome Message */}
           <div className="px-6 py-4 bg-muted/30 border-b">
-            <div className="grid grid-cols-3 gap-3 text-center">
-              <div>
-                <div className="text-lg font-bold">{collection.itemCount}</div>
-                <div className="text-xs text-muted-foreground">Елементів</div>
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground mb-3">
+                Hi! I'm your AI assistant for "{collection.name}". How can I help you today?
+              </p>
+              <div className="flex flex-wrap justify-center gap-2">
+                <Button variant="outline" size="sm" className="text-xs">
+                  Analyze collection
+                </Button>
+                <Button variant="outline" size="sm" className="text-xs">
+                  Suggest rules
+                </Button>
+                <Button variant="outline" size="sm" className="text-xs">
+                  Show stats
+                </Button>
               </div>
-              <div>
-                <div className="text-lg font-bold">
-                  {collection.filters?.length || 0}
-                </div>
-                <div className="text-xs text-muted-foreground">Правил</div>
-              </div>
-              <div>
-                <div className="text-lg font-bold">
-                  {stats?.itemsByCategory
-                    ? Object.keys(stats.itemsByCategory).length
-                    : 0}
-                </div>
-                <div className="text-xs text-muted-foreground">Категорій</div>
-              </div>
-            </div>
-            
-            {/* Auto-sync status */}
-            <div className="mt-3 flex items-center justify-center gap-2">
-              <Badge
-                variant={collection.autoSync ? "default" : "secondary"}
-                className={collection.autoSync ? "bg-green-500" : ""}
-              >
-                {collection.autoSync ? "Автосинхронізація увімкнена" : "Автосинхронізація вимкнена"}
-              </Badge>
             </div>
           </div>
-
-          {/* Scrollable Content */}
-          <ScrollArea className="flex-1">
-            <div className="px-6 py-4 space-y-4">
-              {/* Insights */}
-              {insights.length > 0 && (
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm flex items-center gap-2">
-                      <TrendingUp className="h-4 w-4" />
-                      Інсайти та рекомендації
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    {insights.map((insight) => (
-                      <div
-                        key={insight.id}
-                        className={`p-3 border rounded-lg ${getInsightBgColor(insight.type)}`}
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="shrink-0 mt-0.5">{getInsightIcon(insight.type)}</div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="text-sm font-medium mb-1">{insight.title}</h4>
-                            <p className="text-xs text-muted-foreground mb-2">
-                              {insight.description}
-                            </p>
-                            {insight.actionLabel && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-7 text-xs"
-                                onClick={() => handleInsightAction(insight)}
-                              >
-                                {insight.actionLabel}
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Quick Actions */}
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <Sparkles className="h-4 w-4" />
-                    Швидкі дії
-                  </CardTitle>
-                  <CardDescription className="text-xs">
-                    Часто використовувані операції з колекцією
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  {quickActions.map((action) => (
-                    <Button
-                      key={action.id}
-                      variant="outline"
-                      size="sm"
-                      className="w-full justify-start h-auto py-2 px-3"
-                      onClick={() => handleQuickAction(action.id)}
-                    >
-                      <div className="flex items-center gap-3 w-full">
-                        <div className="shrink-0">{getActionIcon(action.icon)}</div>
-                        <div className="flex-1 text-left">
-                          <div className="text-sm font-medium">{action.label}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {action.description}
-                          </div>
-                        </div>
-                      </div>
-                    </Button>
-                  ))}
-                </CardContent>
-              </Card>
-            </div>
-          </ScrollArea>
 
           {/* AI Chat */}
           <div className="border-t h-[400px]">
             <AIChat
               onMessage={handleAIMessage}
               initialMessages={initialMessages}
-              placeholder="Запитайте про колекцію..."
+              placeholder="Ask about your collection..."
               className="h-full"
             />
           </div>

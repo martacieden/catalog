@@ -2,11 +2,10 @@
 
 import * as React from "react"
 import { CollectionItem, CollectionSortOption } from "@/types/collection"
-import { formatValue, formatRating, getCategoryColor, getStatusColor } from "@/lib/collection-utils"
+import { formatValue, getCategoryColor, getStatusColor } from "@/lib/collection-utils"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,8 +26,6 @@ import {
   Car,
   Plane,
   Ship,
-  Users,
-  Calendar,
   MoreHorizontal,
   ArrowUp,
   ArrowDown,
@@ -37,7 +34,6 @@ import {
   Eye,
   Pin,
   Flag,
-  Star,
   X,
   Plus,
 } from "lucide-react"
@@ -127,7 +123,7 @@ export function ItemsTable({
       Vehicles: Car,
       Aviation: Plane,
       Maritime: Ship,
-      Organizations: Users,
+      Organizations: Building2,
     }
 
     const IconComponent = icons[type as keyof typeof icons] || Building2
@@ -190,25 +186,6 @@ export function ItemsTable({
               <div className="flex items-center">
                 Value
                 {getSortIcon("value")}
-              </div>
-            </TableHead>
-            <TableHead
-              className="cursor-pointer select-none hover:bg-gray-50"
-              onClick={() => handleSort("rating")}
-            >
-              <div className="flex items-center">
-                Rating
-                {getSortIcon("rating")}
-              </div>
-            </TableHead>
-            <TableHead>People</TableHead>
-            <TableHead
-              className="cursor-pointer select-none hover:bg-gray-50"
-              onClick={() => handleSort("updatedAt")}
-            >
-              <div className="flex items-center">
-                Updated
-                {getSortIcon("updatedAt")}
               </div>
             </TableHead>
             {showActions && <TableHead className="w-12"></TableHead>}
@@ -332,47 +309,6 @@ export function ItemsTable({
                   <span className="text-sm font-medium">{formatValue(item.value, item.currency)}</span>
                 ) : (
                   <span className="text-sm text-muted-foreground">—</span>
-                )}
-              </TableCell>
-              <TableCell>
-                {item.guestRating || item.internalRating ? (
-                  <div className="flex items-center gap-1">
-                    <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                    <span className="text-sm">
-                      {(item.guestRating || item.internalRating)?.toFixed(1)}
-                    </span>
-                  </div>
-                ) : (
-                  <span className="text-sm text-muted-foreground">—</span>
-                )}
-              </TableCell>
-              <TableCell>
-                {item.people && item.people.length > 0 ? (
-                  <div className="flex items-center -space-x-2">
-                    {item.people.slice(0, 3).map((person, i) => (
-                      <Avatar key={i} className="h-6 w-6 border-2 border-white">
-                        <AvatarImage src={person.avatar} />
-                        <AvatarFallback className="text-xs">
-                          {person.name.slice(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                    ))}
-                    {item.people.length > 3 && (
-                      <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-gray-100 text-xs">
-                        +{item.people.length - 3}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <span className="text-sm text-muted-foreground">—</span>
-                )}
-              </TableCell>
-              <TableCell>
-                {item.lastUpdated && (
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Calendar className="h-3 w-3" />
-                    <span>{new Date(item.lastUpdated).toLocaleDateString()}</span>
-                  </div>
                 )}
               </TableCell>
               {showActions && (

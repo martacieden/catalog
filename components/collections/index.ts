@@ -6,7 +6,6 @@
 // Core Components
 export { CollectionCard } from "./collection-card"
 export { ItemsTable } from "./items-table"
-export { CollectionDetailView } from "./collection-detail-view"
 
 // Dialogs & Managers
 export { CollectionEditDialog } from "./collection-edit-dialog"

@@ -33,9 +33,9 @@ export function AICollectionPreviewModal({
 }: AICollectionPreviewModalProps) {
   const [collectionName, setCollectionName] = useState(recommendation.name);
   const [collectionDescription, setCollectionDescription] = useState(
-    `Collection created based on AI analysis: "💎 High-value assets". This collection will automatically include objects that match the defined filtering criteria.`
+    `Collection created based on AI analysis: "${recommendation.name}". This collection will automatically include objects that match the defined filtering criteria.`
   );
-  const [filterValue, setFilterValue] = useState("💎 High-value assets");
+  const [filterValue, setFilterValue] = useState(recommendation.name);
   const [selectedObjects, setSelectedObjects] = useState<Set<string>>(new Set());
   const [isTableExpanded, setIsTableExpanded] = useState(false);
   const [isEditingRules, setIsEditingRules] = useState(false);
@@ -145,7 +145,7 @@ export function AICollectionPreviewModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[98vw] sm:max-w-[1172px] max-h-[95vh] w-[98vw] p-0 flex flex-col [&>button]:hidden">
         <DialogHeader className="flex-shrink-0 px-8 py-3">
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500/20 to-blue-500/20 shadow-sm">
                 <Sparkles className="h-5 w-5 text-indigo-600" />
@@ -548,14 +548,14 @@ export function AICollectionPreviewModal({
                   <div className="space-y-4">
                     <div className="flex justify-end">
                       <div className="max-w-[80%] rounded-lg px-3 py-2 bg-blue-600 text-white">
-                        <p className="text-sm leading-relaxed">💎 High-value assets</p>
+                        <p className="text-sm leading-relaxed">{recommendation.name}</p>
                         <p className="text-xs mt-1 text-blue-100">13:46</p>
                       </div>
                     </div>
                     <div className="flex justify-start animate-in fade-in-0 slide-in-from-bottom-2 duration-500">
                       <div className="max-w-[80%] rounded-lg px-3 py-2 bg-gray-100 text-gray-900">
                         <p className="text-sm leading-relaxed">
-                          I've analyzed your request "💎 High-value assets" and created this custom collection based on your specific criteria. The items have been intelligently grouped to meet your needs.
+                          I've analyzed your request "{recommendation.name}" and created this custom collection based on your specific criteria. The items have been intelligently grouped to meet your needs.
                         </p>
                         <p className="text-xs mt-1 text-gray-500">13:46</p>
                       </div>

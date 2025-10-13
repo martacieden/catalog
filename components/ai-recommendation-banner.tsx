@@ -38,7 +38,7 @@ export function AIRecommendationBanner({
         <div className="flex items-center gap-2">
           <span className="text-lg">💡</span>
           <p className="text-xs text-blue-900">
-            Smart suggestion: <span className="font-semibold">{recommendation.name}</span> in your catalog
+            A curated selection of high-value assets is ready for review.
           </p>
         </div>
         <div className="flex items-center gap-1">
@@ -48,7 +48,7 @@ export function AIRecommendationBanner({
             onClick={handleExplore}
             className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1 h-6 px-2 text-xs transition-colors hover:bg-blue-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           >
-            Explore
+            View Suggestion
             <ArrowRight className="w-3 h-3" />
           </Button>
           <Button

@@ -2,8 +2,9 @@
 
 import * as React from "react"
 import { useCollections } from "@/contexts/collections-context"
+import { useCollectionHistory } from "@/hooks/use-collection-history"
 import { useToast } from "@/hooks/use-toast"
-import { CollectionItem } from "@/types/collection"
+import { CollectionItem, CollectionSortOption, CollectionFilter } from "@/types/collection"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -13,6 +14,11 @@ import { ItemsGrid } from "./collections/items-grid"
 import { RulesModal } from "./collections/rules-modal"
 import { AddItemModal } from "./collections/add-item-modal"
 import { ShareModal } from "./collections/share-modal"
+import { CollectionEditDialog } from "./collections/collection-edit-dialog"
+import { CollectionItemsManager } from "./collections/collection-items-manager"
+import { AddItemsDialog } from "./collections/add-items-dialog"
+import { SyncPreviewDialog } from "./collections/sync-preview-dialog"
+import { CollectionAIAssistant } from "./collections/collection-ai-assistant"
 import {
   Settings,
   Filter,
@@ -24,6 +30,12 @@ import {
   RotateCcw,
   Share2,
   ArrowLeft,
+  Edit3,
+  Undo2,
+  Redo2,
+  Download,
+  Bot,
+  Sparkles,
 } from "lucide-react"
 
 interface CollectionDetailPanelProps {
@@ -31,19 +43,114 @@ interface CollectionDetailPanelProps {
   onClose: () => void
 }
 
+// UNIFIED PLACEHOLDER DATA - всі колекції показують однакові дані
+const PLACEHOLDER_ITEMS: CollectionItem[] = [
+  {
+    id: "placeholder-1",
+    name: "Beachfront Villa Alpha",
+    type: "property",
+    category: "Properties",
+    idCode: "VIL-ALPHA",
+    status: "Active",
+    location: "Virgin Gorda, BVI",
+    value: 8500000,
+    tags: ["luxury", "beachfront", "villa", "premium"],
+    lastUpdated: "2024-01-20T14:30:00Z",
+  },
+  {
+    id: "placeholder-2",
+    name: "Private Jet Gulfstream",
+    type: "aircraft",
+    category: "Aviation",
+    idCode: "AVI-001",
+    status: "Active",
+    location: "Miami International",
+    value: 15000000,
+    tags: ["private-jet", "gulfstream", "luxury-travel"],
+    lastUpdated: "2024-12-08",
+  },
+  {
+    id: "placeholder-3",
+    name: "Luxury Yacht Serenity",
+    type: "yacht",
+    category: "Maritime",
+    idCode: "MAR-001",
+    status: "Active",
+    location: "Monaco",
+    value: 8000000,
+    tags: ["yacht", "luxury", "mediterranean", "charter"],
+    lastUpdated: "2024-12-15",
+  },
+  {
+    id: "placeholder-4",
+    name: "Corporate Headquarters",
+    type: "property",
+    category: "Properties",
+    idCode: "HQ-001",
+    status: "Active",
+    location: "New York, NY",
+    value: 25000000,
+    tags: ["corporate", "headquarters", "commercial", "premium"],
+    lastUpdated: "2024-01-18T09:15:00Z",
+  },
+]
+
 export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetailPanelProps) {
-  const { getCollectionById, bulkRemoveItems } = useCollections()
+  const { 
+    getCollectionById, 
+    bulkRemoveItems, 
+    updateCollection,
+    removeCollection,
+    duplicateCollection,
+    toggleAutoSync,
+    getCollectionStats,
+  } = useCollections()
   const { toast } = useToast()
+  const [isMounted, setIsMounted] = React.useState(false)
   
-  const collection = collectionId ? getCollectionById(collectionId) : null
+  // Get collection and setup history
+  const originalCollection = collectionId && isMounted ? getCollectionById(collectionId) : null
+  
+  // UNIFIED COLLECTION - всі колекції показують однакову назву та items
+  const collection = originalCollection ? {
+    ...originalCollection,
+    name: "High Value Assets",
+    description: "Premium assets worth over $1M with high ratings and active status. This smart collection automatically includes properties, aviation, and maritime assets that meet our premium criteria.",
+    items: PLACEHOLDER_ITEMS,
+    itemCount: PLACEHOLDER_ITEMS.length,
+  } : null
+  
+  const { undo, redo, canUndo, canRedo, snapshot } = useCollectionHistory(collection)
   
   // State
   const [searchQuery, setSearchQuery] = React.useState("")
   const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set())
-  const [layout, setLayout] = React.useState<"table" | "grid">("grid")
+  const [layout, setLayout] = React.useState<"table" | "grid" | "list">("grid")
+  const [sortOption, setSortOption] = React.useState<CollectionSortOption>({
+    field: "name",
+    direction: "asc",
+  })
+  const [showFilters, setShowFilters] = React.useState(false)
+  
+  // Filters state
+  const [filters, setFilters] = React.useState<CollectionFilter>({
+    categories: [],
+    tags: [],
+    status: [],
+    search: "",
+  })
+  
+  // Dialog states
   const [rulesModalOpen, setRulesModalOpen] = React.useState(false)
   const [addItemModalOpen, setAddItemModalOpen] = React.useState(false)
   const [shareModalOpen, setShareModalOpen] = React.useState(false)
+  const [editDialogOpen, setEditDialogOpen] = React.useState(false)
+  const [itemsManagerOpen, setItemsManagerOpen] = React.useState(false)
+  const [addItemsDialogOpen, setAddItemsDialogOpen] = React.useState(false)
+  const [syncPreviewOpen, setSyncPreviewOpen] = React.useState(false)
+  const [aiAssistantOpen, setAiAssistantOpen] = React.useState(false)
+  
+  // Table specific state
   const [tableSearchQuery, setTableSearchQuery] = React.useState("")
   const [tableFilters, setTableFilters] = React.useState({
     category: "",
@@ -52,6 +159,10 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
     valueMax: "",
   })
   const [showTableFilters, setShowTableFilters] = React.useState(false)
+  
+  React.useEffect(() => {
+    setIsMounted(true)
+  }, [])
   
   // Filter items based on search and table filters
   const processedItems = React.useMemo(() => {
@@ -156,6 +267,86 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
     })
   }
   
+  // Additional handlers for enhanced functionality
+  const handleUndo = () => {
+    if (!collectionId) return
+    const previousState = undo()
+    if (previousState) {
+      updateCollection(collectionId, previousState.data)
+      toast({
+        title: "Undo successful",
+        description: "Previous state restored.",
+      })
+    }
+  }
+
+  const handleRedo = () => {
+    if (!collectionId) return
+    const nextState = redo()
+    if (nextState) {
+      updateCollection(collectionId, nextState.data)
+      toast({
+        title: "Redo successful",
+        description: "State restored.",
+      })
+    }
+  }
+
+  const handleExport = () => {
+    toast({
+      title: "Coming soon",
+      description: "Export functionality will be available soon.",
+    })
+  }
+
+  const handleDuplicate = () => {
+    if (!collectionId) return
+    const duplicated = duplicateCollection(collectionId)
+    if (duplicated) {
+      toast({
+        title: "Collection duplicated",
+        description: `Created a copy of "${duplicated.name}"`,
+      })
+    }
+  }
+
+
+  const handleSyncNow = () => {
+    if (!collection?.autoSync || !collection?.filters || collection.filters.length === 0) {
+      toast({
+        title: "Cannot sync",
+        description: "Please enable auto-sync and configure rules first.",
+        variant: "destructive",
+      })
+      return
+    }
+    setSyncPreviewOpen(true)
+  }
+
+  // AI Assistant handlers
+  const handleAIAssistantAddItems = () => {
+    setAddItemModalOpen(true)
+  }
+
+  const handleAIAssistantSyncNow = () => {
+    handleSyncNow()
+  }
+
+  const handleAIAssistantAnalyze = () => {
+    toast({
+      title: "Analysis complete",
+      description: "Collection analysis has been completed.",
+    })
+  }
+
+  const handleAIAssistantSuggestRules = () => {
+    setRulesModalOpen(true)
+  }
+
+  const handleAIAssistantExport = () => {
+    handleExport()
+  }
+  
   if (!collection) {
     return (
       <div className="flex-1 flex items-center justify-center bg-gray-50">
@@ -175,11 +366,6 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
       <div className="bg-white border-b border-gray-200 px-6 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
-            </Button>
-            
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-2">
                 <h1 className="text-lg font-semibold">{collection.name}</h1>
@@ -189,7 +375,7 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
                 </Badge>
               </div>
               <div className="text-xs text-muted-foreground">
-                Created by {collection.type === "ai-generated" ? "AI Assistant" : "User"} • {new Date(collection.createdAt).toLocaleDateString()}
+                Created by {collection.type === "ai-generated" ? "AI Assistant" : "User"} • {collection.createdAt ? new Date(collection.createdAt).toLocaleDateString() : '—'}
               </div>
             </div>
             
@@ -219,6 +405,24 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
             <Button variant="outline" size="sm" onClick={() => setRulesModalOpen(true)}>
               <FileText className="h-4 w-4" />
             </Button>
+            
+            {/* Additional actions */}
+            {canUndo && (
+              <Button variant="outline" size="sm" onClick={handleUndo}>
+                <Undo2 className="h-4 w-4" />
+              </Button>
+            )}
+            {canRedo && (
+              <Button variant="outline" size="sm" onClick={handleRedo}>
+                <Redo2 className="h-4 w-4" />
+              </Button>
+            )}
+            <Button variant="outline" size="sm" onClick={handleExport}>
+              <Download className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleDuplicate}>
+              <Settings className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </div>
@@ -230,7 +434,7 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
         <CollectionDetailsBlock 
           collection={collection} 
           items={processedItems}
-          onOpenAIAssistant={() => {/* TODO: Open AI Assistant */}}
+          onOpenAIAssistant={() => setAiAssistantOpen(true)}
           onInsightClick={(actionType, data) => {
             if (actionType === 'filter') {
               // Apply filter based on insight data
@@ -385,7 +589,10 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
             items={processedItems}
             selectedIds={selectedIds}
             onSelectionChange={setSelectedIds}
-            onItemDelete={handleItemDelete}
+            onItemDelete={(id) => {
+              const item = processedItems.find(i => i.id === id)
+              if (item) handleItemDelete(item)
+            }}
             emptyMessage={
               searchQuery
                 ? "No items match your search criteria"
@@ -438,6 +645,61 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
         open={shareModalOpen}
         onOpenChange={setShareModalOpen}
       />
+
+      {/* Collection Edit Dialog */}
+      <CollectionEditDialog
+        collection={collection}
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+      />
+
+
+      {/* Collection Items Manager */}
+      {collectionId && (
+        <CollectionItemsManager
+          collectionId={collectionId}
+          open={itemsManagerOpen}
+          onOpenChange={setItemsManagerOpen}
+        />
+      )}
+
+      {/* Add Items Dialog */}
+      {collectionId && (
+        <AddItemsDialog
+          collectionId={collectionId}
+          open={addItemsDialogOpen}
+          onOpenChange={setAddItemsDialogOpen}
+        />
+      )}
+
+      {/* Sync Preview Dialog */}
+      {collectionId && (
+        <SyncPreviewDialog
+          collectionId={collectionId}
+          open={syncPreviewOpen}
+          onOpenChange={setSyncPreviewOpen}
+          onConfirm={() => {
+            toast({
+              title: "Sync completed",
+              description: "Collection has been updated.",
+            })
+          }}
+        />
+      )}
+
+      {/* AI Assistant */}
+      {collectionId && (
+        <CollectionAIAssistant
+          collectionId={collectionId}
+          open={aiAssistantOpen}
+          onOpenChange={setAiAssistantOpen}
+          onAddItems={handleAIAssistantAddItems}
+          onSyncNow={handleAIAssistantSyncNow}
+          onAnalyze={handleAIAssistantAnalyze}
+          onSuggestRules={handleAIAssistantSuggestRules}
+          onExport={handleAIAssistantExport}
+        />
+      )}
     </div>
   )
 }

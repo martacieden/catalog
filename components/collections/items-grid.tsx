@@ -159,7 +159,9 @@ export function ItemsGrid({
                     <span className="text-sm font-medium">{formatValue(item.value)}</span>
                   )}
                 </div>
-                <span className="text-xs text-muted-foreground">{item.createdAt?.toLocaleDateString()}</span>
+                <span className="text-xs text-muted-foreground">
+                  {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '—'}
+                </span>
               </div>
             </div>
           </div>

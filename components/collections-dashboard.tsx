@@ -4,6 +4,7 @@ import * as React from "react"
 import { useCollections } from "@/contexts/collections-context"
 import { CollectionCard } from "@/components/collections/collection-card"
 import { CollectionEditDialog } from "@/components/collections/collection-edit-dialog"
+import { SmartSearchQuery } from "@/components/smart-search-query"
 import {
   Sparkles,
   Clock,
@@ -46,7 +47,6 @@ import {
   Trash2,
   FilePlus,
   Upload,
-  FileSpreadsheet,
   Zap,
   TrendingUp,
   BarChart3,
@@ -68,15 +68,24 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { AICollectionPreviewDialog } from "@/components/ai-collection-preview-dialog"
+import { AICollectionPreviewModal } from "@/components/ai-collection-preview-modal"
+import { AddItemModal } from "@/components/collections/add-item-modal"
+import { ManualCollectionDialog } from "@/components/manual-collection-dialog"
 import { EmptyState } from "@/components/ui/empty-state"
 import { MOCK_CATALOG_ITEMS } from "@/lib/mock-data"
+import { useToast } from "@/hooks/use-toast"
+import { useRouter } from "next/navigation"
 
 
 
 export function CollectionsDashboard() {
   const [previewDialogOpen, setPreviewDialogOpen] = React.useState(false)
+  const [aiPreviewModalOpen, setAiPreviewModalOpen] = React.useState(false)
   const [selectedCollectionType, setSelectedCollectionType] = React.useState<string>("")
-  const { collections } = useCollections()
+  const { collections, acceptRecommendation } = useCollections()
+  const { toast } = useToast()
+  const router = useRouter()
+  const [isMounted, setIsMounted] = React.useState(false)
   const [searchQuery, setSearchQuery] = React.useState<string>("")
   const [editingCollection, setEditingCollection] = React.useState<any>(null)
   const [viewLayout, setViewLayout] = React.useState<"grid" | "list">("grid")
@@ -92,6 +101,14 @@ export function CollectionsDashboard() {
   const [typeFilter, setTypeFilter] = React.useState<string>("all")
   const [userFilter, setUserFilter] = React.useState<string>("all")
   const [dateFilter, setDateFilter] = React.useState<string>("all")
+  
+  // Стани для модальних вікон Quick Actions
+  const [addItemModalOpen, setAddItemModalOpen] = React.useState(false)
+  const [manualCollectionDialogOpen, setManualCollectionDialogOpen] = React.useState(false)
+
+  React.useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
 
   // AI-powered collection suggestions based on data analysis
@@ -208,6 +225,17 @@ export function CollectionsDashboard() {
   }
 
   const aiSuggestionCards = getAISuggestionCards()
+
+  // Map suggestion IDs to their details
+  const getSuggestionDetails = (suggestionId: string) => {
+    const suggestion = aiSuggestionCards.find(s => s.id === suggestionId)
+    return suggestion || {
+      id: suggestionId,
+      name: "AI Collection",
+      description: "AI-generated collection based on intelligent analysis",
+      itemCount: 0
+    }
+  }
 
   // Metrics data
   const totalItems = MOCK_CATALOG_ITEMS.length
@@ -353,28 +381,6 @@ export function CollectionsDashboard() {
     return objectMatch && typeMatch && userMatch && dateMatch
   })
 
-  // Експорт CSV
-  const handleExportCSV = () => {
-    const csvContent = [
-      ['Object', 'User', 'Action', 'Time', 'Type', 'Code'],
-      ...filteredActivities.map(activity => [
-        activity.name,
-        activity.user,
-        activity.action,
-        activity.time,
-        activity.type,
-        activity.code
-      ])
-    ].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n')
-    
-    const blob = new Blob([csvContent], { type: 'text/csv' })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `activity-log-${new Date().toISOString().split('T')[0]}.csv`
-    a.click()
-    window.URL.revokeObjectURL(url)
-  }
 
   // Отримання унікальних значень для фільтрів
   const uniqueTypes = [...new Set(recentActivities.map(a => a.type))]
@@ -395,9 +401,9 @@ export function CollectionsDashboard() {
   }
 
   const handleAISuggestionClick = (suggestionId: string) => {
-    // Open preview dialog with AI suggested rules
+    // Open AI collection preview modal
     setSelectedCollectionType(suggestionId)
-    setPreviewDialogOpen(true)
+    setAiPreviewModalOpen(true)
   }
 
   const handleAICreate = () => {
@@ -408,6 +414,25 @@ export function CollectionsDashboard() {
     }
   }
 
+  const handleCreateAICollection = (collectionData: {
+    name: string;
+    description: string;
+    objectIds: string[];
+  }) => {
+    console.log('🔍 Creating AI collection with data:', collectionData)
+    
+    // Create collection using acceptRecommendation for AI suggestions
+    const newCollectionId = acceptRecommendation(selectedCollectionType)
+    
+    setAiPreviewModalOpen(false)
+    
+    // Show success toast
+    toast({
+      title: "Collection created successfully! 🎉",
+      description: `"${collectionData.name}" has been created with AI-generated filtering rules.`,
+    })
+  }
+
   const handleCardEdit = (collection: any) => {
     setEditingCollection(collection)
   }
@@ -415,12 +440,10 @@ export function CollectionsDashboard() {
   const handleQuickAction = (action: string) => {
     switch (action) {
       case 'create-item':
-        // TODO: Implement create new item functionality
-        console.log('Create new item')
+        setAddItemModalOpen(true)
         break
       case 'create-collection':
-        // TODO: Implement create new collection functionality
-        console.log('Create new collection')
+        setManualCollectionDialogOpen(true)
         break
       case 'import-csv':
         // TODO: Implement CSV import functionality
@@ -435,133 +458,54 @@ export function CollectionsDashboard() {
     }
   }
 
+  // Prevent hydration mismatch by not rendering until mounted
+  if (!isMounted) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading collections...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-8">
       {/* AI-Powered Collections & Quick Actions */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* AI-Powered Collections */}
-        <Card className="p-6 rounded-xl border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-          <div className="mb-4">
-            <h2 className="text-base font-semibold text-slate-900">Ask Fojo to create collections</h2>
-            <p className="text-sm text-slate-600">Let's create a collection with Fojo - AI generates filtering rules, you review and customize them</p>
-          </div>
-          
-          {/* Quick Prompts - Moved above search */}
-          <div className="mb-4">
-            <div className="flex flex-wrap justify-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setSearchQuery("💎 High-value assets")}
-                className="h-7 px-3 text-xs bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-700 border-slate-200 hover:border-slate-300 transition-all duration-200"
-              >
-                💎 High-value assets
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setSearchQuery("🏢 Legal entities 2024")}
-                className="h-7 px-3 text-xs bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-700 border-slate-200 hover:border-slate-300 transition-all duration-200"
-              >
-                🏢 Legal entities 2024
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setSearchQuery("🏠 Available properties")}
-                className="h-7 px-3 text-xs bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-700 border-slate-200 hover:border-slate-300 transition-all duration-200"
-              >
-                🏠 Available properties
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setSearchQuery("📅 Recent updates")}
-                className="h-7 px-3 text-xs bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-700 border-slate-200 hover:border-slate-300 transition-all duration-200"
-              >
-                📅 Recent updates
-              </Button>
-            </div>
-          </div>
-          
-          {/* Search Input */}
-          <div className="relative">
-            <div className="relative flex items-center bg-slate-50 rounded-xl border border-slate-200 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all duration-200">
-              <Search className="absolute left-4 h-4 w-4 text-slate-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Ask Fojo..."
-                className="w-full rounded-xl bg-transparent px-12 py-4 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && searchQuery.trim()) {
-                    handleAICreate()
-                  }
-                }}
-              />
-              <Button 
-                size="sm" 
-                onClick={handleAICreate}
-                disabled={!searchQuery.trim()}
-                className="absolute right-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 h-9 px-4 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm"
-              >
-                <Sparkles className="h-3 w-3 mr-1" />
-                Ask Fojo
-              </Button>
-            </div>
-          </div>
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Smart Collection Search */}
+        <Card className="px-6 pt-6 pb-4 rounded-xl border-slate-200 shadow-sm hover:shadow-md transition-shadow lg:col-span-2 h-[200px]">
+          <SmartSearchQuery />
         </Card>
 
         {/* Quick Actions */}
-        <Card className="p-6 rounded-xl border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+        <Card className="p-6 rounded-xl border-slate-200 shadow-sm hover:shadow-md transition-shadow lg:col-span-1 h-[200px]">
           <div className="mb-6">
             <h2 className="text-base font-semibold text-slate-900">Quick Actions</h2>
             <p className="text-sm text-slate-600">Common tasks and shortcuts</p>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-2">
             <Button
               variant="outline"
-              className="h-16 flex flex-col items-center justify-center gap-2 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200 group"
+              className="h-10 flex items-center justify-start gap-3 px-4 bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-700 border-slate-200 hover:border-slate-300 transition-all duration-200 group"
               onClick={() => handleQuickAction('create-item')}
             >
-              <div className="w-7 h-7 rounded-lg bg-blue-100 group-hover:bg-blue-200 flex items-center justify-center transition-colors">
-                <FilePlus className="h-4 w-4 text-blue-600" />
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-white transition-colors">
+                <FilePlus className="h-4 w-4 text-slate-600 group-hover:text-slate-700 transition-colors" />
               </div>
-              <span className="text-xs font-medium text-slate-700">Create new item</span>
+              <span className="text-sm font-medium text-slate-600 group-hover:text-slate-700 transition-colors">Create new item</span>
             </Button>
             
             <Button
               variant="outline"
-              className="h-16 flex flex-col items-center justify-center gap-2 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200 group"
-              onClick={() => handleQuickAction('create-collection')}
-            >
-              <div className="w-7 h-7 rounded-lg bg-emerald-100 group-hover:bg-emerald-200 flex items-center justify-center transition-colors">
-                <Folder className="h-4 w-4 text-emerald-600" />
-              </div>
-              <span className="text-xs font-medium text-slate-700">Create new collection</span>
-            </Button>
-            
-            <Button
-              variant="outline"
-              className="h-16 flex flex-col items-center justify-center gap-2 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200 group"
-              onClick={() => handleQuickAction('import-csv')}
-            >
-              <div className="w-7 h-7 rounded-lg bg-amber-100 group-hover:bg-amber-200 flex items-center justify-center transition-colors">
-                <FileSpreadsheet className="h-4 w-4 text-amber-600" />
-              </div>
-              <span className="text-xs font-medium text-slate-700">Import from CSV</span>
-            </Button>
-            
-            <Button
-              variant="outline"
-              className="h-16 flex flex-col items-center justify-center gap-2 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200 group"
+              className="h-10 flex items-center justify-start gap-3 px-4 bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-700 border-slate-200 hover:border-slate-300 transition-all duration-200 group"
               onClick={() => handleQuickAction('smart-upload')}
             >
-              <div className="w-7 h-7 rounded-lg bg-purple-100 group-hover:bg-purple-200 flex items-center justify-center transition-colors">
-                <Zap className="h-4 w-4 text-purple-600" />
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-white transition-colors">
+                <Zap className="h-4 w-4 text-slate-600 group-hover:text-slate-700 transition-colors" />
               </div>
-              <span className="text-xs font-medium text-slate-700">Smart Upload</span>
+              <span className="text-sm font-medium text-slate-600 group-hover:text-slate-700 transition-colors">Smart Upload</span>
             </Button>
           </div>
         </Card>
@@ -763,29 +707,44 @@ export function CollectionsDashboard() {
         </div>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {aiSuggestionCards.map((suggestion) => (
-            <Card
+            <div
               key={suggestion.id}
-              className="group cursor-pointer overflow-hidden transition-all hover:shadow-lg hover:scale-105 border border-gray-200 shadow-none bg-white p-0"
+              className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all hover:shadow-md cursor-pointer"
               onClick={() => handleAISuggestionClick(suggestion.id)}
             >
-              <div className={`h-20 bg-gradient-to-br ${suggestion.color} p-4 border-b border-gray-100 group-hover:opacity-90 transition-opacity`}>
+              {/* Header with AI Icon */}
+              <div className="h-24 p-4 border-b border-gray-100 relative overflow-hidden bg-gradient-to-br from-indigo-50 to-blue-50">
                 <div className="flex h-full items-center justify-center">
-                  <suggestion.icon className="h-8 w-8 text-gray-500 stroke-[1] group-hover:scale-110 transition-transform" />
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500/10 to-blue-500/10">
+                    <suggestion.icon className="h-6 w-6 text-indigo-500" />
+                  </div>
                 </div>
               </div>
-              <CardHeader className="pt-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="mb-1 text-sm">{suggestion.name}</CardTitle>
-                    <CardDescription className="line-clamp-2 text-balance">{suggestion.description}</CardDescription>
-                  </div>
-                  <Badge variant="secondary">{suggestion.itemCount}</Badge>
+
+              {/* Content */}
+              <div className="p-4">
+                <div className="flex items-start justify-between mb-2">
+                  <h3 className="font-semibold text-sm line-clamp-1">{suggestion.name}</h3>
                 </div>
-              </CardHeader>
-              <CardContent className="pt-2 pb-4">
-                {/* Button removed - card is now clickable */}
-              </CardContent>
-            </Card>
+
+                <p className="text-xs text-muted-foreground line-clamp-2 mb-3">
+                  {suggestion.description}
+                </p>
+
+                {/* Stats */}
+                <div className="flex items-center gap-3 text-xs text-muted-foreground mb-3">
+                  <span className="flex items-center gap-1">
+                    <Folder className="h-3 w-3" />
+                    {suggestion.itemCount} items
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Calendar className="h-3 w-3" />
+                    AI Generated
+                  </span>
+                </div>
+
+              </div>
+            </div>
           ))}
         </div>
       </div>
@@ -848,14 +807,6 @@ export function CollectionsDashboard() {
               <ChevronDown className="w-3 h-3" />
             </button>
             
-            <button 
-              onClick={handleExportCSV}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 border border-blue-200 rounded-md transition-colors"
-            >
-              <FileSpreadsheet className="w-3.5 h-3.5" />
-              Export CSV
-            </button>
-            
             <button className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-colors">
               View full log
               <ArrowRight className="w-3 h-3" />
@@ -876,7 +827,7 @@ export function CollectionsDashboard() {
                       onClick={() => handleSort('name')}
                       className="flex items-center gap-1 hover:text-slate-900 transition-colors group"
                     >
-                      Collection / Object
+                      Object
                       {sortColumn === 'name' && (
                         <ChevronDown className={`w-3 h-3 transition-transform ${sortDirection === 'desc' ? 'rotate-180' : ''}`} />
                       )}
@@ -898,7 +849,7 @@ export function CollectionsDashboard() {
                       onClick={() => handleSort('action')}
                       className="flex items-center gap-1 hover:text-slate-900 transition-colors group"
                     >
-                      Action / Description
+                      Description
                       {sortColumn === 'action' && (
                         <ChevronDown className={`w-3 h-3 transition-transform ${sortDirection === 'desc' ? 'rotate-180' : ''}`} />
                       )}
@@ -925,7 +876,7 @@ export function CollectionsDashboard() {
                     key={activity.id}
                     className={`group hover:bg-slate-50 transition-colors cursor-pointer ${activity.isToday ? 'animate-pulse-subtle' : ''}`}
                   >
-                    {/* Collection / Object column */}
+                    {/* Object column */}
                     <td className="px-4 py-2">
                       <div className="flex items-center gap-3">
                         <div className={`w-8 h-8 rounded-lg ${activity.iconBg} flex items-center justify-center shrink-0`}>
@@ -1036,6 +987,56 @@ export function CollectionsDashboard() {
           onOpenChange={(open) => !open && setEditingCollection(null)}
         />
       )}
+
+      {/* Add Item Modal */}
+      <AddItemModal
+        open={addItemModalOpen}
+        onOpenChange={setAddItemModalOpen}
+        collectionId={null}
+        onItemCreated={() => {
+          setAddItemModalOpen(false)
+          // TODO: Refresh collections or show success message
+        }}
+      />
+
+      {/* Manual Collection Dialog */}
+      <ManualCollectionDialog
+        trigger={
+          <div style={{ display: 'none' }}>
+            {/* Hidden trigger - dialog will be opened programmatically */}
+          </div>
+        }
+        open={manualCollectionDialogOpen}
+        onOpenChange={setManualCollectionDialogOpen}
+        onCollectionCreated={() => {
+          setManualCollectionDialogOpen(false)
+          // TODO: Refresh collections or show success message
+        }}
+      />
+
+      {/* AI Collection Preview Modal */}
+      <AICollectionPreviewModal
+        open={aiPreviewModalOpen}
+        onOpenChange={setAiPreviewModalOpen}
+        recommendation={{
+          id: selectedCollectionType,
+          name: getSuggestionDetails(selectedCollectionType).name,
+          description: getSuggestionDetails(selectedCollectionType).description,
+          objectCount: getSuggestionDetails(selectedCollectionType).itemCount,
+          criteria: {
+            minValue: 1000000,
+            categories: ['Properties', 'Vehicles', 'Aviation', 'Maritime'],
+            valueGrowth: 'positive'
+          },
+          objects: [],
+          aiInsights: {
+            patterns: [],
+            benefits: [],
+            analysis: ''
+          }
+        }}
+        onCreateCollection={handleCreateAICollection}
+      />
     </div>
   )
 }

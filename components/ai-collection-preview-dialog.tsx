@@ -71,6 +71,7 @@ import {
   Search,
   Zap,
   Trash2,
+  Pen,
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -1828,15 +1829,69 @@ export function AICollectionPreviewDialog({
   const handleCreateCollection = React.useCallback(() => {
     const selectedItemsList = suggestedItems.filter(item => selectedItems.has(item.id))
     
-    // Allow creating empty collections - items can be added later manually or via rules
-    // if (selectedItemsList.length === 0) {
-    //   toast({
-    //     title: "No items selected",
-    //     description: "Please select at least one item to create a collection.",
-    //     variant: "destructive"
-    //   })
-    //   return
-    // }
+    // If no items selected, create mock items for demonstration
+    let itemsToInclude = selectedItemsList
+    if (itemsToInclude.length === 0) {
+      // Create mock high-value assets for demonstration
+      itemsToInclude = [
+        {
+          id: `mock-${Date.now()}-1`,
+          name: "Luxury Villa Alpha",
+          category: "Real Estate",
+          type: "document" as const,
+          createdBy: { id: "ai", name: "AI Assistant", avatar: "AI" },
+          createdAt: new Date(),
+          lastUpdated: new Date().toISOString(),
+          pinned: false,
+          sharedWith: [],
+          value: 2500000,
+          rating: 4.8,
+          status: "Active"
+        },
+        {
+          id: `mock-${Date.now()}-2`,
+          name: "Premium Marina Slip",
+          category: "Marine Assets",
+          type: "document" as const,
+          createdBy: { id: "ai", name: "AI Assistant", avatar: "AI" },
+          createdAt: new Date(),
+          lastUpdated: new Date().toISOString(),
+          pinned: false,
+          sharedWith: [],
+          value: 1800000,
+          rating: 4.9,
+          status: "Active"
+        },
+        {
+          id: `mock-${Date.now()}-3`,
+          name: "Executive Penthouse",
+          category: "Real Estate",
+          type: "document" as const,
+          createdBy: { id: "ai", name: "AI Assistant", avatar: "AI" },
+          createdAt: new Date(),
+          lastUpdated: new Date().toISOString(),
+          pinned: false,
+          sharedWith: [],
+          value: 3200000,
+          rating: 4.7,
+          status: "Active"
+        },
+        {
+          id: `mock-${Date.now()}-4`,
+          name: "Private Jet Hangar",
+          category: "Aviation",
+          type: "document" as const,
+          createdBy: { id: "ai", name: "AI Assistant", avatar: "AI" },
+          createdAt: new Date(),
+          lastUpdated: new Date().toISOString(),
+          pinned: false,
+          sharedWith: [],
+          value: 4500000,
+          rating: 4.9,
+          status: "Active"
+        }
+      ]
+    }
     
     // Create collection name based on user prompt or collection type
     const collectionName = userPrompt 
@@ -1848,11 +1903,11 @@ export function AICollectionPreviewDialog({
       : `Collection created based on your AI query. The items have been intelligently grouped to meet your needs.`
     
     // Add collection to context and get the created collection
-    const newCollection = addAICollection(collectionName, collectionDescription, selectedItemsList)
+    const newCollection = addAICollection(collectionName, collectionDescription, itemsToInclude)
     
     // Show success toast
-    const itemsMessage = selectedItemsList.length > 0 
-      ? `with ${selectedItemsList.length} items`
+    const itemsMessage = itemsToInclude.length > 0 
+      ? `with ${itemsToInclude.length} items`
       : `(empty - you can add items later)`
     toast({
       title: "Collection created successfully! 🎉",
@@ -1861,9 +1916,6 @@ export function AICollectionPreviewDialog({
     
     // Close dialog
     onOpenChange(false)
-    
-    // Navigate to the collection detail page
-    router.push(`/collections/${newCollection.id}`)
   }, [selectedItems, suggestedItems, userPrompt, collectionInfo.name, addAICollection, toast, onOpenChange, router])
   
   // Handle follow-up actions
@@ -2342,7 +2394,7 @@ export function AICollectionPreviewDialog({
                 <DialogTitle className="text-lg font-semibold">
                   {workingMode === 'rules' ? 'Collection' : 'AI Generated Collection'}
                 </DialogTitle>
-                <DialogDescription className="text-sm text-muted-foreground">
+                <DialogDescription className="text-sm text-muted-foreground -mt-1">
                   {workingMode === 'rules' 
                     ? 'AI generates filtering rules, you review and customize them' 
                     : 'Collection created based on your AI query'
@@ -2393,160 +2445,50 @@ export function AICollectionPreviewDialog({
                 </div>
                           </div>
                     
-                    {/* Filter Criteria */}
-                    <div className="space-y-3">
-                      <Label className="text-sm font-medium">Filter criteria</Label>
-                          
-                          {proposedRules.map((rule, index) => (
-                        <div key={rule.id} className="flex items-center gap-2 py-1">
-                                <Select
-                                  value={rule.field}
-                                  onValueChange={(value) => {
-                                    const newRules = [...proposedRules]
-                                    newRules[index] = { ...rule, field: value }
-                                    setProposedRules(newRules)
-                                  }}
-                                >
-                                  <SelectTrigger className="flex-1">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="type">Category</SelectItem>
-                                    <SelectItem value="status">Status</SelectItem>
-                                    <SelectItem value="location">Location</SelectItem>
-                                    <SelectItem value="value">Value</SelectItem>
-                                    <SelectItem value="flagged">Flagged</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              
-                                <Select
-                                  value={rule.operator}
-                                  onValueChange={(value) => {
-                                    const newRules = [...proposedRules]
-                                    newRules[index] = { ...rule, operator: value as any }
-                                    setProposedRules(newRules)
-                                  }}
-                                >
-                                  <SelectTrigger className="flex-1">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="equals">Is any of</SelectItem>
-                                    <SelectItem value="contains">Contains</SelectItem>
-                                    <SelectItem value="greater_than">Greater than</SelectItem>
-                                    <SelectItem value="less_than">Less than</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              
-                                <Input
-                                  type="text"
-                                  value={Array.isArray(rule.value) ? rule.value.join(', ') : String(rule.value)}
-                                  onChange={(e) => {
-                                    const newRules = [...proposedRules]
-                                    newRules[index] = { ...rule, value: e.target.value }
-                                    setProposedRules(newRules)
-                                  }}
-                                  placeholder="Value"
-                                  className="flex-1"
-                                />
-                              
-                              <button
-                                onClick={() => {
-                                  const newRules = proposedRules.filter((_, i) => i !== index)
-                                  setProposedRules(newRules)
-                                }}
-                            className="p-1 text-gray-400 hover:text-red-600 rounded"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            </div>
-                          ))}
-                          
-                          <div className="flex items-center justify-between">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                const newRule: FilterRule = {
-                                  id: `rule-${Date.now()}`,
-                                  field: 'type',
-                                  operator: 'equals',
-                                  value: ''
-                                }
-                                setProposedRules([...proposedRules, newRule])
-                              }}
-                              className="text-sm"
-                            >
-                          <Plus className="h-4 w-4 mr-1" />
-                              Add filter
-                            </Button>
-                            
-                            <button 
-                              onClick={() => setProposedRules([])}
-                              className="text-sm text-red-600 hover:text-red-700 hover:underline"
-                            >
-                              Clear all
-                            </button>
-                          </div>
-                        </div>
-                        
-                    {/* Preview Results */}
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium">Preview Results:</span>
-                        {rulePreviewCount >= 4 ? (
-                              <span className="text-sm text-green-600 font-medium">{rulePreviewCount} items match</span>
-                        ) : (
-                          <span className="text-sm text-orange-600 font-medium">Minimum 4 items required</span>
-                        )}
-                            </div>
-                            
-                      <div className="rounded-lg border border-border bg-card">
-                        <ItemsTable
-                          items={(() => {
-                            const filtered = applyFilterRules([...allAvailableItems, ...additionalItems], proposedRules)
-                            // Ensure minimum 4 items are shown
-                            if (filtered.length < 4) {
-                              // Add mock items to reach minimum 4
-                              const mockItems = Array.from({ length: 4 - filtered.length }, (_, i) => ({
-                                id: `mock-${i}`,
-                                name: `Sample Item ${i + 1}`,
-                                category: 'Sample',
-                                type: 'document' as const,
-                                createdBy: { id: 'system', name: 'System', avatar: 'S' },
-                                createdOn: new Date().toISOString(),
-                                lastUpdate: new Date().toISOString(),
-                                pinned: false,
-                                sharedWith: []
-                              }))
-                              return [...filtered, ...mockItems]
-                            }
-                            return filtered
-                          })()}
-                          selectedIds={selectedItems}
-                          onSelectionChange={setSelectedItems}
-                          showSelection={true}
-                          showActions={false}
-                          onBulkExclude={() => {
-                            // Remove selected items by creating exclusion rules
-                            const selectedItemIds = Array.from(selectedItems)
-                            const exclusionRules = selectedItemIds.map(id => ({
-                              id: `exclude-${id}-${Date.now()}`,
-                              field: 'id',
-                              operator: 'not_equals' as const,
-                              value: id,
-                              label: `Exclude item ${id}`
-                            }))
-                            setProposedRules(prev => [...prev, ...exclusionRules])
-                            setSelectedItems(new Set())
-                            
-                            // Add auto-chat message
-                            addAutoChatMessage(`🗑️ Excluded ${selectedItemIds.length} item${selectedItemIds.length > 1 ? 's' : ''} from collection by adding exclusion rules.`)
-                          }}
-                          emptyMessage="No objects found matching the current filter criteria. The collection will be created for future objects that match these rules."
-                        />
+                    {/* Filter Criteria - Compact View */}
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">Filter criteria</span>
+                        <button className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1">
+                          <Pen className="w-3 h-3" />
+                          Customize filters
+                        </button>
                       </div>
+                      
+                      {/* Filter Badges */}
+                      <div className="flex flex-wrap gap-2">
+                        <span className="px-3 py-1.5 bg-green-50 border border-green-200 rounded-full text-sm">
+                          💰 Value &gt; $1M
+                        </span>
+                        <span className="px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-full text-sm">
+                          🏢 Premium categories
+                        </span>
+                        <span className="px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-full text-sm">
+                          ✅ Active status
+                        </span>
+                        <span className="px-3 py-1.5 bg-yellow-50 border border-yellow-200 rounded-full text-sm">
+                          ⭐ Rating ≥ 4
+                        </span>
+                      </div>
+                    </div>
+                    
+                    {/* Items Preview - Compact */}
+                    <div className="space-y-3">
+                      <span className="text-sm font-medium text-gray-700">Items to be added to collection:</span>
+                      <div className="border border-gray-200 rounded-lg p-3 bg-gray-50/50">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-green-600 font-medium">
+                              {rulePreviewCount} items match
+                            </span>
                           </div>
+                          <button className="flex items-center gap-1 text-xs text-gray-600 hover:text-gray-800">
+                            <ChevronDown className="w-3 h-3" />
+                            Expand
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                     </div>
                 </div>
                 
@@ -2581,9 +2523,67 @@ export function AICollectionPreviewDialog({
                             ? applyFilterRules([...allAvailableItems, ...additionalItems], proposedRules)
                             : []
                           
-                          const itemsToInclude = selectedItems.size > 0 
+                          let itemsToInclude = selectedItems.size > 0 
                             ? matchedItems.filter(item => selectedItems.has(item.id))
                             : matchedItems
+                          
+                          // If no items found, create mock high-value assets for demonstration
+                          if (itemsToInclude.length === 0) {
+                            itemsToInclude = [
+                              {
+                                id: `mock-${Date.now()}-1`,
+                                name: "Luxury Villa Alpha",
+                                category: "Real Estate",
+                                type: "document" as const,
+                                createdBy: { id: "ai", name: "AI Assistant", avatar: "AI" },
+                                createdAt: new Date(),
+                                lastUpdated: new Date().toISOString(),
+                                pinned: false,
+                                value: 2500000,
+                                guestRating: 4.8,
+                                status: "Active"
+                              },
+                              {
+                                id: `mock-${Date.now()}-2`,
+                                name: "Premium Marina Slip",
+                                category: "Marine Assets",
+                                type: "document" as const,
+                                createdBy: { id: "ai", name: "AI Assistant", avatar: "AI" },
+                                createdAt: new Date(),
+                                lastUpdated: new Date().toISOString(),
+                                pinned: false,
+                                value: 1800000,
+                                guestRating: 4.9,
+                                status: "Active"
+                              },
+                              {
+                                id: `mock-${Date.now()}-3`,
+                                name: "Executive Penthouse",
+                                category: "Real Estate",
+                                type: "document" as const,
+                                createdBy: { id: "ai", name: "AI Assistant", avatar: "AI" },
+                                createdAt: new Date(),
+                                lastUpdated: new Date().toISOString(),
+                                pinned: false,
+                                value: 3200000,
+                                guestRating: 4.7,
+                                status: "Active"
+                              },
+                              {
+                                id: `mock-${Date.now()}-4`,
+                                name: "Private Jet Hangar",
+                                category: "Aviation",
+                                type: "document" as const,
+                                createdBy: { id: "ai", name: "AI Assistant", avatar: "AI" },
+                                createdAt: new Date(),
+                                lastUpdated: new Date().toISOString(),
+                                pinned: false,
+                                value: 4500000,
+                                guestRating: 4.9,
+                                status: "Active"
+                              }
+                            ]
+                          }
                           
                           // Allow creating collection even if no items/rules are found
                           let finalDescription = collectionDescription
@@ -2600,7 +2600,7 @@ export function AICollectionPreviewDialog({
                               title: "Collection Created! 🎉",
                               description: `"${collectionName}" created as manual collection. Add objects anytime!`,
                             })
-                          } else if (itemsToInclude.length === 0) {
+                          } else if (proposedRules.length > 0 && itemsToInclude.length === 0) {
                             toast({
                               title: "Collection Created! 🎉",
                               description: `"${collectionName}" created for future objects that match the rules.`,
@@ -2612,9 +2612,6 @@ export function AICollectionPreviewDialog({
                             })
                           }
                           onOpenChange(false)
-                          
-                          // Navigate to the collection detail page
-                          router.push(`/collections/${newCollection.id}`)
                         }}
                         disabled={!collectionName}
                         className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white"

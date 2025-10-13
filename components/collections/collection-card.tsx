@@ -74,12 +74,18 @@ export function CollectionCard({
   const { toast } = useToast()
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false)
   const [isHovered, setIsHovered] = React.useState(false)
+  const [isMounted, setIsMounted] = React.useState(false)
+
+  React.useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   const handleView = () => {
     if (onView) {
       onView(collection)
     } else {
       // Default: navigate to collection detail page
+      console.log('🔍 Navigating to collection:', collection.id)
       router.push(`/collections/${collection.id}`)
     }
   }
@@ -188,6 +194,13 @@ export function CollectionCard({
   }
 
   const isArchived = collection.tags?.includes("Archived")
+
+  // Prevent hydration mismatch
+  if (!isMounted) {
+    return (
+      <div className="animate-pulse bg-gray-200 rounded-xl h-48 w-full"></div>
+    )
+  }
 
   if (layout === "list") {
     return (

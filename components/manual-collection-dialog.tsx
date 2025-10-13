@@ -30,9 +30,11 @@ import { applyFilterRules } from "@/lib/rule-engine"
 // Use shared FilterRule type from types/rule
 
 interface ManualCollectionDialogProps {
-  trigger?: React.ReactNode
+  trigger: React.ReactNode
   selectedItems?: string[]
   onCollectionCreated?: () => void
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
 const AVAILABLE_FIELDS = [
@@ -173,11 +175,15 @@ const ALL_ICONS = COLLECTION_ICON_CATEGORIES.flatMap(category =>
   category.icons.map(icon => ({ ...icon, category: category.name }))
 )
 
-export function ManualCollectionDialog({ trigger, selectedItems = [], onCollectionCreated }: ManualCollectionDialogProps) {
+export function ManualCollectionDialog({ trigger, selectedItems = [], onCollectionCreated, open: externalOpen, onOpenChange: externalOnOpenChange }: ManualCollectionDialogProps) {
   const { addCollection, allItems } = useCollections()
   const { toast } = useToast()
   const router = useRouter()
-  const [open, setOpen] = React.useState(false)
+  const [internalOpen, setInternalOpen] = React.useState(false)
+  
+  // Use external open state if provided, otherwise use internal state
+  const open = externalOpen !== undefined ? externalOpen : internalOpen
+  const setOpen = externalOnOpenChange || setInternalOpen
   const [collectionName, setCollectionName] = React.useState("New")
   const [filters, setFilters] = React.useState<FilterRule[]>([])
   const [isCreating, setIsCreating] = React.useState(false)
@@ -373,15 +379,9 @@ export function ManualCollectionDialog({ trigger, selectedItems = [], onCollecti
     // Call callback after collection creation
     onCollectionCreated?.()
     
-    // Automatically navigate to created collection
-    if (selectedItems.length > 0) {
-      // Get ID of last created collection
-      const collections = JSON.parse(localStorage.getItem('collections') || '[]')
-      const lastCollection = collections[collections.length - 1]
-      if (lastCollection && lastCollection.id) {
-        router.push(`/catalog?collection=${lastCollection.id}`)
-      }
-    }
+    // Automatically navigate to created collection using returned ID
+    console.log('🔍 Created collection ID:', createdCollection.id)
+    router.push(`/collections/${createdCollection.id}`)
     
     // Reset state
     setCollectionName("New")
@@ -394,14 +394,11 @@ export function ManualCollectionDialog({ trigger, selectedItems = [], onCollecti
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger || (
-          <Button className="gap-2">
-            <FolderOpen className="h-4 w-4" />
-            New collection
-          </Button>
-        )}
-      </DialogTrigger>
+      {trigger && (
+        <DialogTrigger asChild>
+          {trigger}
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-[940px] max-w-[1400px] max-h-[90vh] flex flex-col">
         <DialogHeader>
           <div className="flex items-center justify-between">
