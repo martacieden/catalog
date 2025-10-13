@@ -10,7 +10,7 @@ export interface AIRecommendation {
     categories: string[];
     valueGrowth: 'positive' | 'stable' | 'negative';
   };
-  objects: MockCatalogItem[]; // Array of actual objects
+  objects: string[]; // Array of object IDs
   aiInsights: {
     patterns: Array<{
       type: string;
@@ -99,12 +99,178 @@ Would you like me to add any specific filter rules or adjust the criteria?`
 };
 
 export const getRecommendationById = (id: string): AIRecommendation | null => {
-  const recommendations = [highValueAssetsRecommendation];
+  const recommendations = getAllRecommendations();
   return recommendations.find(rec => rec.id === id) || null;
 };
 
+export const luxuryVillasRecommendation: AIRecommendation = {
+  id: 'luxury-villas',
+  name: 'Luxury Villas & Properties',
+  description: 'Beachfront estates, hillside villas, and vacation rental properties',
+  objectCount: 12,
+  criteria: {
+    minValue: 500000,
+    categories: ['Properties'],
+    valueGrowth: 'positive'
+  },
+  objects: MOCK_CATALOG_ITEMS
+    .filter(item => 
+      item.category === 'Properties' &&
+      (item.name.toLowerCase().includes('villa') ||
+       item.name.toLowerCase().includes('beach') ||
+       item.name.toLowerCase().includes('estate') ||
+       item.name.toLowerCase().includes('resort'))
+    )
+    .slice(0, 12)
+    .map(item => item.id),
+  aiInsights: {
+    patterns: [
+      { type: 'luxury properties', count: 12, threshold: '$500k' }
+    ],
+    benefits: [
+      'Track luxury property portfolio',
+      'Monitor rental income potential',
+      'Plan property maintenance'
+    ],
+    analysis: 'AI identified luxury properties with high rental potential and premium locations.'
+  }
+};
+
+export const marinaAssetsRecommendation: AIRecommendation = {
+  id: 'marina-assets',
+  name: 'Marina Village Assets',
+  description: 'Private marina, boats, water sports equipment, and marine facilities',
+  objectCount: 12,
+  criteria: {
+    minValue: 100000,
+    categories: ['Maritime'],
+    valueGrowth: 'stable'
+  },
+  objects: MOCK_CATALOG_ITEMS
+    .filter(item => 
+      item.category === 'Maritime' ||
+      item.name.toLowerCase().includes('boat') ||
+      item.name.toLowerCase().includes('yacht') ||
+      item.name.toLowerCase().includes('marina')
+    )
+    .slice(0, 12)
+    .map(item => item.id),
+  aiInsights: {
+    patterns: [
+      { type: 'marine assets', count: 12, threshold: '$100k' }
+    ],
+    benefits: [
+      'Track marine asset portfolio',
+      'Monitor maintenance schedules',
+      'Plan seasonal operations'
+    ],
+    analysis: 'AI identified marine assets including boats, yachts, and marina facilities.'
+  }
+};
+
+export const maintenanceUrgentRecommendation: AIRecommendation = {
+  id: 'maintenance-urgent',
+  name: 'Needs Attention',
+  description: 'Assets requiring immediate maintenance or repair',
+  objectCount: 0, // Will be calculated dynamically
+  criteria: {
+    minValue: 0,
+    categories: ['Properties', 'Vehicles', 'Aviation', 'Maritime'],
+    valueGrowth: 'stable'
+  },
+  objects: MOCK_CATALOG_ITEMS
+    .filter(item => 
+      item.status?.toLowerCase().includes('maintenance') || 
+      item.status?.toLowerCase().includes('repair') ||
+      item.status?.toLowerCase().includes('attention')
+    )
+    .map(item => item.id),
+  aiInsights: {
+    patterns: [
+      { type: 'maintenance items', count: 0, threshold: 'urgent' }
+    ],
+    benefits: [
+      'Track maintenance needs',
+      'Plan repair schedules',
+      'Prevent asset deterioration'
+    ],
+    analysis: 'AI identified assets requiring immediate attention or maintenance.'
+  }
+};
+
+export const recentUpdatesRecommendation: AIRecommendation = {
+  id: 'recent-updates',
+  name: 'Recent Updates',
+  description: 'Recently updated or modified items',
+  objectCount: 0, // Will be calculated dynamically
+  criteria: {
+    minValue: 0,
+    categories: ['Properties', 'Vehicles', 'Aviation', 'Maritime', 'Legal entities'],
+    valueGrowth: 'positive'
+  },
+  objects: MOCK_CATALOG_ITEMS
+    .filter(item => {
+      const itemDate = new Date(item.date || '')
+      const thirtyDaysAgo = new Date()
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+      return itemDate > thirtyDaysAgo
+    })
+    .map(item => item.id),
+  aiInsights: {
+    patterns: [
+      { type: 'recent updates', count: 0, threshold: '30 days' }
+    ],
+    benefits: [
+      'Track recent changes',
+      'Monitor update frequency',
+      'Identify active assets'
+    ],
+    analysis: 'AI identified items that have been recently updated or modified.'
+  }
+};
+
+export const resortAmenitiesRecommendation: AIRecommendation = {
+  id: 'resort-amenities',
+  name: 'Resort Amenities',
+  description: 'Spa facilities, dining venues, beach club, and recreational activities',
+  objectCount: 12,
+  criteria: {
+    minValue: 50000,
+    categories: ['Events'],
+    valueGrowth: 'stable'
+  },
+  objects: MOCK_CATALOG_ITEMS
+    .filter(item => 
+      item.category === 'Events' ||
+      item.name.toLowerCase().includes('spa') ||
+      item.name.toLowerCase().includes('dining') ||
+      item.name.toLowerCase().includes('beach') ||
+      item.name.toLowerCase().includes('club')
+    )
+    .slice(0, 12)
+    .map(item => item.id),
+  aiInsights: {
+    patterns: [
+      { type: 'resort amenities', count: 12, threshold: '$50k' }
+    ],
+    benefits: [
+      'Track amenity portfolio',
+      'Monitor guest satisfaction',
+      'Plan facility upgrades'
+    ],
+    analysis: 'AI identified resort amenities and recreational facilities.'
+  }
+};
+
 export const getAllRecommendations = (): AIRecommendation[] => {
-  return [highValueAssetsRecommendation];
+  return [
+    highValueAssetsRecommendation,
+    luxuryVillasRecommendation,
+    marinaAssetsRecommendation,
+    maintenanceUrgentRecommendation,
+    recentUpdatesRecommendation,
+    resortAmenitiesRecommendation
+  ];
 };
 
 export const getObjectsForRecommendation = (recommendation: AIRecommendation) => {

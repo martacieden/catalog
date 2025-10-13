@@ -82,7 +82,7 @@ export function CollectionsDashboard() {
   const [previewDialogOpen, setPreviewDialogOpen] = React.useState(false)
   const [aiPreviewModalOpen, setAiPreviewModalOpen] = React.useState(false)
   const [selectedCollectionType, setSelectedCollectionType] = React.useState<string>("")
-  const { collections, acceptRecommendation } = useCollections()
+  const { collections, acceptRecommendation, aiRecommendations } = useCollections()
   const { toast } = useToast()
   const router = useRouter()
   const [isMounted, setIsMounted] = React.useState(false)
@@ -112,7 +112,7 @@ export function CollectionsDashboard() {
 
 
   // AI-powered collection suggestions based on data analysis
-  const getAISuggestionCards = () => {
+  const getAISuggestionCards = (activeRecommendations: any[] = []) => {
     // Analyze current data to generate intelligent suggestions
     const properties = MOCK_CATALOG_ITEMS.filter(item => item.category === "Properties")
     const maritime = MOCK_CATALOG_ITEMS.filter(item => item.category === "Maritime")
@@ -219,12 +219,15 @@ export function CollectionsDashboard() {
       })
     }
 
+    // Show all suggestions (don't filter by activeRecommendations)
+    const filteredSuggestions = suggestions
+
     // Sort by priority: urgent > high > medium > low
     const priorityOrder: Record<string, number> = { urgent: 0, high: 1, medium: 2, low: 3 }
-    return suggestions.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority])
+    return filteredSuggestions.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority])
   }
 
-  const aiSuggestionCards = getAISuggestionCards()
+  const aiSuggestionCards = getAISuggestionCards(aiRecommendations)
 
   // Map suggestion IDs to their details
   const getSuggestionDetails = (suggestionId: string) => {

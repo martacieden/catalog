@@ -9,7 +9,6 @@ import {
   LayoutGrid,
   Plus,
   Bell,
-  Settings,
   MoreVertical,
   FileText,
   Tag,
@@ -733,9 +732,6 @@ export function CatalogView({ activeView = "catalog", onPinnedCountChange }: Cat
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon">
               <Bell className="h-5 w-5" />
-            </Button>
-            <Button variant="ghost" size="icon">
-              <Settings className="h-5 w-5" />
             </Button>
             <Avatar className="h-8 w-8">
               <AvatarImage src="/placeholder.svg" />

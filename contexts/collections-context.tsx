@@ -14,7 +14,7 @@ import type { FilterRule, ValidationResult } from "@/types/rule"
 import type { User } from "@/types/user"
 import { createSyncPreview, createSyncHistory, getAvailableItems as getAvailableItemsUtil } from "@/lib/auto-sync-engine"
 import type { AIRecommendation } from "@/lib/ai-recommendations"
-import { highValueAssetsRecommendation } from "@/lib/ai-recommendations"
+import { getAllRecommendations } from "@/lib/ai-recommendations"
 import { applyHighValueAssetsFilter } from "@/lib/collection-filters"
 import { MOCK_CATALOG_ITEMS } from "@/lib/mock-data"
 
@@ -143,7 +143,7 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
   const [syncHistoryMap, setSyncHistoryMap] = useState<Map<string, SyncHistory[]>>(new Map())
   
   // AI Recommendations state
-  const [aiRecommendations, setAiRecommendations] = useState<AIRecommendation[]>([highValueAssetsRecommendation])
+  const [aiRecommendations, setAiRecommendations] = useState<AIRecommendation[]>(getAllRecommendations())
   const [showAIBanner, setShowAIBanner] = useState<boolean>(true)
 
   // Hydrate AI recommendations from localStorage after component mounts
@@ -887,8 +887,11 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
     const recommendation = aiRecommendations.find(rec => rec.id === id)
     if (!recommendation) return null
 
-    // Use proper filtering logic to get high-value assets
-    const filteredObjects = applyHighValueAssetsFilter(MOCK_CATALOG_ITEMS)
+    // Get objects for this specific recommendation
+    const filteredObjects = MOCK_CATALOG_ITEMS.filter(item => 
+      recommendation.objects.includes(item.id)
+    )
+    console.log('🔍 Context Debug - Recommendation ID:', recommendation.id);
     console.log('🔍 Context Debug - Total catalog items:', MOCK_CATALOG_ITEMS.length);
     console.log('🔍 Context Debug - Filtered objects:', filteredObjects.length);
     console.log('🔍 Context Debug - Filtered IDs:', filteredObjects.map(obj => obj.id));
@@ -933,7 +936,7 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
       name: recommendation.name,
       description: recommendation.description,
       icon: 'Sparkles',
-      filters: highValueAssetsRules,
+      filters: recommendation.id === 'high-value-assets' ? highValueAssetsRules : [],
       type: 'ai-generated',
       tags: ['ai-generated', 'high-value'],
       items: recommendationObjects,

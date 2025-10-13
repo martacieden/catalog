@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowLeft, Search, Info, Plus, Download, Filter, X } from 'lucide-react'
 import { AppSidebar } from '@/components/app-sidebar'
@@ -44,7 +44,7 @@ const convertToCollectionItem = (result: SearchResult): CollectionItem => ({
   notes: result.description
 })
 
-export default function SearchResultsPage() {
+function SearchResultsContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   
@@ -164,6 +164,11 @@ export default function SearchResultsPage() {
     router.push('/catalog/search?q=*')
   }
 
+  const handleCreateCollection = () => {
+    // TODO: Implement collection creation from search results
+    console.log('Creating collection from search results:', collectionItems.length, 'items')
+  }
+
   return (
     <div className="flex h-screen">
       <AppSidebar />
@@ -275,6 +280,36 @@ export default function SearchResultsPage() {
               </div>
             )}
 
+            {/* AI Collection Suggestion */}
+            {collectionItems.length > 0 && (
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <p className="text-sm text-blue-800 mb-2">
+                      Based on your search <span className="font-semibold">"{searchQuery}"</span> I suggest this collection:
+                    </p>
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2 bg-white rounded-lg px-3 py-2 border border-blue-200 shadow-sm">
+                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                          <span className="text-blue-600 font-bold text-sm">AI</span>
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-gray-900 text-sm">High-Value Properties</h4>
+                          <p className="text-xs text-gray-600">Luxury real estate over $1M</p>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-xs text-gray-500">{collectionItems.length} items</span>
+                        </div>
+                      </div>
+                      <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={handleCreateCollection}>
+                        Create Collection
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Results Table */}
             <div className="bg-card rounded-lg border border-border">
               {collectionItems.length > 0 ? (
@@ -374,5 +409,20 @@ export default function SearchResultsPage() {
         </div>
       </main>
     </div>
+  )
+}
+
+export default function SearchResultsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading search results...</p>
+        </div>
+      </div>
+    }>
+      <SearchResultsContent />
+    </Suspense>
   )
 }

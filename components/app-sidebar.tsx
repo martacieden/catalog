@@ -74,22 +74,26 @@ export function AppSidebar() {
               {!isCollapsed && <span className="truncate">Home</span>}
             </Button>
           </Link>
-          <Button
-            variant={activeItem === "decisions" ? "secondary" : "ghost"}
-            className={cn("w-full", isCollapsed ? "justify-center px-0" : "justify-start")}
-            onClick={() => setActiveItem("decisions")}
-          >
-            <Zap className={cn("h-4 w-4 flex-shrink-0", !isCollapsed && "mr-2")} />
-            {!isCollapsed && <span className="truncate">Decisions</span>}
-          </Button>
-          <Button
-            variant={activeItem === "tasks" ? "secondary" : "ghost"}
-            className={cn("w-full", isCollapsed ? "justify-center px-0" : "justify-start")}
-            onClick={() => setActiveItem("tasks")}
-          >
-            <CheckSquare className={cn("h-4 w-4 flex-shrink-0", !isCollapsed && "mr-2")} />
-            {!isCollapsed && <span className="truncate">Tasks</span>}
-          </Button>
+          <Link href="/decisions">
+            <Button
+              variant={activeItem === "decisions" ? "secondary" : "ghost"}
+              className={cn("w-full", isCollapsed ? "justify-center px-0" : "justify-start")}
+              onClick={() => setActiveItem("decisions")}
+            >
+              <Zap className={cn("h-4 w-4 flex-shrink-0", !isCollapsed && "mr-2")} />
+              {!isCollapsed && <span className="truncate">Decisions</span>}
+            </Button>
+          </Link>
+          <Link href="/tasks">
+            <Button
+              variant={activeItem === "tasks" ? "secondary" : "ghost"}
+              className={cn("w-full", isCollapsed ? "justify-center px-0" : "justify-start")}
+              onClick={() => setActiveItem("tasks")}
+            >
+              <CheckSquare className={cn("h-4 w-4 flex-shrink-0", !isCollapsed && "mr-2")} />
+              {!isCollapsed && <span className="truncate">Tasks</span>}
+            </Button>
+          </Link>
           <Link href="/catalog?view=dashboard">
             <Button
               variant={activeItem === "catalog" ? "secondary" : "ghost"}
@@ -100,30 +104,36 @@ export function AppSidebar() {
               {!isCollapsed && <span className="truncate">Catalog</span>}
             </Button>
           </Link>
-          <Button
-            variant={activeItem === "people" ? "secondary" : "ghost"}
-            className={cn("w-full", isCollapsed ? "justify-center px-0" : "justify-start")}
-            onClick={() => setActiveItem("people")}
-          >
-            <Users className={cn("h-4 w-4 flex-shrink-0", !isCollapsed && "mr-2")} />
-            {!isCollapsed && <span className="truncate">People</span>}
-          </Button>
-          <Button
-            variant={activeItem === "projects" ? "secondary" : "ghost"}
-            className={cn("w-full", isCollapsed ? "justify-center px-0" : "justify-start")}
-            onClick={() => setActiveItem("projects")}
-          >
-            <Briefcase className={cn("h-4 w-4 flex-shrink-0", !isCollapsed && "mr-2")} />
-            {!isCollapsed && <span className="truncate">Projects</span>}
-          </Button>
-          <Button
-            variant={activeItem === "more" ? "secondary" : "ghost"}
-            className={cn("w-full", isCollapsed ? "justify-center px-0" : "justify-start")}
-            onClick={() => setActiveItem("more")}
-          >
-            <MoreHorizontal className={cn("h-4 w-4 flex-shrink-0", !isCollapsed && "mr-2")} />
-            {!isCollapsed && <span className="truncate">More</span>}
-          </Button>
+          <Link href="/people">
+            <Button
+              variant={activeItem === "people" ? "secondary" : "ghost"}
+              className={cn("w-full", isCollapsed ? "justify-center px-0" : "justify-start")}
+              onClick={() => setActiveItem("people")}
+            >
+              <Users className={cn("h-4 w-4 flex-shrink-0", !isCollapsed && "mr-2")} />
+              {!isCollapsed && <span className="truncate">People</span>}
+            </Button>
+          </Link>
+          <Link href="/projects">
+            <Button
+              variant={activeItem === "projects" ? "secondary" : "ghost"}
+              className={cn("w-full", isCollapsed ? "justify-center px-0" : "justify-start")}
+              onClick={() => setActiveItem("projects")}
+            >
+              <Briefcase className={cn("h-4 w-4 flex-shrink-0", !isCollapsed && "mr-2")} />
+              {!isCollapsed && <span className="truncate">Projects</span>}
+            </Button>
+          </Link>
+          <Link href="/more">
+            <Button
+              variant={activeItem === "more" ? "secondary" : "ghost"}
+              className={cn("w-full", isCollapsed ? "justify-center px-0" : "justify-start")}
+              onClick={() => setActiveItem("more")}
+            >
+              <MoreHorizontal className={cn("h-4 w-4 flex-shrink-0", !isCollapsed && "mr-2")} />
+              {!isCollapsed && <span className="truncate">More</span>}
+            </Button>
+          </Link>
         </div>
       </ScrollArea>
 
