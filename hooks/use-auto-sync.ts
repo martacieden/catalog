@@ -52,11 +52,15 @@ export function useAutoSync(
         opts.onSync(matchedItems)
       }
 
-      console.log(
-        `[AutoSync] Collection "${collection.name}" synced: ${matchedItems.length} items matched`
-      )
+      if (process.env.NODE_ENV === 'development') {
+        console.log(
+          `[AutoSync] Collection "${collection.name}" synced: ${matchedItems.length} items matched`
+        )
+      }
     } catch (error) {
-      console.error("[AutoSync] Sync error:", error)
+      if (process.env.NODE_ENV === 'development') {
+        console.error("[AutoSync] Sync error:", error)
+      }
       if (opts.onError) {
         opts.onError(error as Error)
       }

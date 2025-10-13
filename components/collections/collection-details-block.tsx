@@ -207,19 +207,6 @@ export function CollectionDetailsBlock({ collection, items, onOpenAIAssistant, o
   return (
     <Card className="mb-6">
       <CardHeader className="pb-0">
-        <div className="flex items-center justify-end">
-          {onOpenAIAssistant && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onOpenAIAssistant}
-              className="bg-gradient-to-r from-indigo-50 to-blue-50 hover:from-indigo-100 hover:to-blue-100 border-indigo-200"
-            >
-              <Bot className="h-4 w-4 mr-2" />
-              AI Assistant
-            </Button>
-          )}
-        </div>
       </CardHeader>
       
         <CardContent className="space-y-4">
@@ -235,24 +222,21 @@ export function CollectionDetailsBlock({ collection, items, onOpenAIAssistant, o
         {collection.filters && collection.filters.length > 0 && (
           <>
             {collection.description && <Separator />}
-            <div>
-              <h4 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
-                <Filter className="h-4 w-4" />
-                Filter Rules
-              </h4>
-              <div className="space-y-2">
-                {collection.filters.map((rule, index) => (
-                  <div key={rule.id} className="flex items-center gap-2">
-                    {index > 0 && (
-                      <Badge variant="secondary" className="text-xs px-2 py-1">
-                        AND
-                      </Badge>
-                    )}
-                    <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2 text-sm">
-                      <span className="font-medium">{formatRule(rule)}</span>
-                    </div>
-                  </div>
-                ))}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Filter criteria</span>
+                <button className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-pen w-3 h-3">
+                    <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path>
+                  </svg>
+                  Customize filters
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <span className="px-3 py-1.5 bg-green-50 border border-green-200 rounded-full text-sm">💰 Value &gt; $1M</span>
+                <span className="px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-full text-sm">🏢 Premium categories</span>
+                <span className="px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-full text-sm">✅ Active status</span>
+                <span className="px-3 py-1.5 bg-yellow-50 border border-yellow-200 rounded-full text-sm">⭐ Rating ≥ 4</span>
               </div>
               {collection.autoSync && (
                 <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
@@ -278,7 +262,12 @@ export function CollectionDetailsBlock({ collection, items, onOpenAIAssistant, o
                   <Badge variant="secondary" className="text-xs px-2 py-0.5">
                     {aiInsights.length} insight{aiInsights.length > 1 ? 's' : ''}
                   </Badge>
-                  <Button variant="outline" size="sm" className="h-6 px-2 text-xs">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="h-6 px-2 text-xs"
+                    onClick={onOpenAIAssistant}
+                  >
                     <Bot className="h-3 w-3 mr-1" />
                     AI Assistant
                   </Button>

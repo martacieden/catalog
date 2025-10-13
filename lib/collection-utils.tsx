@@ -11,6 +11,18 @@ import type {
   CollectionSortOption 
 } from '@/types/collection'
 import type { FilterRule } from '@/types/rule'
+import React from 'react'
+import { 
+  Building2, 
+  Home, 
+  Car, 
+  Plane, 
+  Ship, 
+  Calendar, 
+  PawPrint, 
+  ScrollText, 
+  FileText 
+} from 'lucide-react'
 
 // ==================== Filtering & Search ====================
 
@@ -536,6 +548,68 @@ export function getStatusColor(status: string): string {
   }
   
   return 'bg-blue-100 text-blue-800'
+}
+
+// ==================== Icon Utilities ====================
+
+/**
+ * Get icon name for category/type
+ * Returns the icon name that can be used with lucide-react
+ */
+export function getCategoryIconName(category: string): string {
+  const iconMap: Record<string, string> = {
+    'Legal entities': 'Building2',
+    'Properties': 'Home',
+    'Vehicles': 'Car',
+    'Aviation': 'Plane',
+    'Maritime': 'Ship',
+    'Organizations': 'Building2',
+    'Events': 'Calendar',
+    'Pets': 'PawPrint',
+    'Obligations': 'ScrollText',
+  }
+
+  return iconMap[category] || 'FileText'
+}
+
+// ==================== Icon Utilities ====================
+
+/**
+ * Get React component for category icon
+ */
+export function getCategoryIcon(category: string): React.ReactNode {
+  const iconMap: Record<string, React.ReactNode> = {
+    "Legal entities": <Building2 className="h-5 w-5" />,
+    "Properties": <Home className="h-5 w-5" />,
+    "Vehicles": <Car className="h-5 w-5" />,
+    "Aviation": <Plane className="h-5 w-5" />,
+    "Maritime": <Ship className="h-5 w-5" />,
+    "Organizations": <Building2 className="h-5 w-5" />,
+    "Events": <Calendar className="h-5 w-5" />,
+    "Pets": <PawPrint className="h-5 w-5" />,
+    "Obligations": <ScrollText className="h-5 w-5" />,
+    // Legacy category names
+    "property": <Home className="h-5 w-5" />,
+    "vehicle": <Car className="h-5 w-5" />,
+    "aircraft": <Plane className="h-5 w-5" />,
+    "marine": <Ship className="h-5 w-5" />,
+  }
+  return iconMap[category] || <FileText className="h-5 w-5" />
+}
+
+/**
+ * Standardized card thumbnail component
+ */
+export function CardItemThumbnail({ item }: { item: any }) {
+  const CategoryIcon = getCategoryIcon(item.category)
+  
+  return (
+    <div className="relative h-24 w-full rounded-lg overflow-hidden flex items-center justify-center" style={{ backgroundColor: '#DEE7F3' }}>
+      <div className="h-12 w-12 flex items-center justify-center rounded-lg">
+        {CategoryIcon}
+      </div>
+    </div>
+  )
 }
 
 

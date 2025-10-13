@@ -55,7 +55,7 @@ export function useCollectionHistory(
   const hasSignificantChanges = useCallback((col: Collection): boolean => {
     const currentHash = JSON.stringify({
       name: col.name,
-      items: col.items.map(i => ({ id: i.id, name: i.name, order: i.order })),
+      items: (col.items || []).map(i => ({ id: i.id, name: i.name, order: i.order })),
       filters: col.filters,
       tags: col.tags,
     })
@@ -134,7 +134,7 @@ export function useCollectionHistory(
       })
       lastSnapshotRef.current = JSON.stringify({
         name: collection.name,
-        items: collection.items.map(i => ({ id: i.id, name: i.name, order: i.order })),
+        items: (collection.items || []).map(i => ({ id: i.id, name: i.name, order: i.order })),
         filters: collection.filters,
         tags: collection.tags,
       })

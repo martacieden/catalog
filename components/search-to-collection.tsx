@@ -43,7 +43,7 @@ export function SearchToCollection({ searchQuery, filterCount, resultCount }: Se
   }
 
   const handleSave = () => {
-    console.log("[v0] Creating collection from search:", { collectionName, searchQuery, filterCount })
+    // TODO: Create collection from search query and filters
     setShowDialog(false)
     setCollectionName("")
   }

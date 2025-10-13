@@ -254,7 +254,7 @@ export interface SyncPreview {
   }
 }
 
-export interface AIInsight {
+export interface CollectionAIInsight {
   id: string
   type: 'suggestion' | 'warning' | 'info' | 'success'
   title: string

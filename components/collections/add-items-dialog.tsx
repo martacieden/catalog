@@ -93,7 +93,7 @@ export function AddItemsDialog({
     return items
   }, [availableItems, selectedCategory, searchQuery])
 
-  // Отримати унікальні категорії
+  // Get unique categories
   const categories = React.useMemo(() => {
     const cats = new Set(availableItems.map(item => item.category))
     return Array.from(cats).sort()
@@ -124,8 +124,8 @@ export function AddItemsDialog({
     bulkAddItems(collectionId, itemsToAdd)
 
     toast({
-      title: "Елементи додано",
-      description: `Додано ${selectedIds.size} елементів до колекції "${collection?.name}".`,
+      title: "Items added",
+      description: `Added ${selectedIds.size} item${selectedIds.size > 1 ? 's' : ''} to collection "${collection?.name}".`,
     })
 
     onOpenChange(false)

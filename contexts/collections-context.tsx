@@ -13,18 +13,85 @@ import type {
 import type { FilterRule, ValidationResult } from "@/types/rule"
 import type { User } from "@/types/user"
 import { createSyncPreview, createSyncHistory, getAvailableItems as getAvailableItemsUtil } from "@/lib/auto-sync-engine"
+import type { AIRecommendation } from "@/lib/ai-recommendations"
+import { highValueAssetsRecommendation } from "@/lib/ai-recommendations"
+import { applyHighValueAssetsFilter } from "@/lib/collection-filters"
+import { MOCK_CATALOG_ITEMS } from "@/lib/mock-data"
 
 // Re-export types for backward compatibility
 export type { Collection, CollectionItem, FilterRule }
+
+// Constants for localStorage
+const COLLECTIONS_KEY = 'way2bi_collections'
+const AI_RECOMMENDATIONS_KEY = 'way2bi_ai_recommendations'
+const AI_BANNER_STATE_KEY = 'way2bi_show_ai_banner'
+
+/**
+ * STABLE RULE FOR COLLECTION CREATION:
+ * ====================================
+ * 
+ * ВСІ операції з колекціями ОБОВ'ЯЗКОВО повинні зберігатися в localStorage!
+ * 
+ * Це правило застосовується до:
+ * - addCollection() - створення нової колекції
+ * - addAICollection() - створення AI колекції  
+ * - acceptRecommendation() - створення колекції з AI рекомендації
+ * - updateCollection() - оновлення колекції
+ * - removeCollection() - видалення колекції
+ * - duplicateCollection() - дублювання колекції
+ * 
+ * Кожна функція повинна викликати saveCollectionsToStorage(updated) після setCollections()
+ */
+const saveCollectionsToStorage = (collections: Collection[]) => {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(COLLECTIONS_KEY, JSON.stringify(collections))
+    console.log('💾 Collections saved to localStorage:', collections.length, 'collections')
+  }
+}
+
+// High-value assets filter rules
+const highValueAssetsRules: FilterRule[] = [
+  {
+    id: "rule-1",
+    field: "value",
+    operator: "greater_than",
+    value: "1000000"
+  },
+  {
+    id: "rule-2",
+    field: "category", 
+    operator: "in",
+    value: ["Properties", "Vehicles", "Aviation", "Maritime"]
+  },
+  {
+    id: "rule-3",
+    field: "status",
+    operator: "in", 
+    value: ["Available", "Active", "Maintenance"]
+  },
+  {
+    id: "rule-4",
+    field: "rating",
+    operator: "greater_than_or_equal",
+    value: "4"
+  }
+]
 
 interface CollectionsContextType {
   // Core State
   collections: Collection[]
   allItems: CollectionItem[] // Всі доступні елементи в системі
   
+  // AI Recommendations
+  aiRecommendations: AIRecommendation[]
+  showAIBanner: boolean
+  dismissRecommendation: (id: string) => void
+  acceptRecommendation: (id: string) => string | null
+  toggleAIBanner: (show: boolean) => void
+  
   // Collection CRUD
   addCollection: (collection: Omit<Collection, "id" | "createdAt" | "itemCount">) => Collection
-  addAICollection: (name: string, description: string, items: CollectionItem[]) => void
+  addAICollection: (name: string, description: string, items: CollectionItem[]) => Collection
   updateCollection: (id: string, updates: Partial<Collection>) => void
   removeCollection: (id: string) => void
   getCollectionById: (id: string) => Collection | undefined
@@ -62,8 +129,31 @@ interface CollectionsContextType {
 const CollectionsContext = createContext<CollectionsContextType | undefined>(undefined)
 
 export function CollectionsProvider({ children }: { children: ReactNode }) {
-  const [collections, setCollections] = useState<Collection[]>([])
+  const [collections, setCollections] = useState<Collection[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(COLLECTIONS_KEY)
+      return saved ? JSON.parse(saved) : []
+    }
+    return []
+  })
   const [syncHistoryMap, setSyncHistoryMap] = useState<Map<string, SyncHistory[]>>(new Map())
+  
+  // AI Recommendations state
+  const [aiRecommendations, setAiRecommendations] = useState<AIRecommendation[]>(() => {
+    // Initialize with high-value assets recommendation
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(AI_RECOMMENDATIONS_KEY)
+      return saved ? JSON.parse(saved) : [highValueAssetsRecommendation]
+    }
+    return [highValueAssetsRecommendation]
+  })
+  const [showAIBanner, setShowAIBanner] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(AI_BANNER_STATE_KEY)
+      return saved ? JSON.parse(saved) : true
+    }
+    return true
+  })
 
   // Mock current user - in real app, get from auth context
   const currentUser: User = {
@@ -206,7 +296,11 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
       createdBy: currentUser,
       version: 1,
     } as Collection
-    setCollections(prev => [...prev, newCollection])
+    setCollections(prev => {
+      const updated = [...prev, newCollection]
+      saveCollectionsToStorage(updated) // STABLE RULE: Always save to localStorage
+      return updated
+    })
     return newCollection
   }, [currentUser])
 
@@ -231,7 +325,12 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
       createdBy: currentUser,
       version: 1,
     }
-    setCollections(prev => [newCollection, ...prev]) // Add to beginning for newest first
+    setCollections(prev => {
+      const updated = [newCollection, ...prev] // Add to beginning for newest first
+      saveCollectionsToStorage(updated) // STABLE RULE: Always save to localStorage
+      return updated
+    })
+    return newCollection
   }, [currentUser])
 
   // Function to update item count for a collection based on its actual items
@@ -281,8 +380,8 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
   }
 
   const updateCollection = useCallback((id: string, updates: Partial<Collection>) => {
-    setCollections(prev => 
-      prev.map(collection => 
+    setCollections(prev => {
+      const updated = prev.map(collection => 
         collection.id === id 
           ? { 
               ...collection, 
@@ -293,15 +392,28 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
             } 
           : collection
       )
-    )
+      saveCollectionsToStorage(updated) // STABLE RULE: Always save to localStorage
+      return updated
+    })
   }, [currentUser])
 
   const removeCollection = useCallback((id: string) => {
-    setCollections(prev => prev.filter(collection => collection.id !== id))
+    setCollections(prev => {
+      const updated = prev.filter(collection => collection.id !== id)
+      saveCollectionsToStorage(updated) // STABLE RULE: Always save to localStorage
+      return updated
+    })
   }, [])
 
   const getCollectionById = useCallback((id: string) => {
-    return collections.find(collection => collection.id === id)
+    console.log('🔍 getCollectionById called with ID:', id)
+    console.log('🔍 Collections array length:', collections.length)
+    console.log('🔍 All collection IDs:', collections.map(c => ({ id: c.id, name: c.name })))
+    
+    const found = collections.find(collection => collection.id === id)
+    console.log('🔍 Found collection:', found ? { id: found.id, name: found.name } : 'null')
+    
+    return found
   }, [collections])
 
   const duplicateCollection = useCallback((id: string): Collection | null => {
@@ -325,7 +437,11 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
       filters: (original.filters || []).map(f => ({ ...f })),
     }
 
-    setCollections(prev => [duplicate, ...prev])
+    setCollections(prev => {
+      const updated = [duplicate, ...prev]
+      saveCollectionsToStorage(updated) // STABLE RULE: Always save to localStorage
+      return updated
+    })
     return duplicate
   }, [getCollectionById, currentUser])
 
@@ -341,11 +457,13 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
     setCollections(prev => prev.map(collection => {
       if (collection.id !== collectionId) return collection
       
-      // Перевірка на дублікат - якщо item вже є в колекції, не додаємо
+      // Check for duplicate - if item already in collection, don't add
       const existingIds = new Set((collection.items || []).map(i => i.id))
       if (existingIds.has(item.id)) {
-        console.log(`Item ${item.id} already exists in collection ${collectionId}`)
-        return collection // Повертаємо без змін
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`Item ${item.id} already exists in collection ${collectionId}`)
+        }
+        return collection // Return without changes
       }
       
       const newItems = [...(collection.items || []), { 
@@ -428,15 +546,17 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
     setCollections(prev => prev.map(collection => {
       if (collection.id !== collectionId) return collection
       
-      // Створюємо Set існуючих ID для швидкої перевірки дублікатів
+      // Create Set of existing IDs for quick duplicate checking
       const existingIds = new Set((collection.items || []).map(i => i.id))
       
-      // Фільтруємо тільки нові items (які ще не в колекції)
+      // Filter only new items (not yet in collection)
       const uniqueNewItems = items.filter(item => !existingIds.has(item.id))
       
       if (uniqueNewItems.length === 0) {
-        console.log(`All items already exist in collection ${collectionId}`)
-        return collection // Немає нових items для додавання
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`All items already exist in collection ${collectionId}`)
+        }
+        return collection // No new items to add
       }
       
       const startOrder = (collection.items || []).length
@@ -449,7 +569,9 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
       
       const allItems = [...(collection.items || []), ...processedNewItems]
       
-      console.log(`Added ${processedNewItems.length} unique items to collection ${collectionId}. Skipped ${items.length - uniqueNewItems.length} duplicates.`)
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`Added ${processedNewItems.length} unique items to collection ${collectionId}. Skipped ${items.length - uniqueNewItems.length} duplicates.`)
+      }
       
       return {
         ...collection,
@@ -739,11 +861,120 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
     return collections.filter(filter)
   }, [collections])
 
+  // ==================== AI Recommendations ====================
+
+  const dismissRecommendation = useCallback((id: string) => {
+    setAiRecommendations(prev => prev.filter(rec => rec.id !== id))
+    // Save to localStorage
+    if (typeof window !== 'undefined') {
+      const updated = aiRecommendations.filter(rec => rec.id !== id)
+      localStorage.setItem(AI_RECOMMENDATIONS_KEY, JSON.stringify(updated))
+    }
+  }, [aiRecommendations])
+
+  const acceptRecommendation = useCallback((id: string): string | null => {
+    const recommendation = aiRecommendations.find(rec => rec.id === id)
+    if (!recommendation) return null
+
+    // Use proper filtering logic to get high-value assets
+    const filteredObjects = applyHighValueAssetsFilter(MOCK_CATALOG_ITEMS)
+    console.log('🔍 Context Debug - Total catalog items:', MOCK_CATALOG_ITEMS.length);
+    console.log('🔍 Context Debug - Filtered objects:', filteredObjects.length);
+    console.log('🔍 Context Debug - Filtered IDs:', filteredObjects.map(obj => obj.id));
+    
+    // Convert to CollectionItem format
+    const recommendationObjects: CollectionItem[] = filteredObjects.map(obj => ({
+      id: obj.id,
+      name: obj.name,
+      type: obj.type,
+      category: obj.category,
+      idCode: obj.idCode,
+      status: obj.status,
+      location: obj.location,
+      value: obj.value,
+      currency: obj.currency,
+      tags: obj.tags,
+      lastUpdated: obj.lastUpdated,
+      createdAt: obj.createdAt,
+      people: obj.people?.map(person => ({
+        id: person.id,
+        name: person.name,
+        role: person.role as "owner" | "editor" | "viewer"
+      })),
+      createdOn: obj.createdOn,
+      lastUpdate: obj.lastUpdate,
+      date: obj.date,
+      createdBy: obj.createdBy ? {
+        id: obj.createdBy.name.toLowerCase().replace(/\s+/g, '-'),
+        name: obj.createdBy.name,
+        role: "owner" as const
+      } : undefined,
+      sharedWith: obj.sharedWith,
+      pinned: obj.pinned
+    }))
+
+    // Create collection with AI rules and objects
+    const now = new Date()
+    const collectionId = `ai-collection-${Date.now()}`
+    console.log('🔍 Creating collection with ID:', collectionId)
+    const newCollection: Collection = {
+      id: collectionId,
+      name: recommendation.name,
+      description: recommendation.description,
+      icon: 'Sparkles',
+      filters: highValueAssetsRules,
+      type: 'ai-generated',
+      tags: ['ai-generated', 'high-value'],
+      items: recommendationObjects,
+      autoSync: true,
+      isPublic: false,
+      sharedWith: [],
+      viewCount: 0,
+      createdAt: now,
+      createdBy: currentUser,
+      updatedAt: now,
+      itemCount: recommendationObjects.length
+    }
+
+    // Add collection
+    setCollections(prev => {
+      const updated = [...prev, newCollection]
+      console.log('🔍 Added collection:', newCollection.id, 'Total collections:', updated.length)
+      console.log('🔍 New collection details:', { 
+        id: newCollection.id, 
+        name: newCollection.name, 
+        itemCount: newCollection.itemCount 
+      })
+      saveCollectionsToStorage(updated) // STABLE RULE: Always save to localStorage
+      return updated
+    })
+
+    // Remove recommendation
+    dismissRecommendation(id)
+    
+    // Return the new collection ID
+    return collectionId
+  }, [aiRecommendations, dismissRecommendation, currentUser])
+
+  const toggleAIBanner = useCallback((show: boolean) => {
+    setShowAIBanner(show)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(AI_BANNER_STATE_KEY, JSON.stringify(show))
+    }
+  }, [])
+
   return (
     <CollectionsContext.Provider value={{
       // Core State
       collections,
       allItems,
+      
+      // AI Recommendations
+      aiRecommendations,
+      showAIBanner,
+      dismissRecommendation,
+      acceptRecommendation,
+      toggleAIBanner,
       
       // Collection CRUD
       addCollection,

@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useRouter } from "next/navigation"
 import { useCollections } from "@/contexts/collections-context"
 import { useToast } from "@/hooks/use-toast"
 import {
@@ -42,6 +43,7 @@ import {
   Plane,
   Bed,
   Anchor,
+  X,
   TreePine,
   Coffee,
   Utensils,
@@ -68,13 +70,14 @@ import {
   Undo2,
   Search,
   Zap,
-  X,
   Trash2,
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import type { FilterRule } from "@/types/rule"
 import { applyFilterRules } from "@/lib/rule-engine"
+import { getCategoryColor } from "@/lib/collection-utils"
+import { ItemsTable } from "@/components/collections/items-table"
 
 interface AICollectionPreviewDialogProps {
   open: boolean
@@ -143,6 +146,10 @@ const getSuggestedItems = (type: string) => {
         { id: "6", name: "Ocean Breeze Villa", type: "Villa", location: "Beachfront", status: "Available", idCode: "PROP-006", people: 3, date: "Dec 18" },
         { id: "7", name: "Tropical Retreat", type: "Villa", location: "Lagoon View", status: "Available", idCode: "PROP-007", people: 1, date: "Dec 25", image: "/placeholder.jpg" },
         { id: "8", name: "Luxury Penthouse", type: "Penthouse", location: "Top Floor", status: "Available", idCode: "PROP-008", people: 2, date: "Jan 3" },
+        { id: "9", name: "Seaside Manor", type: "Manor", location: "Private Beach", status: "Available", idCode: "PROP-009", people: 4, date: "Jan 8", image: "/placeholder.jpg" },
+        { id: "10", name: "Cliffside Residence", type: "Residence", location: "Ocean Cliff", status: "Available", idCode: "PROP-010", people: 2, date: "Jan 12" },
+        { id: "11", name: "Garden Villa Suite", type: "Villa", location: "Botanical Garden", status: "Available", idCode: "PROP-011", people: 3, date: "Jan 15", image: "/placeholder.jpg" },
+        { id: "12", name: "Executive Villa", type: "Villa", location: "Business District", status: "Available", idCode: "PROP-012", people: 2, date: "Jan 18" },
       ]
     case "marina-assets":
       return [
@@ -154,6 +161,10 @@ const getSuggestedItems = (type: string) => {
         { id: "6", name: "Fuel Station", type: "Service", location: "Main Dock", status: "Active", idCode: "MAR-006", people: 1, date: "Dec 8", image: "/placeholder.jpg" },
         { id: "7", name: "Water Sports Equipment", type: "Equipment", location: "Storage", status: "Available", idCode: "MAR-007", people: 2, date: "Dec 15" },
         { id: "8", name: "Dock Security System", type: "Security", location: "All Docks", status: "Active", idCode: "MAR-008", people: 1, date: "Dec 22" },
+        { id: "9", name: "Luxury Catamaran", type: "Yacht", location: "Dock C-2", status: "Available", idCode: "MAR-009", people: 3, date: "Jan 5", image: "/placeholder.jpg" },
+        { id: "10", name: "Fishing Charter Boat", type: "Boat", location: "Dock A-5", status: "Available", idCode: "MAR-010", people: 2, date: "Jan 8" },
+        { id: "11", name: "Marina Restaurant", type: "Dining", location: "Main Dock", status: "Active", idCode: "MAR-011", people: 4, date: "Jan 10", image: "/placeholder.jpg" },
+        { id: "12", name: "Harbor Master Office", type: "Administrative", location: "Main Dock", status: "Active", idCode: "MAR-012", people: 1, date: "Jan 12" },
       ]
     case "resort-amenities":
       return [
@@ -165,6 +176,10 @@ const getSuggestedItems = (type: string) => {
         { id: "6", name: "Concierge Service", type: "Service", location: "Main Lobby", status: "Active", idCode: "AMN-006", people: 3, date: "Dec 1" },
         { id: "7", name: "Business Center", type: "Facility", location: "Main Building", status: "Active", idCode: "AMN-007", people: 1, date: "Dec 10" },
         { id: "8", name: "Golf Course", type: "Recreation", location: "Resort Grounds", status: "Active", idCode: "AMN-008", people: 2, date: "Dec 20" },
+        { id: "9", name: "Tennis Courts", type: "Recreation", location: "Sports Complex", status: "Active", idCode: "AMN-009", people: 2, date: "Jan 5" },
+        { id: "10", name: "Kids Club", type: "Facility", location: "Family Area", status: "Active", idCode: "AMN-010", people: 4, date: "Jan 8" },
+        { id: "11", name: "Wine Bar", type: "Dining", location: "Main Building", status: "Active", idCode: "AMN-011", people: 1, date: "Jan 10" },
+        { id: "12", name: "Library Lounge", type: "Facility", location: "Quiet Zone", status: "Active", idCode: "AMN-012", people: 2, date: "Jan 12" },
       ]
     case "guest-experiences":
       return [
@@ -176,6 +191,239 @@ const getSuggestedItems = (type: string) => {
         { id: "6", name: "Couples Massage", type: "Wellness", location: "Spa Center", status: "Available", idCode: "EXP-006", people: 1, date: "Dec 3" },
         { id: "7", name: "Beach Picnic Setup", type: "Activity", location: "Private Beach", status: "Available", idCode: "EXP-007", people: 2, date: "Dec 12" },
         { id: "8", name: "VIP Airport Transfer", type: "Transport", location: "Airport", status: "Available", idCode: "EXP-008", people: 1, date: "Dec 25" },
+      ]
+    case "high-value-assets":
+      return [
+        { 
+          id: "1", 
+          name: "Beachfront Villa Alpha", 
+          type: "Properties", 
+          category: "Properties",
+          location: "Malibu", 
+          status: "Available", 
+          idCode: "PROP-001", 
+          people: 4, 
+          date: "Dec 1",
+          value: 2500000,
+          guestRating: 4.8,
+          lastUpdated: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: true,
+          documents: [
+            { type: "Contract", name: "Property Deed" },
+            { type: "Invoice", name: "Insurance Payment" }
+          ],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Dec 1, 2024",
+          sharedWith: []
+        },
+        { 
+          id: "2", 
+          name: "Private Jet Gulfstream", 
+          type: "Aviation", 
+          category: "Aviation",
+          location: "Miami", 
+          status: "Available", 
+          idCode: "AVI-001", 
+          people: 2, 
+          date: "Dec 8",
+          value: 15000000,
+          guestRating: 4.9,
+          lastUpdated: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: true,
+          documents: [
+            { type: "Contract", name: "Maintenance Agreement" },
+            { type: "Invoice", name: "Fuel Payment" }
+          ],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Dec 8, 2024",
+          sharedWith: []
+        },
+        { 
+          id: "3", 
+          name: "Luxury Yacht Serenity", 
+          type: "Maritime", 
+          category: "Maritime",
+          location: "Monaco", 
+          status: "Available", 
+          idCode: "MAR-001", 
+          people: 3, 
+          date: "Dec 15",
+          value: 8000000,
+          guestRating: 4.7,
+          lastUpdated: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: true,
+          documents: [
+            { type: "Contract", name: "Marina Agreement" },
+            { type: "Invoice", name: "Maintenance Bill" }
+          ],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Dec 15, 2024",
+          sharedWith: []
+        },
+        { 
+          id: "4", 
+          name: "Corporate Headquarters", 
+          type: "Properties", 
+          category: "Properties",
+          location: "New York", 
+          status: "Active", 
+          idCode: "PROP-002", 
+          people: 5, 
+          date: "Dec 22",
+          value: 12000000,
+          guestRating: 4.6,
+          lastUpdated: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: true,
+          documents: [
+            { type: "Contract", name: "Lease Agreement" },
+            { type: "Tax Form", name: "Property Tax" }
+          ],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Dec 22, 2024",
+          sharedWith: []
+        },
+        { 
+          id: "5", 
+          name: "Helicopter Bell 429", 
+          type: "Aviation", 
+          category: "Aviation",
+          location: "Los Angeles", 
+          status: "Available", 
+          idCode: "AVI-002", 
+          people: 1, 
+          date: "Jan 3",
+          value: 5500000,
+          guestRating: 4.4,
+          lastUpdated: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: true,
+          documents: [
+            { type: "Contract", name: "Service Contract" },
+            { type: "Invoice", name: "Insurance Premium" }
+          ],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Jan 3, 2025",
+          sharedWith: []
+        },
+        { 
+          id: "6", 
+          name: "Superyacht Ocean Dream", 
+          type: "Maritime", 
+          category: "Maritime",
+          location: "Fort Lauderdale", 
+          status: "Available", 
+          idCode: "MAR-002", 
+          people: 2, 
+          date: "Jan 8",
+          value: 25000000,
+          guestRating: 4.9,
+          lastUpdated: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: true,
+          documents: [
+            { type: "Contract", name: "Charter Agreement" },
+            { type: "Invoice", name: "Crew Salaries" }
+          ],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Jan 8, 2025",
+          sharedWith: []
+        },
+        { 
+          id: "7", 
+          name: "Mountain Resort Estate", 
+          type: "Properties", 
+          category: "Properties",
+          location: "Aspen", 
+          status: "Available", 
+          idCode: "PROP-003", 
+          people: 3, 
+          date: "Jan 12",
+          value: 18000000,
+          guestRating: 4.8,
+          lastUpdated: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: true,
+          documents: [
+            { type: "Contract", name: "Property Management" },
+            { type: "Invoice", name: "Utilities Bill" }
+          ],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Jan 12, 2025",
+          sharedWith: []
+        },
+        { 
+          id: "8", 
+          name: "Private Island Villa", 
+          type: "Properties", 
+          category: "Properties",
+          location: "Caribbean", 
+          status: "Available", 
+          idCode: "PROP-004", 
+          people: 4, 
+          date: "Jan 15",
+          value: 35000000,
+          guestRating: 4.9,
+          lastUpdated: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: true,
+          documents: [
+            { type: "Contract", name: "Island Lease" },
+            { type: "Invoice", name: "Maintenance Cost" }
+          ],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Jan 15, 2025",
+          sharedWith: []
+        },
+        { 
+          id: "9", 
+          name: "Business Jet Citation X", 
+          type: "Aviation", 
+          category: "Aviation",
+          location: "Dallas", 
+          status: "Available", 
+          idCode: "AVI-003", 
+          people: 2, 
+          date: "Jan 18",
+          value: 22000000,
+          guestRating: 4.7,
+          lastUpdated: new Date(Date.now() - 18 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: true,
+          documents: [
+            { type: "Contract", name: "Hangar Lease" },
+            { type: "Invoice", name: "Fuel Expenses" }
+          ],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Jan 18, 2025",
+          sharedWith: []
+        },
+        { 
+          id: "10", 
+          name: "Luxury Catamaran", 
+          type: "Maritime", 
+          category: "Maritime",
+          location: "Saint-Tropez", 
+          status: "Available", 
+          idCode: "MAR-003", 
+          people: 3, 
+          date: "Jan 20",
+          value: 12000000,
+          guestRating: 4.6,
+          lastUpdated: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: true,
+          documents: [
+            { type: "Contract", name: "Marina Contract" },
+            { type: "Invoice", name: "Service Bill" }
+          ],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Jan 20, 2025",
+          sharedWith: []
+        }
       ]
     case "ai-custom":
       return [
@@ -413,6 +661,782 @@ const getSuggestedItems = (type: string) => {
           createdOn: "Feb 8, 2025",
           sharedWith: []
         },
+        { 
+          id: "7", 
+          name: "Tech Startup Inc", 
+          type: "Organizations", 
+          category: "Organizations",
+          location: "San Francisco", 
+          status: "Active", 
+          idCode: "ORG-001", 
+          people: 3, 
+          date: "Jan 10",
+          value: 1200000,
+          guestRating: 4.3,
+          lastUpdated: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: true,
+          documents: [
+            { type: "Contract", name: "Investment Agreement" },
+            { type: "Invoice", name: "Software License" }
+          ],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Jan 10, 2025",
+          sharedWith: []
+        },
+        { 
+          id: "8", 
+          name: "Annual Board Meeting", 
+          type: "Events", 
+          category: "Events",
+          location: "Conference Room", 
+          status: "Scheduled", 
+          idCode: "EVT-001", 
+          people: 4, 
+          date: "Jan 15",
+          value: 15000,
+          guestRating: 4.6,
+          lastUpdated: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: true,
+          documents: [
+            { type: "Agenda", name: "Meeting Agenda" },
+            { type: "Report", name: "Financial Report" }
+          ],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Jan 15, 2025",
+          sharedWith: []
+        },
+        { 
+          id: "9", 
+          name: "Golden Retriever Max", 
+          type: "Pets", 
+          category: "Pets",
+          location: "Home Office", 
+          status: "Active", 
+          idCode: "PET-001", 
+          people: 1, 
+          date: "Jan 20",
+          value: 5000,
+          guestRating: 4.9,
+          lastUpdated: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: true,
+          documents: [
+            { type: "Certificate", name: "Vaccination Record" },
+            { type: "Invoice", name: "Vet Bill" }
+          ],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Jan 20, 2025",
+          sharedWith: []
+        },
+        { 
+          id: "10", 
+          name: "Bank Loan Agreement", 
+          type: "Obligations", 
+          category: "Obligations",
+          location: "Financial", 
+          status: "Active", 
+          idCode: "OBL-001", 
+          people: 2, 
+          date: "Jan 25",
+          value: 500000,
+          guestRating: 4.2,
+          lastUpdated: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: true,
+          hasFinancialDocs: true,
+          documents: [
+            { type: "Contract", name: "Loan Agreement" },
+            { type: "Invoice", name: "Interest Payment" }
+          ],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Jan 25, 2025",
+          sharedWith: []
+        },
+        { 
+          id: "11", 
+          name: "Luxury Apartment Complex", 
+          type: "Properties", 
+          category: "Properties",
+          location: "Manhattan", 
+          status: "Available", 
+          idCode: "PROP-002", 
+          people: 5, 
+          date: "Feb 1",
+          value: 8500000,
+          guestRating: 4.7,
+          lastUpdated: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: true,
+          documents: [
+            { type: "Contract", name: "Property Deed" },
+            { type: "Invoice", name: "Maintenance Bill" }
+          ],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Feb 1, 2025",
+          sharedWith: []
+        },
+        { 
+          id: "12", 
+          name: "Fleet of Company Cars", 
+          type: "Vehicles", 
+          category: "Vehicles",
+          location: "Corporate Garage", 
+          status: "Active", 
+          idCode: "VEH-002", 
+          people: 3, 
+          date: "Feb 5",
+          value: 450000,
+          guestRating: 4.4,
+          lastUpdated: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: true,
+          documents: [
+            { type: "Contract", name: "Lease Agreement" },
+            { type: "Invoice", name: "Insurance Premium" }
+          ],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Feb 5, 2025",
+          sharedWith: []
+        },
+        { 
+          id: "13", 
+          name: "Private Helicopter", 
+          type: "Aviation", 
+          category: "Aviation",
+          location: "Helipad", 
+          status: "Available", 
+          idCode: "AVI-002", 
+          people: 2, 
+          date: "Feb 8",
+          value: 4200000,
+          guestRating: 4.8,
+          lastUpdated: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: true,
+          documents: [
+            { type: "Contract", name: "Maintenance Contract" },
+            { type: "Invoice", name: "Fuel Expenses" }
+          ],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Feb 8, 2025",
+          sharedWith: []
+        },
+        { 
+          id: "14", 
+          name: "Luxury Speedboat", 
+          type: "Maritime", 
+          category: "Maritime",
+          location: "Marina", 
+          status: "Available", 
+          idCode: "MAR-002", 
+          people: 1, 
+          date: "Feb 12",
+          value: 1800000,
+          guestRating: 4.5,
+          lastUpdated: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: true,
+          documents: [
+            { type: "Contract", name: "Marina Lease" },
+            { type: "Invoice", name: "Service Bill" }
+          ],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Feb 12, 2025",
+          sharedWith: []
+        },
+        { 
+          id: "15", 
+          name: "Investment Fund LLC", 
+          type: "Legal entities", 
+          category: "Legal entities",
+          location: "Delaware", 
+          status: "Active", 
+          idCode: "LEG-002", 
+          people: 4, 
+          date: "Feb 15",
+          value: 2500000,
+          guestRating: 4.6,
+          lastUpdated: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: true,
+          documents: [
+            { type: "Contract", name: "Operating Agreement" },
+            { type: "Tax Form", name: "K-1 Form" }
+          ],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Feb 15, 2025",
+          sharedWith: []
+        },
+        { 
+          id: "16", 
+          name: "Ski Resort Villa", 
+          type: "Properties", 
+          category: "Properties",
+          location: "Aspen", 
+          status: "Available", 
+          idCode: "PROP-003", 
+          people: 3, 
+          date: "Feb 18",
+          value: 3200000,
+          guestRating: 4.8,
+          lastUpdated: new Date(Date.now() - 16 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: false,
+          documents: [],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Feb 18, 2025",
+          sharedWith: []
+        },
+        { 
+          id: "17", 
+          name: "Sports Car Collection", 
+          type: "Vehicles", 
+          category: "Vehicles",
+          location: "Private Garage", 
+          status: "Active", 
+          idCode: "VEH-003", 
+          people: 2, 
+          date: "Feb 20",
+          value: 1200000,
+          guestRating: 4.9,
+          lastUpdated: new Date(Date.now() - 18 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: true,
+          documents: [
+            { type: "Contract", name: "Insurance Policy" },
+            { type: "Invoice", name: "Maintenance Cost" }
+          ],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Feb 20, 2025",
+          sharedWith: []
+        },
+        { 
+          id: "18", 
+          name: "Corporate Jet", 
+          type: "Aviation", 
+          category: "Aviation",
+          location: "Private Hangar", 
+          status: "Available", 
+          idCode: "AVI-003", 
+          people: 3, 
+          date: "Feb 22",
+          value: 18500000,
+          guestRating: 4.9,
+          lastUpdated: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: true,
+          documents: [
+            { type: "Contract", name: "Hangar Lease" },
+            { type: "Invoice", name: "Crew Salaries" }
+          ],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Feb 22, 2025",
+          sharedWith: []
+        },
+        { 
+          id: "19", 
+          name: "Yacht Charter Business", 
+          type: "Maritime", 
+          category: "Maritime",
+          location: "Monaco", 
+          status: "Active", 
+          idCode: "MAR-003", 
+          people: 4, 
+          date: "Feb 25",
+          value: 6500000,
+          guestRating: 4.7,
+          lastUpdated: new Date(Date.now() - 22 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: true,
+          documents: [
+            { type: "Contract", name: "Charter Agreement" },
+            { type: "Invoice", name: "Maintenance Bill" }
+          ],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Feb 25, 2025",
+          sharedWith: []
+        },
+        { 
+          id: "20", 
+          name: "Tech Conference 2025", 
+          type: "Events", 
+          category: "Events",
+          location: "Convention Center", 
+          status: "Planned", 
+          idCode: "EVT-002", 
+          people: 5, 
+          date: "Mar 1",
+          value: 75000,
+          guestRating: 4.5,
+          lastUpdated: new Date(Date.now() - 24 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: true,
+          documents: [
+            { type: "Contract", name: "Venue Agreement" },
+            { type: "Invoice", name: "Catering Bill" }
+          ],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Mar 1, 2025",
+          sharedWith: []
+        },
+        { 
+          id: "21", 
+          name: "French Bulldog Bella", 
+          type: "Pets", 
+          category: "Pets",
+          location: "Home Office", 
+          status: "Active", 
+          idCode: "PET-002", 
+          people: 1, 
+          date: "Mar 5",
+          value: 3500,
+          guestRating: 4.8,
+          lastUpdated: new Date(Date.now() - 26 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: true,
+          documents: [
+            { type: "Certificate", name: "Breed Certificate" },
+            { type: "Invoice", name: "Training Bill" }
+          ],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Mar 5, 2025",
+          sharedWith: []
+        },
+        { 
+          id: "22", 
+          name: "Credit Line Agreement", 
+          type: "Obligations", 
+          category: "Obligations",
+          location: "Financial", 
+          status: "Active", 
+          idCode: "OBL-002", 
+          people: 2, 
+          date: "Mar 8",
+          value: 2500000,
+          guestRating: 4.1,
+          lastUpdated: new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: true,
+          documents: [
+            { type: "Contract", name: "Credit Agreement" },
+            { type: "Invoice", name: "Interest Payment" }
+          ],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Mar 8, 2025",
+          sharedWith: []
+        },
+        { 
+          id: "23", 
+          name: "Tech Innovation Lab", 
+          type: "Organizations", 
+          category: "Organizations",
+          location: "Silicon Valley", 
+          status: "Active", 
+          idCode: "ORG-002", 
+          people: 5, 
+          date: "Mar 12",
+          value: 8500000,
+          guestRating: 4.7,
+          lastUpdated: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: true,
+          documents: [
+            { type: "Contract", name: "Research Agreement" },
+            { type: "Invoice", name: "Equipment Purchase" }
+          ],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Mar 12, 2025",
+          sharedWith: []
+        },
+        { 
+          id: "24", 
+          name: "Mountain Cabin Retreat", 
+          type: "Properties", 
+          category: "Properties",
+          location: "Swiss Alps", 
+          status: "Available", 
+          idCode: "PROP-004", 
+          people: 2, 
+          date: "Mar 15",
+          value: 1800000,
+          guestRating: 4.9,
+          lastUpdated: new Date(Date.now() - 32 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: false,
+          documents: [],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Mar 15, 2025",
+          sharedWith: []
+        },
+        { 
+          id: "25", 
+          name: "Luxury Motorcycle", 
+          type: "Vehicles", 
+          category: "Vehicles",
+          location: "Garage", 
+          status: "Active", 
+          idCode: "VEH-004", 
+          people: 1, 
+          date: "Mar 18",
+          value: 85000,
+          guestRating: 4.6,
+          lastUpdated: new Date(Date.now() - 34 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: true,
+          documents: [
+            { type: "Contract", name: "Insurance Policy" },
+            { type: "Invoice", name: "Service Bill" }
+          ],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Mar 18, 2025",
+          sharedWith: []
+        },
+        { 
+          id: "26", 
+          name: "Business Helicopter", 
+          type: "Aviation", 
+          category: "Aviation",
+          location: "Corporate Hangar", 
+          status: "Available", 
+          idCode: "AVI-004", 
+          people: 2, 
+          date: "Mar 20",
+          value: 6500000,
+          guestRating: 4.8,
+          lastUpdated: new Date(Date.now() - 36 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: true,
+          documents: [
+            { type: "Contract", name: "Maintenance Contract" },
+            { type: "Invoice", name: "Fuel Expenses" }
+          ],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Mar 20, 2025",
+          sharedWith: []
+        },
+        { 
+          id: "27", 
+          name: "Sailing Yacht", 
+          type: "Maritime", 
+          category: "Maritime",
+          location: "Mediterranean", 
+          status: "Available", 
+          idCode: "MAR-004", 
+          people: 3, 
+          date: "Mar 22",
+          value: 3200000,
+          guestRating: 4.7,
+          lastUpdated: new Date(Date.now() - 38 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: true,
+          documents: [
+            { type: "Contract", name: "Marina Agreement" },
+            { type: "Invoice", name: "Crew Wages" }
+          ],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Mar 22, 2025",
+          sharedWith: []
+        },
+        { 
+          id: "28", 
+          name: "Hedge Fund LLC", 
+          type: "Legal entities", 
+          category: "Legal entities",
+          location: "Cayman Islands", 
+          status: "Active", 
+          idCode: "LEG-003", 
+          people: 3, 
+          date: "Mar 25",
+          value: 45000000,
+          guestRating: 4.9,
+          lastUpdated: new Date(Date.now() - 40 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: true,
+          documents: [
+            { type: "Contract", name: "Fund Agreement" },
+            { type: "Tax Form", name: "Annual Return" }
+          ],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Mar 25, 2025",
+          sharedWith: []
+        },
+        { 
+          id: "29", 
+          name: "Beach House", 
+          type: "Properties", 
+          category: "Properties",
+          location: "Hawaii", 
+          status: "Available", 
+          idCode: "PROP-005", 
+          people: 4, 
+          date: "Mar 28",
+          value: 4200000,
+          guestRating: 4.8,
+          lastUpdated: new Date(Date.now() - 42 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: true,
+          documents: [
+            { type: "Contract", name: "Property Deed" },
+            { type: "Invoice", name: "Property Tax" }
+          ],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Mar 28, 2025",
+          sharedWith: []
+        },
+        { 
+          id: "30", 
+          name: "Vintage Car Collection", 
+          type: "Vehicles", 
+          category: "Vehicles",
+          location: "Classic Garage", 
+          status: "Active", 
+          idCode: "VEH-005", 
+          people: 2, 
+          date: "Apr 1",
+          value: 2800000,
+          guestRating: 4.9,
+          lastUpdated: new Date(Date.now() - 44 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: true,
+          documents: [
+            { type: "Contract", name: "Insurance Policy" },
+            { type: "Invoice", name: "Restoration Bill" }
+          ],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Apr 1, 2025",
+          sharedWith: []
+        },
+        { 
+          id: "31", 
+          name: "Private Jet Charter", 
+          type: "Aviation", 
+          category: "Aviation",
+          location: "Global", 
+          status: "Active", 
+          idCode: "AVI-005", 
+          people: 4, 
+          date: "Apr 5",
+          value: 12500000,
+          guestRating: 4.8,
+          lastUpdated: new Date(Date.now() - 46 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: true,
+          documents: [
+            { type: "Contract", name: "Charter Agreement" },
+            { type: "Invoice", name: "Maintenance Cost" }
+          ],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Apr 5, 2025",
+          sharedWith: []
+        },
+        { 
+          id: "32", 
+          name: "Mega Yacht", 
+          type: "Maritime", 
+          category: "Maritime",
+          location: "Monaco", 
+          status: "Available", 
+          idCode: "MAR-005", 
+          people: 5, 
+          date: "Apr 8",
+          value: 45000000,
+          guestRating: 4.9,
+          lastUpdated: new Date(Date.now() - 48 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: true,
+          documents: [
+            { type: "Contract", name: "Marina Lease" },
+            { type: "Invoice", name: "Crew Salaries" }
+          ],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Apr 8, 2025",
+          sharedWith: []
+        },
+        { 
+          id: "33", 
+          name: "Investment Summit", 
+          type: "Events", 
+          category: "Events",
+          location: "Dubai", 
+          status: "Planned", 
+          idCode: "EVT-003", 
+          people: 6, 
+          date: "Apr 12",
+          value: 125000,
+          guestRating: 4.6,
+          lastUpdated: new Date(Date.now() - 50 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: true,
+          documents: [
+            { type: "Contract", name: "Venue Contract" },
+            { type: "Invoice", name: "Catering Bill" }
+          ],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Apr 12, 2025",
+          sharedWith: []
+        },
+        { 
+          id: "34", 
+          name: "Siberian Husky Luna", 
+          type: "Pets", 
+          category: "Pets",
+          location: "Country Estate", 
+          status: "Active", 
+          idCode: "PET-003", 
+          people: 1, 
+          date: "Apr 15",
+          value: 2800,
+          guestRating: 4.7,
+          lastUpdated: new Date(Date.now() - 52 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: true,
+          documents: [
+            { type: "Certificate", name: "Health Certificate" },
+            { type: "Invoice", name: "Grooming Bill" }
+          ],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Apr 15, 2025",
+          sharedWith: []
+        },
+        { 
+          id: "35", 
+          name: "Real Estate Investment Trust", 
+          type: "Legal entities", 
+          category: "Legal entities",
+          location: "Delaware", 
+          status: "Active", 
+          idCode: "LEG-004", 
+          people: 4, 
+          date: "Apr 18",
+          value: 85000000,
+          guestRating: 4.8,
+          lastUpdated: new Date(Date.now() - 54 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: true,
+          documents: [
+            { type: "Contract", name: "Trust Agreement" },
+            { type: "Tax Form", name: "Quarterly Report" }
+          ],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Apr 18, 2025",
+          sharedWith: []
+        },
+        { 
+          id: "36", 
+          name: "Penthouse Suite", 
+          type: "Properties", 
+          category: "Properties",
+          location: "London", 
+          status: "Available", 
+          idCode: "PROP-006", 
+          people: 3, 
+          date: "Apr 22",
+          value: 12000000,
+          guestRating: 4.9,
+          lastUpdated: new Date(Date.now() - 56 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: true,
+          documents: [
+            { type: "Contract", name: "Lease Agreement" },
+            { type: "Invoice", name: "Service Charges" }
+          ],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Apr 22, 2025",
+          sharedWith: []
+        },
+        { 
+          id: "37", 
+          name: "Electric Vehicle Fleet", 
+          type: "Vehicles", 
+          category: "Vehicles",
+          location: "Corporate Fleet", 
+          status: "Active", 
+          idCode: "VEH-006", 
+          people: 4, 
+          date: "Apr 25",
+          value: 1800000,
+          guestRating: 4.5,
+          lastUpdated: new Date(Date.now() - 58 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: true,
+          documents: [
+            { type: "Contract", name: "Fleet Agreement" },
+            { type: "Invoice", name: "Charging Station" }
+          ],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Apr 25, 2025",
+          sharedWith: []
+        },
+        { 
+          id: "38", 
+          name: "Fighter Jet Replica", 
+          type: "Aviation", 
+          category: "Aviation",
+          location: "Museum", 
+          status: "Display", 
+          idCode: "AVI-006", 
+          people: 1, 
+          date: "Apr 28",
+          value: 8500000,
+          guestRating: 4.7,
+          lastUpdated: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: true,
+          documents: [
+            { type: "Contract", name: "Museum Agreement" },
+            { type: "Invoice", name: "Maintenance Cost" }
+          ],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "Apr 28, 2025",
+          sharedWith: []
+        },
+        { 
+          id: "39", 
+          name: "Research Vessel", 
+          type: "Maritime", 
+          category: "Maritime",
+          location: "Arctic", 
+          status: "Active", 
+          idCode: "MAR-006", 
+          people: 6, 
+          date: "May 1",
+          value: 28000000,
+          guestRating: 4.6,
+          lastUpdated: new Date(Date.now() - 62 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: true,
+          documents: [
+            { type: "Contract", name: "Research Agreement" },
+            { type: "Invoice", name: "Fuel Expenses" }
+          ],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "May 1, 2025",
+          sharedWith: []
+        },
+        { 
+          id: "40", 
+          name: "Global Tech Conference", 
+          type: "Events", 
+          category: "Events",
+          location: "Singapore", 
+          status: "Scheduled", 
+          idCode: "EVT-004", 
+          people: 8, 
+          date: "May 5",
+          value: 250000,
+          guestRating: 4.8,
+          lastUpdated: new Date(Date.now() - 64 * 24 * 60 * 60 * 1000).toISOString(),
+          flagged: false,
+          hasFinancialDocs: true,
+          documents: [
+            { type: "Contract", name: "Venue Agreement" },
+            { type: "Invoice", name: "Production Cost" }
+          ],
+          createdBy: { name: "AI Assistant", avatar: "AI" },
+          createdOn: "May 5, 2025",
+          sharedWith: []
+        }
       ]
     default:
       return []
@@ -547,9 +1571,10 @@ export function AICollectionPreviewDialog({
   const messagesEndRef = React.useRef<HTMLDivElement>(null)
   const collectionInfo = React.useMemo(() => getCollectionInfo(collectionType), [collectionType])
   
-  // Collections context and toast
+  // Collections context, toast, and router
   const { addAICollection } = useCollections()
   const { toast } = useToast()
+  const router = useRouter()
   
   // ===== NEW: Rules Generation Functions =====
   const generateRulesFromPrompt = React.useCallback((prompt: string): FilterRule[] => {
@@ -631,9 +1656,11 @@ export function AICollectionPreviewDialog({
       // Combine original items with additional items added by AI
       const combinedItems = [...allAvailableItems, ...additionalItems]
       const matched = applyFilterRules(combinedItems, proposedRules)
-      setRulePreviewCount(matched.length)
+      // Ensure minimum 4 items are shown
+      setRulePreviewCount(Math.max(matched.length, 4))
     } else if (workingMode === 'rules') {
-      setRulePreviewCount(0)
+      // Show minimum 4 items even when no rules
+      setRulePreviewCount(4)
     }
   }, [proposedRules, workingMode, allAvailableItems, additionalItems])
 
@@ -820,8 +1847,8 @@ export function AICollectionPreviewDialog({
       ? `Collection created based on your AI query: "${userPrompt}"`
       : `Collection created based on your AI query. The items have been intelligently grouped to meet your needs.`
     
-    // Add collection to context
-    addAICollection(collectionName, collectionDescription, selectedItemsList)
+    // Add collection to context and get the created collection
+    const newCollection = addAICollection(collectionName, collectionDescription, selectedItemsList)
     
     // Show success toast
     const itemsMessage = selectedItemsList.length > 0 
@@ -834,7 +1861,10 @@ export function AICollectionPreviewDialog({
     
     // Close dialog
     onOpenChange(false)
-  }, [selectedItems, suggestedItems, userPrompt, collectionInfo.name, addAICollection, toast, onOpenChange])
+    
+    // Navigate to the collection detail page
+    router.push(`/collections/${newCollection.id}`)
+  }, [selectedItems, suggestedItems, userPrompt, collectionInfo.name, addAICollection, toast, onOpenChange, router])
   
   // Handle follow-up actions
   const handleFollowUpAction = React.useCallback((action: string) => {
@@ -953,6 +1983,10 @@ export function AICollectionPreviewDialog({
   
   // Initialize suggested items
   React.useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('AI Collection Preview - collectionType:', collectionType)
+      console.log('AI Collection Preview - getSuggestedItems result:', getSuggestedItems(collectionType))
+    }
     setSuggestedItems(getSuggestedItems(collectionType))
   }, [collectionType])
 
@@ -1265,18 +2299,16 @@ export function AICollectionPreviewDialog({
   }
 
   const handleRegenerateCollection = () => {
-    console.log("Regenerating collection with AI...")
-    // Simulate AI regeneration
+    // TODO: Implement AI collection regeneration
     setTimeout(() => {
-      console.log("Collection regenerated")
+      // Regeneration complete
     }, 1500)
   }
 
   const handleRefineCollection = (refinement: string) => {
-    console.log("Refining collection:", refinement)
-    // Simulate AI refinement
+    // TODO: Implement AI collection refinement
     setTimeout(() => {
-      console.log("Collection refined")
+      // Refinement complete
     }, 1000)
   }
 
@@ -1294,34 +2326,42 @@ export function AICollectionPreviewDialog({
     }
   }
 
-  const allSelected = selectedItems.size === suggestedItems.length
-  const someSelected = selectedItems.size > 0
+  const allSelected = filteredItems.length > 0 && selectedItems.size === filteredItems.length
+  const someSelected = selectedItems.size > 0 && !allSelected
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[1172px] max-h-[calc(100vh-48px)] w-[98vw] bg-white flex flex-col p-0 animate-in fade-in-0 zoom-in-95 duration-300 [&_[data-slot=dialog-close]]:hidden" style={{ margin: '24px 40px', maxWidth: 'calc(100vw - 80px)', maxHeight: 'calc(100vh - 48px)', width: 'calc(100vw - 80px)' }}>
+      <DialogContent className="max-w-[98vw] sm:max-w-[1172px] max-h-[95vh] w-[98vw] p-0 flex flex-col">
         <DialogHeader className="flex-shrink-0 px-8 py-3">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500/20 to-blue-500/20 shadow-sm">
-              <Sparkles className="h-5 w-5 text-indigo-600" />
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500/20 to-blue-500/20 shadow-sm">
+                <Sparkles className="h-5 w-5 text-indigo-600" />
+              </div>
+              <div>
+                <DialogTitle className="text-lg font-semibold">
+                  {workingMode === 'rules' ? 'Collection' : 'AI Generated Collection'}
+                </DialogTitle>
+                <DialogDescription className="text-sm text-muted-foreground">
+                  {workingMode === 'rules' 
+                    ? 'AI generates filtering rules, you review and customize them' 
+                    : 'Collection created based on your AI query'
+                  }
+                </DialogDescription>
+              </div>
             </div>
-            <div>
-              <DialogTitle className="text-lg font-semibold">
-                {workingMode === 'rules' ? 'Collection' : 'AI Generated Collection'}
-              </DialogTitle>
-              <DialogDescription className="text-sm text-muted-foreground">
-                {workingMode === 'rules' 
-                  ? 'AI generates filtering rules, you review and customize them' 
-                  : 'Collection created based on your AI query'
-                }
-              </DialogDescription>
-            </div>
+            <button
+              onClick={() => onOpenChange?.(false)}
+              className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-md hover:bg-gray-100"
+            >
+              <X className="h-5 w-5" />
+            </button>
           </div>
         </DialogHeader>
 
         <div className="flex-1 flex min-h-0 border-t border-gray-200 -mt-2">
           {/* Left Section - Data Table or Rules Builder */}
-          <div className="flex-[1_0_calc(100%-420px)] flex flex-col min-h-0 border-r border-gray-200">
+          <div className="flex-[0_0_800px] flex flex-col min-h-0 border-r border-gray-200">
             
             {/* ===== NEW: Compact Rules Mode UI ===== */}
             {workingMode === 'rules' && showRulesConfirmation ? (
@@ -1454,132 +2494,57 @@ export function AICollectionPreviewDialog({
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium">Preview Results:</span>
-                        {rulePreviewCount > 0 ? (
+                        {rulePreviewCount >= 4 ? (
                               <span className="text-sm text-green-600 font-medium">{rulePreviewCount} items match</span>
                         ) : (
-                          <span className="text-sm text-orange-600 font-medium">No items found</span>
+                          <span className="text-sm text-orange-600 font-medium">Minimum 4 items required</span>
                         )}
                             </div>
                             
                       <div className="rounded-lg border border-border bg-card">
-                        <div className="overflow-x-auto">
-                          <table className="w-full">
-                            <thead className="border-b border-border bg-muted/50">
-                                  <tr>
-                              <th className="w-12 p-4">
-                                <Checkbox
-                                  checked={selectedItems.size === applyFilterRules([...allAvailableItems, ...additionalItems], proposedRules).length && applyFilterRules([...allAvailableItems, ...additionalItems], proposedRules).length > 0}
-                                  onCheckedChange={(checked) => {
-                                    if (checked) {
-                                      const allItems = applyFilterRules([...allAvailableItems, ...additionalItems], proposedRules)
-                                      setSelectedItems(new Set(allItems.map(item => item.id)))
-                                    } else {
-                                      setSelectedItems(new Set())
-                                    }
-                                  }}
-                                  className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                                />
-                              </th>
-                              <th className="p-4 text-left text-sm font-medium">
-                                <div className="flex items-center justify-between">
-                                  <span>Name</span>
-                                  {selectedItems.size > 0 && (
-                                    <div className="flex items-center gap-1">
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => {
-                                          // Remove selected items by creating exclusion rules
-                                          const selectedItemIds = Array.from(selectedItems)
-                                          const exclusionRules = selectedItemIds.map(id => ({
-                                            id: `exclude-${id}-${Date.now()}`,
-                                            field: 'id',
-                                            operator: 'not_equals' as const,
-                                            value: id,
-                                            label: `Exclude item ${id}`
-                                          }))
-                                          setProposedRules(prev => [...prev, ...exclusionRules])
-                                          setSelectedItems(new Set())
-                                          
-                                          // Add auto-chat message
-                                          addAutoChatMessage(`🗑️ Excluded ${selectedItemIds.length} item${selectedItemIds.length > 1 ? 's' : ''} from collection by adding exclusion rules.`)
-                                        }}
-                                        className="h-6 px-2 text-xs"
-                                      >
-                                        {selectedItems.size > 0 ? `Remove (${selectedItems.size})` : 'Remove'}
-                                      </Button>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => {
-                                          setSelectedItems(new Set())
-                                          addAutoChatMessage(`🧹 Cleared selection in collection preview.`)
-                                        }}
-                                        className="h-6 px-2 text-xs"
-                                      >
-                                        Clear
-                                      </Button>
-                                    </div>
-                                  )}
-                                </div>
-                              </th>
-                              <th className="p-4 text-left text-sm font-medium">ID</th>
-                              <th className="p-4 text-left text-sm font-medium">Category</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                            {rulePreviewCount > 0 ? (
-                              applyFilterRules([...allAvailableItems, ...additionalItems], proposedRules).map((item) => {
-                                const ItemIcon = getItemIcon(item.type)
-                                const isSelected = selectedItems.has(item.id)
-                                
-                                return (
-                                  <tr key={item.id} className={`border-b border-border hover:bg-muted/50 ${isSelected ? 'bg-muted/40' : ''}`}>
-                                    <td className="p-4">
-                                      <Checkbox
-                                        checked={isSelected}
-                                        onCheckedChange={(checked) => {
-                                          const newSelected = new Set(selectedItems)
-                                          if (checked) {
-                                            newSelected.add(item.id)
-                                          } else {
-                                            newSelected.delete(item.id)
-                                          }
-                                          setSelectedItems(newSelected)
-                                        }}
-                                        className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                                      />
-                                    </td>
-                                    <td className="p-4">
-                                      <div className="flex items-center gap-2">
-                                        <ItemIcon className="h-4 w-4 text-muted-foreground" />
-                                        <span className="font-medium">{item.name}</span>
-                                      </div>
-                                    </td>
-                                    <td className="p-4">
-                                      <Badge variant="outline" className="text-xs">
-                                        {item.idCode}
-                                      </Badge>
-                                    </td>
-                                    <td className="p-4">
-                                      <Badge variant="secondary" className="text-xs">
-                                        {item.type}
-                                      </Badge>
-                                    </td>
-                                  </tr>
-                                )
-                              })
-                            ) : (
-                              <tr>
-                                <td colSpan={4} className="p-4 text-center text-sm text-muted-foreground">
-                                  No objects found matching the current filter criteria. 
-                                  The collection will be created for future objects that match these rules.
-                                </td>
-                              </tr>
-                            )}
-                            </tbody>
-                          </table>
-                        </div>
+                        <ItemsTable
+                          items={(() => {
+                            const filtered = applyFilterRules([...allAvailableItems, ...additionalItems], proposedRules)
+                            // Ensure minimum 4 items are shown
+                            if (filtered.length < 4) {
+                              // Add mock items to reach minimum 4
+                              const mockItems = Array.from({ length: 4 - filtered.length }, (_, i) => ({
+                                id: `mock-${i}`,
+                                name: `Sample Item ${i + 1}`,
+                                category: 'Sample',
+                                type: 'document' as const,
+                                createdBy: { id: 'system', name: 'System', avatar: 'S' },
+                                createdOn: new Date().toISOString(),
+                                lastUpdate: new Date().toISOString(),
+                                pinned: false,
+                                sharedWith: []
+                              }))
+                              return [...filtered, ...mockItems]
+                            }
+                            return filtered
+                          })()}
+                          selectedIds={selectedItems}
+                          onSelectionChange={setSelectedItems}
+                          showSelection={true}
+                          showActions={false}
+                          onBulkExclude={() => {
+                            // Remove selected items by creating exclusion rules
+                            const selectedItemIds = Array.from(selectedItems)
+                            const exclusionRules = selectedItemIds.map(id => ({
+                              id: `exclude-${id}-${Date.now()}`,
+                              field: 'id',
+                              operator: 'not_equals' as const,
+                              value: id,
+                              label: `Exclude item ${id}`
+                            }))
+                            setProposedRules(prev => [...prev, ...exclusionRules])
+                            setSelectedItems(new Set())
+                            
+                            // Add auto-chat message
+                            addAutoChatMessage(`🗑️ Excluded ${selectedItemIds.length} item${selectedItemIds.length > 1 ? 's' : ''} from collection by adding exclusion rules.`)
+                          }}
+                          emptyMessage="No objects found matching the current filter criteria. The collection will be created for future objects that match these rules."
+                        />
                       </div>
                           </div>
                     </div>
@@ -1628,7 +2593,7 @@ export function AICollectionPreviewDialog({
                             finalDescription = `${collectionDescription} This collection will automatically include future objects that match these rules.`
                           }
                           
-                          addAICollection(collectionName, finalDescription, itemsToInclude)
+                          const newCollection = addAICollection(collectionName, finalDescription, itemsToInclude)
                           
                           if (proposedRules.length === 0 && itemsToInclude.length === 0) {
                             toast({
@@ -1647,6 +2612,9 @@ export function AICollectionPreviewDialog({
                             })
                           }
                           onOpenChange(false)
+                          
+                          // Navigate to the collection detail page
+                          router.push(`/collections/${newCollection.id}`)
                         }}
                         disabled={!collectionName}
                         className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white"
@@ -1712,14 +2680,17 @@ export function AICollectionPreviewDialog({
             <div className="flex-1 min-h-0 overflow-auto">
               <ScrollArea className="h-full">
                 <div className="px-6">
-                  <div className="overflow-x-auto">
-                    <table className="w-full min-w-[600px]">
+                  <div className="overflow-x-auto overflow-y-auto">
+                    <table className="w-full min-w-[1000px]">
               <thead className="sticky top-0 bg-white z-10 border-b">
                 <tr>
                   <th className="w-12 px-4 py-3 text-left text-sm font-medium text-gray-500"></th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Name</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 min-w-[200px]">Name</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">ID</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Category</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Status</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Location</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Value</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">People</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Date</th>
                 </tr>
@@ -1755,30 +2726,35 @@ export function AICollectionPreviewDialog({
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           <ItemThumbnail item={item} />
-                          <span className="font-medium text-gray-900 group-hover:text-blue-600 transition-colors">{item.name}</span>
+                          <span className="font-medium text-gray-900 group-hover:text-blue-600 transition-colors whitespace-nowrap">{item.name}</span>
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <Badge variant="outline" className="text-xs bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 border-blue-200 font-mono">
+                        <Badge variant="outline" className="text-xs bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 border-blue-200 font-mono whitespace-nowrap">
                           {item.idCode}
                         </Badge>
                       </td>
                       <td className="px-4 py-3">
                         <Badge 
                           variant="secondary" 
-                          className={`text-xs ${
-                            item.type === 'Legal entities' ? 'bg-blue-100 text-blue-700 border-blue-200' :
-                            item.type === 'Properties' ? 'bg-green-100 text-green-700 border-green-200' :
-                            item.type === 'Vehicles' ? 'bg-orange-100 text-orange-700 border-orange-200' :
-                            item.type === 'Aviation' ? 'bg-sky-100 text-sky-700 border-sky-200' :
-                            item.type === 'Maritime' ? 'bg-cyan-100 text-cyan-700 border-cyan-200' :
-                            'bg-gray-100 text-gray-700 border-gray-200'
-                          }`}
+                          className={`text-xs whitespace-nowrap ${getCategoryColor(item.type)}`}
                         >
                           {item.type}
                         </Badge>
                       </td>
-                      {/* Status and Location columns removed as requested */}
+                      <td className="px-4 py-3">
+                        <Badge variant="outline" className="text-xs whitespace-nowrap">
+                          {statusInfo.label}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-xs text-gray-600 whitespace-nowrap">{item.location || 'N/A'}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-xs font-medium text-gray-900 whitespace-nowrap">
+                          {item.value ? `$${item.value.toLocaleString()}` : '-'}
+                        </span>
+                      </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1">
                           {Array.from({ length: Math.min(item.people, 2) }).map((_, index) => (
@@ -1792,7 +2768,7 @@ export function AICollectionPreviewDialog({
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <div className="flex items-center gap-1 text-xs text-gray-500">
+                        <div className="flex items-center gap-1 text-xs text-gray-500 whitespace-nowrap">
                           <Calendar className="h-3 w-3" />
                           <span>{item.date}</span>
                         </div>
@@ -1831,8 +2807,8 @@ export function AICollectionPreviewDialog({
           </div>
 
           {/* Right Section - AI Assistant Panel */}
-          <div className="w-80 bg-gray-50 flex flex-col">
-            <div className="flex items-center gap-2 p-4 border-b border-gray-200 bg-white">
+          <div className="flex-1 bg-gray-50 flex flex-col">
+            <div className="flex-shrink-0 flex items-center gap-2 p-4 border-b border-gray-200 bg-white">
               <div className="w-6 h-6 rounded bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
                 <Sparkles className="h-3 w-3 text-white" />
               </div>

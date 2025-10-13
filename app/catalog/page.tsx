@@ -1,12 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import React, { useState } from "react"
 import { AppSidebar } from "@/components/app-sidebar"
 import { CatalogSidebar } from "@/components/catalog-sidebar"
 import { CatalogView } from "@/components/catalog-view"
 import { CollectionsDashboard } from "@/components/collections-dashboard"
 import { CollectionDetailPanel } from "@/components/collection-detail-panel"
-import { CollectionsProvider } from "@/contexts/collections-context"
 
 export default function CatalogPage() {
   const [activeView, setActiveView] = useState("dashboard")
@@ -14,11 +13,24 @@ export default function CatalogPage() {
   const [pinnedCount, setPinnedCount] = useState(0)
   const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null)
 
+  // Reset to dashboard when coming from collection detail page
+  React.useEffect(() => {
+    // If we're on catalog page and no specific view is set, default to dashboard
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search)
+      const view = urlParams.get('view')
+      if (view) {
+        setActiveView(view)
+      } else {
+        setActiveView("dashboard")
+      }
+    }
+  }, [])
+
   const handleOrganizationChange = (organizationId: string) => {
     setSelectedOrganization(organizationId)
-    console.log("Selected organization:", organizationId)
     
-    // Метадані організацій
+    // Organization metadata (for future features)
     const orgMetadata = {
       "onb": {
         name: "Oil Nut Bay",
@@ -57,45 +69,38 @@ export default function CatalogPage() {
       }
     }
     
+    // TODO: Use selectedOrg metadata to update UI (theme, stats display, etc.)
     const selectedOrg = orgMetadata[organizationId as keyof typeof orgMetadata]
-    if (selectedOrg) {
-      console.log("Organization metadata:", selectedOrg)
-      console.log(`Theme: ${selectedOrg.theme}, Color: ${selectedOrg.color}`)
-      console.log(`Stats: ${selectedOrg.stats.totalObjects} objects, ${selectedOrg.stats.collections} collections`)
-      console.log(`Characteristics: ${selectedOrg.characteristics.join(", ")}`)
-    }
   }
 
   return (
-    <CollectionsProvider>
-      <div className="flex h-screen">
-        <AppSidebar />
-        <CatalogSidebar 
-          activeView={activeView} 
-          onViewChange={setActiveView}
-          onOrganizationChange={handleOrganizationChange}
-          pinnedCount={pinnedCount}
-          onCollectionSelect={setSelectedCollectionId}
-          selectedCollectionId={selectedCollectionId}
-        />
-        <main className="flex-1 overflow-hidden">
-          {selectedCollectionId ? (
-            <CollectionDetailPanel 
-              collectionId={selectedCollectionId}
-              onClose={() => setSelectedCollectionId(null)}
-            />
-          ) : activeView === "dashboard" ? (
-            <div className="h-full overflow-auto bg-background p-6">
-              <CollectionsDashboard />
-            </div>
-          ) : (
-            <CatalogView 
-              activeView={activeView} 
-              onPinnedCountChange={setPinnedCount}
-            />
-          )}
-        </main>
-      </div>
-    </CollectionsProvider>
+    <div className="flex h-screen">
+      <AppSidebar />
+      <CatalogSidebar 
+        activeView={activeView} 
+        onViewChange={setActiveView}
+        onOrganizationChange={handleOrganizationChange}
+        pinnedCount={pinnedCount}
+        onCollectionSelect={setSelectedCollectionId}
+        selectedCollectionId={selectedCollectionId}
+      />
+      <main className="flex-1 overflow-hidden">
+        {selectedCollectionId ? (
+          <CollectionDetailPanel 
+            collectionId={selectedCollectionId}
+            onClose={() => setSelectedCollectionId(null)}
+          />
+        ) : activeView === "dashboard" ? (
+          <div className="h-full overflow-auto bg-background p-6">
+            <CollectionsDashboard />
+          </div>
+        ) : (
+          <CatalogView 
+            activeView={activeView} 
+            onPinnedCountChange={setPinnedCount}
+          />
+        )}
+      </main>
+    </div>
   )
 }

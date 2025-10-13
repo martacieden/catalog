@@ -60,7 +60,7 @@ export function CollectionSettingsDialog({
   }
 
   const handleSave = () => {
-    console.log("[v0] Saving collection metadata:", metadata)
+    // TODO: Save collection metadata to context/API
     setOpen(false)
   }
 

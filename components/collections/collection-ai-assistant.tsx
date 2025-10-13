@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Collection, AIInsight } from "@/types/collection"
+import { Collection, CollectionAIInsight } from "@/types/collection"
 import { useCollections } from "@/contexts/collections-context"
 import { generateInsights, generateQuickActions, generateContextualResponse } from "@/lib/ai-insights-generator"
 import { AIChat } from "@/components/ai-chat"
@@ -79,23 +79,23 @@ export function CollectionAIAssistant({
     return generateQuickActions(collection)
   }, [collection])
 
-  // Обробка повідомлень від AI
+  // AI message processing
   const handleAIMessage = (message: string) => {
-    // Логіка обробки повідомлень
-    console.log("AI Message:", message)
+    // AI message processing logic
+    // TODO: Implement AI message handling
   }
 
-  const handleInsightAction = (insight: AIInsight) => {
+  const handleInsightAction = (insight: CollectionAIInsight) => {
     if (insight.onAction) {
       insight.onAction()
     } else {
-      // Дефолтні дії на основі типу інсайту
+      // Default actions based on insight type
       switch (insight.id) {
         case "enable-autosync":
           // TODO: Enable auto-sync
           toast({
-            title: "Функція в розробці",
-            description: "Цей функціонал буде доступний найближчим часом",
+            title: "Coming soon",
+            description: "This functionality will be available soon",
           })
           break
         case "add-rules":
@@ -130,13 +130,13 @@ export function CollectionAIAssistant({
         break
       default:
         toast({
-          title: "Функція в розробці",
-          description: "Цей функціонал буде доступний найближчим часом",
+          title: "Coming soon",
+          description: "This functionality will be available soon",
         })
     }
   }
 
-  const getInsightIcon = (type: AIInsight["type"]) => {
+  const getInsightIcon = (type: CollectionAIInsight["type"]) => {
     switch (type) {
       case "suggestion":
         return <Lightbulb className="h-5 w-5 text-yellow-600" />
@@ -151,7 +151,7 @@ export function CollectionAIAssistant({
     }
   }
 
-  const getInsightBgColor = (type: AIInsight["type"]) => {
+  const getInsightBgColor = (type: CollectionAIInsight["type"]) => {
     switch (type) {
       case "suggestion":
         return "bg-yellow-50 border-yellow-200"

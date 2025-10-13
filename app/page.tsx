@@ -19,7 +19,7 @@ export default function Page() {
               <Settings className="h-5 w-5" />
             </Button>
             <Avatar className="h-8 w-8">
-              <AvatarImage src="/placeholder.svg?height=32&width=32" />
+              <AvatarImage src="/placeholder.svg" />
               <AvatarFallback>JD</AvatarFallback>
             </Avatar>
           </div>

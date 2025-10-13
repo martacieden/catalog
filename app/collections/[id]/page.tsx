@@ -11,7 +11,9 @@ export default function CollectionDetailPage() {
   const { getCollectionById } = useCollections()
   
   const collectionId = params.id as string
+  console.log('🔍 Collection page - ID:', collectionId)
   const collection = getCollectionById(collectionId)
+  console.log('🔍 Collection page - Found collection:', !!collection)
 
   const handleClose = () => {
     router.push("/catalog")
@@ -31,7 +33,7 @@ export default function CollectionDetailPage() {
               onClick={handleClose}
               className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
             >
-              Back to Catalog
+              Back to Dashboard
             </button>
           </div>
         </main>

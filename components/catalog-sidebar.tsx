@@ -33,6 +33,8 @@ import { ManualCollectionDialog } from "@/components/manual-collection-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useCollections } from "@/contexts/collections-context"
+import { EmptyState } from "@/components/ui/empty-state"
+import { MOCK_CATALOG_ITEMS } from "@/lib/mock-data"
 
 // Import icons for collection display
 const ALL_ICONS = [
@@ -85,71 +87,6 @@ interface Organization {
   }
   characteristics: string[]
 }
-
-const mockItems = [
-  {
-    id: "LEG-129",
-    name: "Sapphire Holdings LLC",
-    category: "Legal entities",
-  },
-  {
-    id: "LEG-111",
-    name: "Starlight Philanthropies",
-    category: "Legal entities",
-  },
-  {
-    id: "PROP-045",
-    name: "Sunset Villa Estate",
-    category: "Properties",
-  },
-  {
-    id: "PROP-078",
-    name: "Downtown Office Complex",
-    category: "Properties",
-  },
-  {
-    id: "VEH-234",
-    name: "Tesla Model S",
-    category: "Vehicles",
-  },
-  {
-    id: "VEH-567",
-    name: "Mercedes-Benz S-Class",
-    category: "Vehicles",
-  },
-  {
-    id: "AVI-012",
-    name: "Gulfstream G650",
-    category: "Aviation",
-  },
-  {
-    id: "MAR-089",
-    name: "Oceanic Dream Yacht",
-    category: "Maritime",
-  },
-  {
-    id: "ORG-456",
-    name: "Tech Innovations Inc",
-    category: "Organizations",
-  },
-  {
-    id: "EVT-789",
-    name: "Annual Shareholders Meeting",
-    category: "Events",
-  },
-  {
-    id: "PET-123",
-    name: "Golden Retriever - Max",
-    category: "Pets",
-  },
-  {
-    id: "OBL-901",
-    name: "Bank Loan Agreement",
-    category: "Obligations",
-  },
-]
-
-// Remove this line - we'll use context instead
 
 const organizations: Organization[] = [
   {
@@ -250,11 +187,6 @@ export function CatalogSidebar({
   const sharedCollections: any[] = []
 
   const currentOrganization = organizations.find(org => org.id === selectedOrganization) || organizations[0]
-  
-  // Debug logs
-  console.log("Organizations:", organizations)
-  console.log("Selected organization:", selectedOrganization)
-  console.log("Current organization:", currentOrganization)
 
   return (
     <div className="flex h-screen w-56 min-w-[200px] max-w-[240px] flex-col border-r border-sidebar-border bg-sidebar">
@@ -294,7 +226,7 @@ export function CatalogSidebar({
             onClick={() => onViewChange?.("dashboard")}
           >
             <LayoutDashboard className="mr-2 h-4 w-4 flex-shrink-0" />
-            <span className="truncate">Dashboard</span>
+            <span className="truncate">Overview</span>
           </Button>
 
           <Button
@@ -353,7 +285,7 @@ export function CatalogSidebar({
                   </button>
                 }
                 onCollectionCreated={() => {
-                  // Колекція буде автоматично оновлена через контекст
+                  // Collection will be automatically updated via context
                 }}
               />
             </div>
@@ -361,11 +293,13 @@ export function CatalogSidebar({
             {collectionsExpanded && (
               <>
                 {collections.length === 0 ? (
-                  <div className="px-2 py-6 text-center">
-                    <Folder className="mx-auto mb-2 h-8 w-8 text-muted-foreground/50" />
-                    <p className="mb-1 text-sm font-medium text-muted-foreground">No collections yet</p>
-                    <p className="mb-4 text-xs text-muted-foreground/70">Group items into collections to organize your objects</p>
-                  </div>
+                  <EmptyState
+                    icon={Folder}
+                    title="No collections yet"
+                    description="Group items into collections to organize your objects"
+                    size="sm"
+                    className="px-2"
+                  />
                 ) : (
                   <div className="space-y-1">
                     {collections.map((collection) => (
@@ -381,81 +315,10 @@ export function CatalogSidebar({
                   </div>
                 )}
 
-                <div className="mt-2 space-y-1">
-                  <ManualCollectionDialog
-                    trigger={
-                      <Button variant="outline" className="w-full justify-start text-sm font-normal border-primary/20 hover:border-primary/40">
-                        <Plus className="mr-2 h-4 w-4" />
-                        New collection
-                      </Button>
-                    }
-                  />
-                </div>
               </>
             )}
           </div>
 
-          {/* Shared with You Section */}
-          <div className="mt-6">
-            <div className="mb-2 flex w-full items-center justify-between px-2 hover:bg-accent/50 rounded-md py-1 transition-colors group">
-              <button
-                onClick={() => setSharedExpanded(!sharedExpanded)}
-                className="flex items-center gap-2 flex-1"
-              >
-                <h3 className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  <Users className="h-3 w-3" />
-                  Shared with You
-                </h3>
-                {sharedExpanded ? (
-                  <ChevronDown className="h-3 w-3 text-muted-foreground" />
-                ) : (
-                  <ChevronRight className="h-3 w-3 text-muted-foreground" />
-                )}
-              </button>
-              <ManualCollectionDialog
-                trigger={
-                  <button
-                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-accent rounded-sm"
-                    title="Create new collection"
-                  >
-                    <Plus className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-                  </button>
-                }
-                onCollectionCreated={() => {
-                  // Колекція буде автоматично оновлена через контекст
-                }}
-              />
-            </div>
-
-            {sharedExpanded && (
-              <>
-                {sharedCollections.length === 0 ? (
-                  <div className="px-2 py-6 text-center">
-                    <Users className="mx-auto mb-2 h-8 w-8 text-muted-foreground/50" />
-                    <p className="mb-1 text-sm font-medium text-muted-foreground">No shared collections</p>
-                    <p className="text-xs text-muted-foreground/70">Collections shared with you will appear here</p>
-                  </div>
-                ) : (
-                  <div className="space-y-1">
-                    {sharedCollections.map((collection) => (
-                      <Button
-                        key={collection.id}
-                        variant={activeView === collection.id ? "secondary" : "ghost"}
-                        className="w-full justify-start text-sm font-normal"
-                        onClick={() => handleCollectionClick(collection.id)}
-                      >
-                        <Folder className="mr-2 h-4 w-4" />
-                        <span className="flex-1 truncate text-left">{collection.name}</span>
-                        <Badge variant="secondary" className="ml-2 text-xs">
-                          {collection.count}
-                        </Badge>
-                      </Button>
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-          </div>
         </div>
       </ScrollArea>
     </div>

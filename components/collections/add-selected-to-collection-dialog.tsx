@@ -42,29 +42,29 @@ export function AddSelectedToCollectionDialog({ trigger, selectedItemIds }: AddS
     
     const collection = getCollectionById(collectionId)
     
-    // Перевірка на дублікати перед додаванням
+    // Check for duplicates before adding
     const existingIds = new Set((collection?.items || []).map(i => i.id))
     const newItems = selectedItems.filter(item => !existingIds.has(item.id))
     const duplicateCount = selectedItems.length - newItems.length
     
     bulkAddItems(collectionId, selectedItems)
     
-    // Показуємо повідомлення залежно від результату
+    // Show message based on result
     if (duplicateCount === 0) {
       toast({
-        title: "Елементи додано",
-        description: `Додано ${newItems.length} елементів до колекції "${collection?.name}".`,
+        title: "Items added",
+        description: `Added ${newItems.length} item${newItems.length > 1 ? 's' : ''} to collection "${collection?.name}".`,
       })
     } else if (newItems.length === 0) {
       toast({
-        title: "Елементи вже в колекції",
-        description: `Усі ${selectedItems.length} елементів вже є в колекції "${collection?.name}".`,
+        title: "Items already in collection",
+        description: `All ${selectedItems.length} item${selectedItems.length > 1 ? 's are' : ' is'} already in collection "${collection?.name}".`,
         variant: "default",
       })
     } else {
       toast({
-        title: "Елементи додано",
-        description: `Додано ${newItems.length} нових елементів. ${duplicateCount} елементів вже були в колекції "${collection?.name}".`,
+        title: "Items added",
+        description: `Added ${newItems.length} new item${newItems.length > 1 ? 's' : ''}. ${duplicateCount} item${duplicateCount > 1 ? 's were' : ' was'} already in collection "${collection?.name}".`,
       })
     }
     

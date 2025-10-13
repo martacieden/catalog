@@ -65,16 +65,16 @@ export function SyncPreviewDialog({
       await syncCollection(collectionId)
       
       toast({
-        title: "Синхронізація завершена",
-        description: `Додано: ${preview.changes.added}, Видалено: ${preview.changes.removed}`,
+        title: "Sync completed",
+        description: `Added: ${preview.changes.added}, Removed: ${preview.changes.removed}`,
       })
 
       onConfirm?.()
       onOpenChange(false)
     } catch (error) {
       toast({
-        title: "Помилка синхронізації",
-        description: "Не вдалося синхронізувати колекцію. Спробуйте ще раз.",
+        title: "Sync error",
+        description: "Failed to sync collection. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -185,19 +185,19 @@ export function SyncPreviewDialog({
           <div className="grid grid-cols-4 gap-4">
             <div className="text-center">
               <div className="text-2xl font-bold">{preview.currentCount}</div>
-              <div className="text-xs text-muted-foreground">Поточна кількість</div>
+              <div className="text-xs text-muted-foreground">Current count</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-green-600">+{preview.changes.added}</div>
-              <div className="text-xs text-muted-foreground">Буде додано</div>
+              <div className="text-xs text-muted-foreground">Will be added</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-red-600">-{preview.changes.removed}</div>
-              <div className="text-xs text-muted-foreground">Буде видалено</div>
+              <div className="text-xs text-muted-foreground">Will be removed</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-blue-600">{preview.newCount}</div>
-              <div className="text-xs text-muted-foreground">Нова кількість</div>
+              <div className="text-xs text-muted-foreground">New count</div>
             </div>
           </div>
         </div>
@@ -268,11 +268,11 @@ export function SyncPreviewDialog({
         {/* Footer */}
         <DialogFooter className="px-6 py-4 border-t">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Скасувати
+            Cancel
           </Button>
           <Button onClick={handleSync} disabled={!hasChanges || isLoading}>
             <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
-            {isLoading ? "Синхронізація..." : "Застосувати зміни"}
+            {isLoading ? "Syncing..." : "Apply changes"}
           </Button>
         </DialogFooter>
       </DialogContent>

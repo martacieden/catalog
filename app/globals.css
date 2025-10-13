@@ -125,3 +125,48 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  @keyframes pulse-subtle {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.95;
+    }
+  }
+  
+  .animate-pulse-subtle {
+    animation: pulse-subtle 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes grow {
+    from {
+      transform: scaleY(0);
+    }
+    to {
+      transform: scaleY(1);
+    }
+  }
+
+  .animate-grow {
+    animation: grow 0.6s ease-out forwards;
+    transform-origin: bottom;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+
+  .ai-gradient:hover {
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(99, 102, 241, 0.1),
+      transparent
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
+}

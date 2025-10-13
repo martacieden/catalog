@@ -129,8 +129,8 @@ export function CollectionCard({
       onSyncNow(collection)
     } else {
       toast({
-        title: "Синхронізація",
-        description: "Функція синхронізації буде доступна в деталях колекції",
+        title: "Sync",
+        description: "Sync functionality is available in collection details",
       })
     }
   }
@@ -159,11 +159,32 @@ export function CollectionCard({
       )
     }
 
+    // Спеціальні іконки для різних типів колекцій
+    if (collection.name.toLowerCase().includes('business') || collection.name.toLowerCase().includes('ideas')) {
+      return <span className="text-2xl">💡</span>
+    }
+    
+    if (collection.name.toLowerCase().includes('legal') || collection.name.toLowerCase().includes('document')) {
+      return <span className="text-2xl">📄</span>
+    }
+
     if (collection.type === "ai-generated") {
       return <Sparkles className="h-5 w-5 text-indigo-600" />
     }
 
     return <Folder className="h-5 w-5 text-blue-600" />
+  }
+
+  const getCategoryColor = (category: string) => {
+    const colors = {
+      'Legal entities': 'bg-blue-100 text-blue-700 border-blue-200',
+      'Properties': 'bg-green-100 text-green-700 border-green-200',
+      'Vehicles': 'bg-orange-100 text-orange-700 border-orange-200',
+      'Business': 'bg-indigo-100 text-indigo-700 border-indigo-200',
+      'Aviation': 'bg-sky-100 text-sky-700 border-sky-200',
+      'Maritime': 'bg-cyan-100 text-cyan-700 border-cyan-200'
+    }
+    return colors[category as keyof typeof colors] || 'bg-gray-100 text-gray-700 border-gray-200'
   }
 
   const isArchived = collection.tags?.includes("Archived")
@@ -320,9 +341,9 @@ export function CollectionCard({
     >
       {/* Header with Icon */}
       <div
-        className={`h-24 p-4 border-b border-gray-100 ${
+        className={`h-24 p-4 border-b border-gray-100 relative overflow-hidden ${
           collection.type === "ai-generated"
-            ? "bg-gradient-to-br from-indigo-50 to-blue-50"
+            ? "bg-gradient-to-br from-indigo-50 to-blue-50 ai-gradient"
             : "bg-gradient-to-br from-blue-50 to-cyan-50"
         }`}
       >
@@ -424,7 +445,7 @@ export function CollectionCard({
 
         {/* Badges & Shared */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 flex-wrap">
             {collection.type === "ai-generated" && (
               <Badge variant="secondary" className="text-xs bg-indigo-50 text-indigo-700 border-indigo-200">
                 <Sparkles className="h-3 w-3 mr-1" />
@@ -434,6 +455,17 @@ export function CollectionCard({
             {collection.autoSync && (
               <Badge variant="secondary" className="text-xs bg-green-50 text-green-700 border-green-200">
                 Auto-sync
+              </Badge>
+            )}
+            {isArchived && (
+              <Badge variant="secondary" className="text-xs bg-gray-50 text-gray-600 border-gray-200">
+                <Archive className="h-3 w-3 mr-1" />
+                Archived
+              </Badge>
+            )}
+            {collection.category && (
+              <Badge variant="outline" className={`text-xs ${getCategoryColor(collection.category)}`}>
+                {collection.category}
               </Badge>
             )}
           </div>

@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import {
   Search,
   Filter,
@@ -30,6 +31,7 @@ import {
   Columns,
   Grid3X3,
   Square,
+  Diamond,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -43,12 +45,17 @@ import { AddItemModal } from "@/components/collections/add-item-modal"
 import { AICollectionPreviewDialog } from "@/components/ai-collection-preview-dialog"
 import { SearchToCollection } from "@/components/search-to-collection"
 import { getUnsplashImageUrl, getRandomUnsplashImage } from "@/lib/unsplash"
-import { ShareDialog } from "@/components/share-dialog"
+import { ShareModal } from "@/components/collections/share-modal"
 import { CollectionSettingsDialog } from "@/components/collection-settings-dialog"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useCollections } from "@/contexts/collections-context"
 import { useToast } from "@/hooks/use-toast"
+import { EmptyState } from "@/components/ui/empty-state"
+import { MOCK_CATALOG_ITEMS, type MockCatalogItem } from "@/lib/mock-data"
+import { AIRecommendationBanner } from "@/components/ai-recommendation-banner"
+import { AICollectionPreviewModal } from "@/components/ai-collection-preview-modal"
+import { highValueAssetsRecommendation, getRecommendationById } from "@/lib/ai-recommendations"
 
 
 interface CatalogViewProps {
@@ -56,172 +63,56 @@ interface CatalogViewProps {
   onPinnedCountChange?: (count: number) => void
 }
 
-const mockItems = [
-  {
-    id: "LEG-129",
-    name: "Sapphire Holdings LLC",
-    category: "Legal entities",
-    sharedWith: [
-      { name: "John Smith", avatar: "JS" },
-      { name: "Jane Doe", avatar: "JD" },
-      { name: "Bob Wilson", avatar: "BW" },
-    ],
-    createdBy: { name: "John Smith", avatar: "JS" },
-    createdOn: "Sep 20, 2024",
-    lastUpdate: "Sep 20, 2024",
-    pinned: false,
-  },
-  {
-    id: "LEG-111",
-    name: "Starlight Philanthropies",
-    category: "Legal entities",
-    sharedWith: [
-      { name: "Ember Bett", avatar: "EB" },
-      { name: "Alice Cooper", avatar: "AC" },
-      { name: "David Lee", avatar: "DL" },
-      { name: "Emma Stone", avatar: "ES" },
-    ],
-    createdBy: { name: "Ember Bett", avatar: "EB" },
-    createdOn: "Aug 3, 2024",
-    lastUpdate: "Aug 3, 2024",
-    pinned: false,
-  },
-  {
-    id: "PROP-045",
-    name: "Sunset Villa Estate",
-    category: "Properties",
-    sharedWith: [{ name: "Sarah Miller", avatar: "SM" }],
-    createdBy: { name: "Sarah Miller", avatar: "SM" },
-    createdOn: "Oct 15, 2024",
-    lastUpdate: "Oct 15, 2024",
-    pinned: false,
-  },
-  {
-    id: "PROP-078",
-    name: "Downtown Office Complex",
-    category: "Properties",
-    sharedWith: [
-      { name: "Tom Brown", avatar: "TB" },
-      { name: "Lisa White", avatar: "LW" },
-    ],
-    createdBy: { name: "Tom Brown", avatar: "TB" },
-    createdOn: "Nov 2, 2024",
-    lastUpdate: "Nov 2, 2024",
-    pinned: false,
-  },
-  {
-    id: "VEH-234",
-    name: "Tesla Model S",
-    category: "Vehicles",
-    sharedWith: [{ name: "James Levin", avatar: "JL" }],
-    createdBy: { name: "James Levin", avatar: "JL" },
-    createdOn: "Dec 1, 2024",
-    lastUpdate: "Dec 1, 2024",
-    pinned: false,
-  },
-  {
-    id: "VEH-567",
-    name: "Mercedes-Benz S-Class",
-    category: "Vehicles",
-    sharedWith: [],
-    createdBy: { name: "Jane Smith", avatar: "JS" },
-    createdOn: "Nov 20, 2024",
-    lastUpdate: "Nov 20, 2024",
-    pinned: false,
-  },
-  {
-    id: "AVI-012",
-    name: "Gulfstream G650",
-    category: "Aviation",
-    sharedWith: [
-      { name: "Zane Mango", avatar: "ZM" },
-      { name: "Rachel Green", avatar: "RG" },
-    ],
-    createdBy: { name: "Zane Mango", avatar: "ZM" },
-    createdOn: "Sep 10, 2024",
-    lastUpdate: "Sep 10, 2024",
-    pinned: false,
-  },
-  {
-    id: "MAR-089",
-    name: "Oceanic Dream Yacht",
-    category: "Maritime",
-    sharedWith: [{ name: "Leo Franci", avatar: "LF" }],
-    createdBy: { name: "Leo Franci", avatar: "LF" },
-    createdOn: "Aug 25, 2024",
-    lastUpdate: "Aug 25, 2024",
-    pinned: false,
-  },
-  {
-    id: "ORG-456",
-    name: "Tech Innovations Inc",
-    category: "Organizations",
-    sharedWith: [{ name: "Charlie Botosh", avatar: "CB" }],
-    createdBy: { name: "Charlie Botosh", avatar: "CB" },
-    createdOn: "Jul 30, 2024",
-    lastUpdate: "Jul 30, 2024",
-    pinned: false,
-  },
-  {
-    id: "EVT-789",
-    name: "Annual Shareholders Meeting",
-    category: "Events",
-    sharedWith: [
-      { name: "John Smith", avatar: "JS" },
-      { name: "Jane Doe", avatar: "JD" },
-    ],
-    createdBy: { name: "John Smith", avatar: "JS" },
-    createdOn: "Dec 15, 2024",
-    lastUpdate: "Dec 15, 2024",
-    pinned: false,
-  },
-  {
-    id: "PET-123",
-    name: "Golden Retriever - Max",
-    category: "Pets",
-    sharedWith: [],
-    createdBy: { name: "Emma Stone", avatar: "ES" },
-    createdOn: "Jun 5, 2024",
-    lastUpdate: "Jun 5, 2024",
-    pinned: false,
-  },
-  {
-    id: "OBL-901",
-    name: "Bank Loan Agreement",
-    category: "Obligations",
-    sharedWith: [
-      { name: "David Lee", avatar: "DL" },
-      { name: "Sarah Miller", avatar: "SM" },
-    ],
-    createdBy: { name: "David Lee", avatar: "DL" },
-    createdOn: "Oct 1, 2024",
-    lastUpdate: "Oct 1, 2024",
-    pinned: false,
-  },
-]
-
-function getCategoryIcon(category: string) {
+function getCategoryIcon(category: string, size: string = "h-5 w-5") {
   const iconMap: Record<string, React.ReactNode> = {
-    "Legal entities": <Building2 className="h-5 w-5" />,
-    Properties: <Home className="h-5 w-5" />,
-    Vehicles: <Car className="h-5 w-5" />,
-    Aviation: <Plane className="h-5 w-5" />,
-    Maritime: <Ship className="h-5 w-5" />,
-    Organizations: <Building2 className="h-5 w-5" />,
-    Events: <Calendar className="h-5 w-5" />,
-    Pets: <PawPrint className="h-5 w-5" />,
-    Obligations: <ScrollText className="h-5 w-5" />,
+    "Legal entities": <Building2 className={`${size} text-blue-600`} />,
+    "Properties": <Home className={`${size} text-green-600`} />,
+    "Vehicles": <Car className={`${size} text-red-600`} />,
+    "Aviation": <Plane className={`${size} text-sky-600`} />,
+    "Maritime": <Ship className={`${size} text-blue-500`} />,
+    "Organizations": <Building2 className={`${size} text-purple-600`} />,
+    "Events": <Calendar className={`${size} text-orange-600`} />,
+    "Pets": <PawPrint className={`${size} text-pink-600`} />,
+    "Obligations": <ScrollText className={`${size} text-gray-600`} />,
+    // Додаткові категорії з mock-data
+    "Real Estate": <Home className={`${size} text-green-600`} />,
+    "Electric Cars": <Car className={`${size} text-red-600`} />,
+    "Private Jets": <Plane className={`${size} text-sky-600`} />,
+    "Yachts": <Ship className={`${size} text-blue-500`} />,
+    "Sports Cars": <Car className={`${size} text-red-600`} />,
   }
-  return iconMap[category] || <FileText className="h-5 w-5" />
+  return iconMap[category] || <FileText className={`${size} text-gray-500`} />
+}
+
+function getCategoryBgColor(category: string) {
+  const colorMap: Record<string, string> = {
+    "Legal entities": "bg-blue-50 border-blue-200",
+    "Properties": "bg-green-50 border-green-200",
+    "Vehicles": "bg-red-50 border-red-200",
+    "Aviation": "bg-sky-50 border-sky-200",
+    "Maritime": "bg-blue-50 border-blue-200",
+    "Organizations": "bg-purple-50 border-purple-200",
+    "Events": "bg-orange-50 border-orange-200",
+    "Pets": "bg-pink-50 border-pink-200",
+    "Obligations": "bg-gray-50 border-gray-200",
+    // Додаткові категорії з mock-data
+    "Real Estate": "bg-green-50 border-green-200",
+    "Electric Cars": "bg-red-50 border-red-200",
+    "Private Jets": "bg-sky-50 border-sky-200",
+    "Yachts": "bg-blue-50 border-blue-200",
+    "Sports Cars": "bg-red-50 border-red-200",
+  }
+  return colorMap[category] || "bg-gray-50 border-gray-200"
 }
 
 // Компонент для відображення в картковому вигляді (великий розмір)
 const CardItemThumbnail = ({ item }: { item: any }) => {
-  const CategoryIcon = getCategoryIcon(item.category)
+  const CategoryIcon = getCategoryIcon(item.category, "h-8 w-8")
+  const bgColorClass = getCategoryBgColor(item.category)
   
   return (
-    <div className="relative h-24 w-full rounded-lg overflow-hidden flex items-center justify-center" style={{ backgroundColor: '#DEE7F3' }}>
-      <div className="h-12 w-12 flex items-center justify-center rounded-lg">
+    <div className={`relative h-24 w-full rounded-lg overflow-hidden flex items-center justify-center ${bgColorClass}`}>
+      <div className="h-12 w-12 flex items-center justify-center rounded-lg bg-white shadow-sm">
         {CategoryIcon}
       </div>
     </div>
@@ -230,11 +121,12 @@ const CardItemThumbnail = ({ item }: { item: any }) => {
 
 // Компонент для відображення в табличному вигляді (малий розмір)
 const TableItemThumbnail = ({ item }: { item: any }) => {
-  const CategoryIcon = getCategoryIcon(item.category)
+  const CategoryIcon = getCategoryIcon(item.category, "h-5 w-5")
+  const bgColorClass = getCategoryBgColor(item.category)
   
   return (
-    <div className="relative h-12 w-12 rounded-lg overflow-hidden flex items-center justify-center" style={{ backgroundColor: '#DEE7F3' }}>
-      <div className="h-6 w-6 flex items-center justify-center rounded-lg">
+    <div className={`relative h-12 w-12 rounded-lg overflow-hidden flex items-center justify-center ${bgColorClass}`}>
+      <div className="h-8 w-8 flex items-center justify-center rounded-lg bg-white shadow-sm">
         {CategoryIcon}
       </div>
     </div>
@@ -247,59 +139,94 @@ function AddOrCreateButton({ selectedIds, size = "sm", variant = "outline", labe
   if (collections.length === 0) {
     return (
       <ManualCollectionDialog
-        trigger={<Button variant={variant} size={size}><Plus className="mr-2 h-4 w-4" />Create new collection</Button>}
+        trigger={
+          <Button variant={variant} size={size}>
+            <Plus className="mr-1 sm:mr-2 h-4 w-4" />
+            <span className="hidden sm:inline">Create new collection</span>
+            <span className="sm:hidden">Create</span>
+          </Button>
+        }
         selectedItems={selectedIds}
       />
     )
   }
   return (
     <AddSelectedToCollectionDialog
-      trigger={<Button variant={variant} size={size}><Plus className="mr-2 h-4 w-4" />{label}</Button>}
+      trigger={
+        <Button variant={variant} size={size}>
+          <Plus className="mr-1 sm:mr-2 h-4 w-4" />
+          <span className="hidden sm:inline">{label}</span>
+          <span className="sm:hidden">Add</span>
+        </Button>
+      }
       selectedItemIds={selectedIds}
     />
   )
 }
 
 export function CatalogView({ activeView = "catalog", onPinnedCountChange }: CatalogViewProps) {
-  const { collections, getCollectionById, allItems, bulkRemoveItems } = useCollections()
+  const router = useRouter()
+  const { 
+    collections, 
+    getCollectionById, 
+    allItems, 
+    bulkRemoveItems,
+    aiRecommendations,
+    showAIBanner,
+    dismissRecommendation,
+    acceptRecommendation,
+    toggleAIBanner
+  } = useCollections()
   const { toast } = useToast()
   const [searchQuery, setSearchQuery] = React.useState("")
   const [activeFilters, setActiveFilters] = React.useState(0)
   const [selectedItems, setSelectedItems] = React.useState<Set<string>>(new Set())
-  const [items, setItems] = React.useState(mockItems)
+  const [items, setItems] = React.useState(MOCK_CATALOG_ITEMS)
   const [viewMode, setViewMode] = React.useState<"grid" | "card">("card")
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false)
   const [addItemModalOpen, setAddItemModalOpen] = React.useState(false)
+  const [shareModalOpen, setShareModalOpen] = React.useState(false)
+  const [aiSuggestions, setAiSuggestions] = React.useState<any[]>([])
+  const [showAiSuggestions, setShowAiSuggestions] = React.useState(false)
+  const [aiCollectionDialogOpen, setAiCollectionDialogOpen] = React.useState(false)
+  const [isAISearching, setIsAISearching] = React.useState(false)
+  const [showAIRecommendations, setShowAIRecommendations] = React.useState(false)
+  const [collectionDialogOpen, setCollectionDialogOpen] = React.useState(false)
+  const [aiPreviewModalOpen, setAiPreviewModalOpen] = React.useState(false)
+  const [currentRecommendation, setCurrentRecommendation] = React.useState(highValueAssetsRecommendation)
 
-  // Update items when allItems or activeView changes - filter by collection if needed
+  // Update items when activeView changes - filter by collection if needed
   React.useEffect(() => {
-    let itemsToShow = allItems
+    let itemsToShow = MOCK_CATALOG_ITEMS
     
     // If we're viewing a specific collection, filter items by that collection
     const collection = getCollectionById(activeView)
     if (collection && collection.items) {
       // Get only items that belong to this collection
       const collectionItemIds = collection.items.map(item => item.id)
-      itemsToShow = allItems.filter(item => collectionItemIds.includes(item.id))
+      itemsToShow = MOCK_CATALOG_ITEMS.filter(item => collectionItemIds.includes(item.id))
     }
     
-    // Convert CollectionItem to mockItems format, preserving pinned status
-    const convertedItems = itemsToShow.map(item => {
-      // Find existing item to preserve pinned status
-      const existingItem = items.find(existing => existing.id === item.id)
-      return {
-        id: item.id,
-        name: item.name,
-        category: item.category,
-        sharedWith: [],
-        createdBy: { name: "System", avatar: "S" },
-        createdOn: new Date().toLocaleDateString(),
-        lastUpdate: new Date().toLocaleDateString(),
-        pinned: existingItem?.pinned || false, // Preserve existing pinned status
+    // Preserve pinned status from ref
+    const itemsWithPinned = itemsToShow.map(item => ({
+      ...item,
+      pinned: pinnedStatusRef.current[item.id] || false
+    }))
+    
+    setItems(itemsWithPinned)
+  }, [activeView, getCollectionById])
+
+  // Use ref to track pinned status without causing re-renders
+  const pinnedStatusRef = React.useRef<Record<string, boolean>>({})
+  
+  // Update pinned status when items change
+  React.useEffect(() => {
+    items.forEach(item => {
+      if (item.pinned !== undefined) {
+        pinnedStatusRef.current[item.id] = item.pinned
       }
     })
-    setItems(convertedItems)
-  }, [allItems, activeView, getCollectionById])
+  }, [items])
 
   const getPageTitle = () => {
     if (!activeView) return "Catalog"
@@ -357,7 +284,7 @@ export function CatalogView({ activeView = "catalog", onPinnedCountChange }: Cat
     })
   }
 
-  const getFilteredItems = () => {
+  const getFilteredItems = (): MockCatalogItem[] => {
     let filteredItems = items
 
     // Check if activeView is a collection ID
@@ -370,10 +297,26 @@ export function CatalogView({ activeView = "catalog", onPinnedCountChange }: Cat
           id: item.id,
           name: item.name,
           category: item.category,
+          type: item.type || 'document',
+          idCode: item.idCode || '',
+          status: item.status || 'Active',
+          location: item.location || '',
+          value: item.value || 0,
+          currency: item.currency || 'USD',
+          tags: item.tags || [],
+          guestRating: item.guestRating,
+          lastUpdated: item.lastUpdated || new Date().toISOString(),
+          createdAt: item.createdAt || new Date(),
+          people: (item.people || []).map(p => ({
+            id: p.id || '',
+            role: p.role || 'Unknown',
+            name: p.name || 'Unknown'
+          })),
           sharedWith: [],
           createdBy: { name: "System", avatar: "S" },
           createdOn: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
           lastUpdate: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+          date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
           pinned: false,
         }))
       }
@@ -443,7 +386,7 @@ export function CatalogView({ activeView = "catalog", onPinnedCountChange }: Cat
     setItems((prevItems) => prevItems.map((item) => (selectedItems.has(item.id) ? { ...item, pinned: true } : item)))
     setSelectedItems(new Set())
     
-    // Показати toast нотифікацію
+    // Show toast notification
     toast({
       title: "Items pinned successfully",
       description: `${pinnedCount} ${pinnedCount === 1 ? 'item' : 'items'} pinned`,
@@ -455,7 +398,7 @@ export function CatalogView({ activeView = "catalog", onPinnedCountChange }: Cat
     setItems((prevItems) => prevItems.map((item) => (selectedItems.has(item.id) ? { ...item, pinned: false } : item)))
     setSelectedItems(new Set())
     
-    // Показати toast нотифікацію
+    // Show toast notification
     toast({
       title: "Items unpinned successfully",
       description: `${unpinnedCount} ${unpinnedCount === 1 ? 'item' : 'items'} unpinned`,
@@ -464,7 +407,7 @@ export function CatalogView({ activeView = "catalog", onPinnedCountChange }: Cat
 
   const handleCreateCollectionFromSelected = () => {
     // This will be handled by the AI Collection Dialog
-    console.log("[v0] Creating collection from selected items:", Array.from(selectedItems))
+    // TODO: Implement collection creation from selected items
   }
 
 
@@ -472,17 +415,26 @@ export function CatalogView({ activeView = "catalog", onPinnedCountChange }: Cat
   const allSelected = filteredItems.length > 0 && selectedItems.size === filteredItems.length
   const indeterminate = selectedItems.size > 0 && selectedItems.size < filteredItems.length
   
-  // Підрахунок закріплених елементів
+  // Calculate pinned items count
   const pinnedCount = items.filter(item => item.pinned).length
   
-  // Відправляємо оновлений лічильник вгору
+  // Send updated counter upward
   React.useEffect(() => {
     onPinnedCountChange?.(pinnedCount)
   }, [pinnedCount, onPinnedCountChange])
 
+  // Show AI banner on All Objects page
+  React.useEffect(() => {
+    if (activeView === "all-objects") {
+      toggleAIBanner(true)
+    } else {
+      toggleAIBanner(false)
+    }
+  }, [activeView, toggleAIBanner])
+
   const handleDeleteSelected = () => {
     if (isCollectionView()) {
-      // Для колекцій - видаляємо з колекції
+      // For collections - remove from collection
       const collection = getCollectionById(activeView)
       if (collection) {
         bulkRemoveItems(collection.id, Array.from(selectedItems))
@@ -492,7 +444,7 @@ export function CatalogView({ activeView = "catalog", onPinnedCountChange }: Cat
         })
       }
     } else {
-      // Для All Items - видаляємо назавжди
+      // For All Items - delete permanently
       setItems((prevItems) => prevItems.filter((item) => !selectedItems.has(item.id)))
       toast({
         title: "Items deleted",
@@ -509,6 +461,245 @@ export function CatalogView({ activeView = "catalog", onPinnedCountChange }: Cat
 
   const handleClearSelection = () => {
     setSelectedItems(new Set())
+  }
+
+  const handleAISearch = (query: string) => {
+    setIsAISearching(true)
+    
+    // Parse complex query for advanced filtering
+    const parsedQuery = parseComplexQuery(query)
+    
+    // Apply advanced filtering based on parsed query
+    let filtered = MOCK_CATALOG_ITEMS
+    
+    if (parsedQuery.filters.length > 0) {
+      filtered = MOCK_CATALOG_ITEMS.filter(item => {
+        return parsedQuery.filters.every(filter => {
+          switch (filter.field) {
+            case 'createdOn':
+              return item.createdOn?.includes(String(filter.value)) || false
+            case 'category':
+              if (filter.operator === 'in') {
+                return Array.isArray(filter.value) && filter.value.includes(item.category)
+              }
+              return item.category === filter.value
+            case 'status':
+              return (item as any).status === filter.value
+            case 'budget':
+              // Mock budget filtering - simulate high-value items
+              if (filter.operator === 'greater_than') {
+                const budgetThreshold = parseInt(String(filter.value))
+                // Simulate budget filtering based on item name/category
+                const isHighValue = item.name.toLowerCase().includes('luxury') ||
+                                  item.name.toLowerCase().includes('premium') ||
+                                  item.name.toLowerCase().includes('villa') ||
+                                  item.name.toLowerCase().includes('penthouse') ||
+                                  item.name.toLowerCase().includes('tesla') ||
+                                  item.name.toLowerCase().includes('gulfstream') ||
+                                  item.name.toLowerCase().includes('yacht') ||
+                                  item.name.toLowerCase().includes('corporate') ||
+                                  item.name.toLowerCase().includes('enterprise') ||
+                                  item.name.toLowerCase().includes('holdings') ||
+                                  item.name.toLowerCase().includes('group') ||
+                                  item.category === 'Real Estate' ||
+                                  item.category === 'Vehicles' ||
+                                  item.category === 'Legal entities'
+                return isHighValue
+              }
+              return true
+            default:
+              return true
+          }
+        })
+      })
+    } else {
+      // Simple text search
+      filtered = MOCK_CATALOG_ITEMS.filter(item => 
+        item.name.toLowerCase().includes(query.toLowerCase()) ||
+        item.category.toLowerCase().includes(query.toLowerCase())
+      )
+    }
+    
+    // Ensure minimum 6 items are always shown
+    if (filtered.length < 6) {
+      // Add additional items to reach minimum 6
+      const additionalItems = MOCK_CATALOG_ITEMS
+        .filter(item => !filtered.some(filteredItem => filteredItem.id === item.id))
+        .slice(0, 6 - filtered.length)
+      filtered = [...filtered, ...additionalItems]
+    }
+    
+    setItems(filtered)
+    setShowAIRecommendations(true)
+    
+    // Show AI banner for certain queries
+    if (query.toLowerCase().includes('high value') || 
+        query.toLowerCase().includes('luxury') ||
+        query.toLowerCase().includes('premium')) {
+      toggleAIBanner(true)
+    }
+  }
+
+  // Parse complex queries to extract filters and criteria
+  const parseComplexQuery = (query: string) => {
+    const lowerQuery = query.toLowerCase()
+    const filters = []
+    
+    // Extract year filters
+    const yearMatch = lowerQuery.match(/(\d{4})\s*рік|(\d{4})\s*year/)
+    if (yearMatch) {
+      const year = yearMatch[1] || yearMatch[2]
+      filters.push({
+        field: 'createdOn',
+        operator: 'contains',
+        value: year
+      })
+    }
+    
+    // Extract budget/amount filters
+    const budgetMatch = lowerQuery.match(/бюджетом\s*вище\s*(\d+)|budget\s*above\s*(\d+)|вище\s*(\d+)|above\s*(\d+)/)
+    if (budgetMatch) {
+      const amount = budgetMatch[1] || budgetMatch[2] || budgetMatch[3] || budgetMatch[4]
+      filters.push({
+        field: 'budget',
+        operator: 'greater_than',
+        value: amount
+      })
+    }
+    
+    // Special handling for "high-value assets above 1M"
+    if (lowerQuery.includes('high-value assets above 1m') || 
+        lowerQuery.includes('high value assets above 1m') ||
+        lowerQuery.includes('high-value above 1m')) {
+      // Add budget filter for 1M
+      filters.push({
+        field: 'budget',
+        operator: 'greater_than',
+        value: '1000000'
+      })
+      
+      // Add high-value category filter
+      filters.push({
+        field: 'category',
+        operator: 'in',
+        value: ['Real Estate', 'Vehicles', 'Legal entities', 'Properties']
+      })
+    }
+    
+    // Special handling for "high value legal entety" query
+    if (lowerQuery.includes('high value legal entety') || 
+        lowerQuery.includes('high value legal entity') ||
+        lowerQuery.includes('legal entety') ||
+        lowerQuery.includes('legal entity')) {
+      // Add legal entities category filter
+      filters.push({
+        field: 'category',
+        operator: 'equals',
+        value: 'Legal entities'
+      })
+      
+      // Add high-value filter
+      filters.push({
+        field: 'budget',
+        operator: 'greater_than',
+        value: '500000'
+      })
+    }
+    
+    // Extract status filters
+    if (lowerQuery.includes('активні') || lowerQuery.includes('active')) {
+      filters.push({
+        field: 'status',
+        operator: 'equals',
+        value: 'Active'
+      })
+    }
+    
+    // Extract category filters
+    if (lowerQuery.includes('legal entities') || lowerQuery.includes('legal entiti')) {
+      filters.push({
+        field: 'category',
+        operator: 'equals',
+        value: 'Legal entities'
+      })
+    }
+    
+    if (lowerQuery.includes('properties') || lowerQuery.includes('нерухомість')) {
+      filters.push({
+        field: 'category',
+        operator: 'equals',
+        value: 'Properties'
+      })
+    }
+    
+    if (lowerQuery.includes('vehicles') || lowerQuery.includes('транспорт')) {
+      filters.push({
+        field: 'category',
+        operator: 'equals',
+        value: 'Vehicles'
+      })
+    }
+    
+    return {
+      originalQuery: query,
+      filters,
+      hasComplexFilters: filters.length > 0
+    }
+  }
+
+  const handleAIClear = () => {
+    setItems(MOCK_CATALOG_ITEMS)
+    setShowAIRecommendations(false)
+    setIsAISearching(false)
+    toggleAIBanner(false)
+  }
+
+  const handleAIBannerExplore = (recommendationId: string) => {
+    const recommendation = getRecommendationById(recommendationId)
+    if (recommendation) {
+      setCurrentRecommendation(recommendation)
+      setAiPreviewModalOpen(true)
+    }
+  }
+
+  const handleAIBannerDismiss = () => {
+    toggleAIBanner(false)
+  }
+
+  const handleCreateAICollection = (collectionData: {
+    name: string;
+    description: string;
+    objectIds: string[];
+  }) => {
+    console.log('🔍 Creating AI collection with data:', collectionData)
+    console.log('🔍 Current recommendation ID:', currentRecommendation.id)
+    
+    // Create collection through context
+    const newCollectionId = acceptRecommendation(currentRecommendation.id)
+    console.log('🔍 Created collection ID:', newCollectionId)
+    
+    setAiPreviewModalOpen(false)
+    
+    // Show success toast
+    toast({
+      title: "Collection created successfully",
+      description: `"${collectionData.name}" has been created with AI-generated filtering rules.`,
+    })
+    
+    // Redirect to the specific collection page
+    if (newCollectionId) {
+      console.log('🔍 Redirecting to collection:', newCollectionId)
+      setTimeout(() => {
+        router.push(`/collections/${newCollectionId}`)
+      }, 1000)
+    } else {
+      router.push('/collections')
+    }
+  }
+
+  const handleAIRecommendationClick = (recommendation: string) => {
+    console.log('AI Recommendation clicked:', recommendation)
+    // Handle AI recommendation click
   }
 
   return (
@@ -529,59 +720,113 @@ export function CatalogView({ activeView = "catalog", onPinnedCountChange }: Cat
           )}
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon">
-            <Bell className="h-5 w-5" />
-          </Button>
-          <Button variant="ghost" size="icon">
-            <Settings className="h-5 w-5" />
-          </Button>
-          <Avatar className="h-8 w-8">
-            <AvatarImage src="/placeholder.svg?height=32&width=32" />
-            <AvatarFallback>JD</AvatarFallback>
-          </Avatar>
+        <div className="flex items-center gap-4">
+          {/* AI Recommendation Banner */}
+          {showAIBanner && (
+            <AIRecommendationBanner
+              recommendation={{
+                id: currentRecommendation.id,
+                name: currentRecommendation.name,
+                objectCount: currentRecommendation.objectCount,
+              }}
+              onDismiss={handleAIBannerDismiss}
+              onExplore={handleAIBannerExplore}
+            />
+          )}
+
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon">
+              <Bell className="h-5 w-5" />
+            </Button>
+            <Button variant="ghost" size="icon">
+              <Settings className="h-5 w-5" />
+            </Button>
+            <Avatar className="h-8 w-8">
+              <AvatarImage src="/placeholder.svg" />
+              <AvatarFallback>JD</AvatarFallback>
+            </Avatar>
+          </div>
         </div>
       </header>
 
+
             {activeView === "dashboard" ? (
-              <DashboardView items={items} onCategoryClick={() => {}} />
+              <DashboardView items={items} onCategoryClick={(category) => {
+                // Navigate to category view (implemented in parent)
+                // TODO: Add navigation callback to CatalogViewProps
+              }} />
             ) : (
         <>
           {/* Toolbar */}
-          <div className="flex items-center justify-between border-b border-border bg-card px-6 py-3">
-            <div className="flex items-center gap-2">
-              <div className="relative w-80">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Search..."
-                  className="pl-9"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
+          <div className="flex items-center justify-between border-b border-border bg-card px-6 py-3 gap-2 lg:gap-4">
+            {/* Left group: Filters, Columns */}
+            <div className="flex items-center gap-2 lg:gap-3 flex-shrink-0">
               <Button variant="outline" size="sm" onClick={() => setActiveFilters(activeFilters > 0 ? 0 : 2)}>
-                <Filter className="mr-2 h-4 w-4" />
-                Filters
+                <Filter className="mr-1 lg:mr-2 h-4 w-4" />
+                <span className="hidden sm:inline">Filters</span>
                 {activeFilters > 0 && (
-                  <Badge variant="secondary" className="ml-2">
+                  <Badge variant="secondary" className="ml-1 lg:ml-2">
                     {activeFilters}
                   </Badge>
                 )}
               </Button>
-              <Button variant="outline" size="sm">
-                <Columns className="mr-2 h-4 w-4" />
-                9/9 columns
+              <Button variant="outline" size="sm" className="hidden md:flex">
+                <Columns className="mr-1 lg:mr-2 h-4 w-4" />
+                <span className="hidden lg:inline">9/9 columns</span>
               </Button>
-              <ShareDialog collectionName={getPageTitle()} />
-              <CollectionSettingsDialog collectionName={getPageTitle()} />
+            </div>
+            
+            {/* Center: Search with Fojo - адаптивна ширина */}
+            <div className="relative flex-1 min-w-0 max-w-xs sm:max-w-sm lg:max-w-md mx-1 sm:mx-2 lg:mx-4">
+              <div className="relative flex items-center bg-gray-50 rounded-lg border border-gray-200 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500">
+                <Search className="absolute left-2 sm:left-3 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search with Fojo..."
+                  className="pl-8 sm:pl-10 pr-16 sm:pr-20 lg:pr-28 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-9 text-sm"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && searchQuery.trim()) {
+                      handleAISearch(searchQuery)
+                    }
+                  }}
+                />
+                <div className="absolute right-1 sm:right-2 flex items-center gap-1">
+                  <Button
+                    size="sm"
+                    onClick={() => handleAISearch(searchQuery)}
+                    disabled={!searchQuery.trim() || isAISearching}
+                    className="bg-blue-600 text-white hover:bg-blue-700 h-6 sm:h-7 px-1 sm:px-2 lg:px-3 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Sparkles className="h-3 w-3 sm:mr-1" />
+                    <span className="hidden sm:inline">Ask Fojo</span>
+                  </Button>
+                  {searchQuery && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={handleAIClear}
+                      className="h-6 sm:h-7 w-6 sm:w-7 p-0 text-gray-400 hover:text-gray-600"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  )}
+                </div>
+              </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            {/* Right group: Share, Settings, View toggle, Add */}
+            <div className="flex items-center gap-2 lg:gap-3 flex-shrink-0">
+              <Button variant="outline" size="sm" onClick={() => setShareModalOpen(true)} className="hidden md:flex">
+                <Share2 className="mr-1 lg:mr-2 h-4 w-4" />
+                <span className="hidden lg:inline">Share</span>
+              </Button>
+              <CollectionSettingsDialog collectionName={getPageTitle()} />
               <div className="flex items-center border border-border rounded-md p-1">
                 <Button
                   variant={viewMode === "grid" ? "default" : "ghost"}
                   size="sm"
-                  className="h-8 px-3"
+                  className="h-8 px-2 lg:px-3"
                   onClick={() => setViewMode("grid")}
                 >
                   <Grid3X3 className="h-4 w-4" />
@@ -589,22 +834,54 @@ export function CatalogView({ activeView = "catalog", onPinnedCountChange }: Cat
                 <Button
                   variant={viewMode === "card" ? "default" : "ghost"}
                   size="sm"
-                  className="h-8 px-3"
+                  className="h-8 px-2 lg:px-3"
                   onClick={() => setViewMode("card")}
                 >
                   <Square className="h-4 w-4" />
                 </Button>
               </div>
-              <Button onClick={() => setAddItemModalOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add
+              <Button onClick={() => setAddItemModalOpen(true)} size="sm" className="lg:size-default">
+                <Plus className="mr-1 lg:mr-2 h-4 w-4" />
+                <span className="hidden sm:inline">Add</span>
               </Button>
             </div>
           </div>
 
+          {/* Bulk Action for High Value Legal Entity Query */}
+          {searchQuery.toLowerCase().includes('high value legal entety') && (
+            <div className="border-b border-border bg-card px-6 py-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100">
+                    <Sparkles className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-blue-900">AI Collection Assistant</h3>
+                    <p className="text-xs text-blue-700">
+                      I found {items.length} items matching "high value legal entety". Create a smart collection?
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      // Open collection creation dialog with pre-filled data
+                      setCollectionDialogOpen(true)
+                    }}
+                    className="text-blue-700 border-blue-300 hover:bg-blue-100"
+                  >
+                    <FolderOpen className="mr-2 h-4 w-4" />
+                    Create Collection
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="flex-1 overflow-auto bg-background p-6">
-            <div className="mx-auto max-w-6xl">
+            <div className="w-full">
             {searchQuery && activeFilters > 0 && (
               <div className="mb-4">
                 <SearchToCollection
@@ -687,6 +964,54 @@ export function CatalogView({ activeView = "catalog", onPinnedCountChange }: Cat
         }}
       />
 
+      {/* Share Modal */}
+      <ShareModal
+        collection={{
+          id: activeView,
+          name: getPageTitle(),
+          description: '',
+          icon: 'Folder',
+          filters: [],
+          type: 'manual',
+          tags: [],
+          items: [],
+          autoSync: false,
+          isPublic: false,
+          sharedWith: [],
+          viewCount: 0,
+          createdAt: new Date(),
+          createdBy: { id: '', name: '', email: '', avatar: '' },
+          updatedAt: new Date(),
+          itemCount: filteredItems.length,
+        }}
+        open={shareModalOpen}
+        onOpenChange={setShareModalOpen}
+      />
+
+      {/* Collection Creation Dialog */}
+      <ManualCollectionDialog
+        trigger={
+          <div style={{ display: 'none' }}>
+            {/* Hidden trigger - dialog will be opened programmatically */}
+          </div>
+        }
+        onCollectionCreated={() => {
+          setCollectionDialogOpen(false)
+          toast({
+            title: "Collection created",
+            description: "Your collection has been created successfully.",
+          })
+        }}
+      />
+
+      {/* AI Collection Preview Modal */}
+      <AICollectionPreviewModal
+        open={aiPreviewModalOpen}
+        onOpenChange={setAiPreviewModalOpen}
+        recommendation={currentRecommendation}
+        onCreateCollection={handleCreateAICollection}
+      />
+
     </div>
   )
 }
@@ -694,7 +1019,7 @@ export function CatalogView({ activeView = "catalog", onPinnedCountChange }: Cat
 function DashboardView({
   items,
   onCategoryClick,
-}: { items: typeof mockItems; onCategoryClick: (category: string) => void }) {
+}: { items: MockCatalogItem[]; onCategoryClick: (category: string) => void }) {
   const categoryCounts = React.useMemo(() => {
     return items.reduce(
       (acc, item) => {
@@ -705,7 +1030,7 @@ function DashboardView({
     )
   }, [items])
 
-  const recentItems: typeof mockItems = []
+  const recentItems: MockCatalogItem[] = []
 
   return (
     <div className="flex-1 overflow-auto bg-background p-6">
@@ -788,21 +1113,22 @@ function DashboardView({
           <div className="mb-4 flex items-center justify-between">
             <h3 className="font-semibold">Recent Collections</h3>
           </div>
-          <div className="flex flex-col items-center justify-center py-12">
-            <FolderOpen className="mb-4 h-12 w-12 text-muted-foreground/50" />
-            <p className="mb-2 text-sm font-medium text-muted-foreground">No collections yet</p>
-            <p className="mb-4 text-center text-xs text-muted-foreground/70">
-              Create your first collection to organize your objects
-            </p>
-            <ManualCollectionDialog
-              trigger={
-                <Button size="sm">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create
-                </Button>
-              }
-            />
-          </div>
+          <EmptyState
+            icon={FolderOpen}
+            title="No collections yet"
+            description="Create your first collection to organize your objects"
+            size="default"
+            action={
+              <ManualCollectionDialog
+                trigger={
+                  <Button size="sm">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create
+                  </Button>
+                }
+              />
+            }
+          />
         </div>
       </div>
     </div>
@@ -821,7 +1147,7 @@ function CardView({
   activeView,
   isCollectionView,
 }: {
-  items: typeof mockItems
+  items: MockCatalogItem[]
   selectedItems: Set<string>
   onSelectItem: (id: string, checked: boolean) => void
   onPinSelected: () => void
@@ -838,31 +1164,35 @@ function CardView({
     <div>
       {selectedCount > 0 && (
         <div className="sticky top-0 z-10 -mt-2 mb-4 rounded-lg border border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 px-4 py-3 shadow-sm">
-          <div className="mx-auto max-w-6xl flex items-center justify-between">
-            <div className="flex items-center gap-4">
+          <div className="w-full flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2 sm:gap-4">
               <span className="text-sm font-medium">
                 {selectedCount} item{selectedCount > 1 ? "s" : ""} selected
               </span>
               <Button variant="ghost" size="sm" onClick={onClearSelection}>
-                <X className="mr-2 h-4 w-4" />
-                Clear selection
+                <X className="mr-1 sm:mr-2 h-4 w-4" />
+                <span className="hidden sm:inline">Clear selection</span>
+                <span className="sm:hidden">Clear</span>
               </Button>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
               <AddOrCreateButton selectedIds={Array.from(selectedItems)} />
               {activeView === "pinned" ? (
                 <Button variant="outline" size="sm" onClick={onUnpinSelected}>
-                  <Pin className="mr-2 h-4 w-4" />
-                  Unpin items
+                  <Pin className="mr-1 sm:mr-2 h-4 w-4" />
+                  <span className="hidden sm:inline">Unpin items</span>
+                  <span className="sm:hidden">Unpin</span>
                 </Button>
               ) : (
                 <Button variant="outline" size="sm" onClick={onPinSelected}>
-                  <Pin className="mr-2 h-4 w-4" />
-                  Pin items
+                  <Pin className="mr-1 sm:mr-2 h-4 w-4" />
+                  <span className="hidden sm:inline">Pin items</span>
+                  <span className="sm:hidden">Pin</span>
                 </Button>
               )}
               <Button variant="destructive" size="sm" onClick={onDeleteClick}>
-                {isCollectionView ? 'Remove items' : 'Delete items'}
+                <span className="hidden sm:inline">{isCollectionView ? 'Remove items' : 'Delete items'}</span>
+                <span className="sm:hidden">{isCollectionView ? 'Remove' : 'Delete'}</span>
               </Button>
             </div>
           </div>
@@ -943,20 +1273,24 @@ function CardView({
               
               {/* Description if exists - removed as item doesn't have description property */}
               
-              {/* Bottom section with shared info and date */}
+              {/* Bottom section with user access info and date */}
               <div className="flex items-center justify-between pt-2">
-                {/* Shared with section */}
+                {/* User access section */}
                 <div className="flex items-center gap-1">
-                  {item.sharedWith && item.sharedWith.slice(0, 3).map((user, i) => (
+                  {item.people && item.people.slice(0, 3).map((person, i) => (
                     <div
                       key={i}
-                      className="flex h-4 w-4 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground"
+                      className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-sm font-medium text-gray-700"
+                      title={`${person.role}: ${person.name}`}
                     >
-                      {user.avatar}
+                      {person.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                     </div>
                   ))}
-                  {item.sharedWith && item.sharedWith.length > 3 && (
-                    <span className="text-xs text-muted-foreground">+{item.sharedWith.length - 3}</span>
+                  {item.people && item.people.length > 3 && (
+                    <span className="text-xs text-muted-foreground">+{item.people.length - 3}</span>
+                  )}
+                  {(!item.people || item.people.length === 0) && (
+                    <span className="text-xs text-muted-foreground">No access info</span>
                   )}
                 </div>
                 
@@ -986,7 +1320,7 @@ function GridView({
   activeView,
   isCollectionView,
 }: {
-  items: typeof mockItems
+  items: MockCatalogItem[]
   selectedItems: Set<string>
   onSelectItem: (id: string, checked: boolean) => void
   onSelectAll: (checked: boolean) => void
@@ -1018,7 +1352,7 @@ function GridView({
               <th className="p-4 text-left text-sm font-medium text-muted-foreground">Name</th>
               <th className="p-4 text-left text-sm font-medium text-muted-foreground">ID</th>
               <th className="p-4 text-left text-sm font-medium text-muted-foreground">Category</th>
-              <th className="p-4 text-left text-sm font-medium text-muted-foreground">Shared with</th>
+              <th className="p-4 text-left text-sm font-medium text-muted-foreground">Access</th>
               <th className="p-4 text-left text-sm font-medium text-muted-foreground">Created by</th>
               <th className="p-4 text-left text-sm font-medium text-muted-foreground">Created on</th>
               <th className="p-4 text-left text-sm font-medium text-muted-foreground">Last update</th>
@@ -1027,31 +1361,35 @@ function GridView({
             {selectedCount > 0 && (
               <tr className="border-b border-border bg-muted">
                 <td colSpan={8} className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 sm:gap-4">
                       <span className="text-sm font-medium">
                         {selectedCount} item{selectedCount > 1 ? "s" : ""} selected
                       </span>
                       <Button variant="ghost" size="sm" onClick={onClearSelection}>
-                        <X className="mr-2 h-4 w-4" />
-                        Clear selection
+                        <X className="mr-1 sm:mr-2 h-4 w-4" />
+                        <span className="hidden sm:inline">Clear selection</span>
+                        <span className="sm:hidden">Clear</span>
                       </Button>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
                       <AddOrCreateButton selectedIds={Array.from(selectedItems)} />
                       {activeView === "pinned" ? (
                         <Button variant="outline" size="sm" onClick={onUnpinSelected}>
-                          <Pin className="mr-2 h-4 w-4" />
-                          Unpin items
+                          <Pin className="mr-1 sm:mr-2 h-4 w-4" />
+                          <span className="hidden sm:inline">Unpin items</span>
+                          <span className="sm:hidden">Unpin</span>
                         </Button>
                       ) : (
                         <Button variant="outline" size="sm" onClick={onPinSelected}>
-                          <Pin className="mr-2 h-4 w-4" />
-                          Pin items
+                          <Pin className="mr-1 sm:mr-2 h-4 w-4" />
+                          <span className="hidden sm:inline">Pin items</span>
+                          <span className="sm:hidden">Pin</span>
                         </Button>
                       )}
                       <Button variant="destructive" size="sm" onClick={onDeleteClick}>
-                        {isCollectionView ? 'Remove items' : 'Delete items'}
+                        <span className="hidden sm:inline">{isCollectionView ? 'Remove items' : 'Delete items'}</span>
+                        <span className="sm:hidden">{isCollectionView ? 'Remove' : 'Delete'}</span>
                       </Button>
                     </div>
                   </div>
@@ -1092,15 +1430,19 @@ function GridView({
                 </td>
                 <td className="p-4">
                   <div className="flex items-center gap-1">
-                    {item.sharedWith && item.sharedWith.slice(0, 3).map((user, i) => (
-                      <span key={i} className="text-xs font-medium text-muted-foreground">
-                        {user.avatar}
-                      </span>
+                    {item.people && item.people.slice(0, 3).map((person, i) => (
+                      <div
+                        key={i}
+                        className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-sm font-medium text-gray-700"
+                        title={`${person.role}: ${person.name}`}
+                      >
+                        {person.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                      </div>
                     ))}
-                    {item.sharedWith && item.sharedWith.length > 3 && (
-                      <span className="text-xs text-muted-foreground">+{item.sharedWith.length - 3}</span>
+                    {item.people && item.people.length > 3 && (
+                      <span className="text-xs text-muted-foreground">+{item.people.length - 3}</span>
                     )}
-                    {(!item.sharedWith || item.sharedWith.length === 0) && <span className="text-xs text-muted-foreground">No shares</span>}
+                    {(!item.people || item.people.length === 0) && <span className="text-xs text-muted-foreground">No access info</span>}
                   </div>
                 </td>
                 <td className="p-4">
@@ -1129,7 +1471,7 @@ function TableView({
   onSelectAll,
   allSelected,
 }: {
-  items: typeof mockItems
+  items: MockCatalogItem[]
   selectedItems: Set<string>
   onSelectItem: (id: string, checked: boolean) => void
   onSelectAll: (checked: boolean) => void
@@ -1187,21 +1529,25 @@ function TableView({
                 </td>
                 <td className="p-4 text-sm text-muted-foreground">{item.category}</td>
                 <td className="p-4">
-                  {item.sharedWith && item.sharedWith.length > 0 ? (
+                  {item.people && item.people.length > 0 ? (
                     <div className="flex -space-x-2">
-                      {item.sharedWith.slice(0, 3).map((user, i) => (
-                        <Avatar key={i} className="h-6 w-6 border-2 border-card">
-                          <AvatarFallback className="text-xs">{user.avatar}</AvatarFallback>
-                        </Avatar>
+                      {item.people.slice(0, 3).map((person, i) => (
+                        <div
+                          key={i}
+                          className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-card bg-gray-100 text-sm font-medium text-gray-700"
+                          title={`${person.role}: ${person.name}`}
+                        >
+                          {person.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                        </div>
                       ))}
-                      {item.sharedWith.length > 3 && (
-                        <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-card bg-muted text-xs">
-                          +{item.sharedWith.length - 3}
+                      {item.people.length > 3 && (
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-card bg-muted text-sm">
+                          +{item.people.length - 3}
                         </div>
                       )}
                     </div>
                   ) : (
-                    <span className="text-sm text-muted-foreground">All users</span>
+                    <span className="text-sm text-muted-foreground">No access info</span>
                   )}
                 </td>
                 <td className="p-4">
@@ -1224,27 +1570,11 @@ function TableView({
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem>View</DropdownMenuItem>
                       <DropdownMenuItem>Edit</DropdownMenuItem>
-                      <ShareDialog
-                        trigger={
-                          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                            <Share2 className="mr-2 h-4 w-4" />
-                            Share
-                          </DropdownMenuItem>
-                        }
-                        collectionName={item.name}
-                      />
-                      <CollectionSettingsDialog
-                        collectionName={item.name}
-                        trigger={
-                          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                            <FileText className="mr-2 h-4 w-4" />
-                            Settings
-                          </DropdownMenuItem>
-                        }
-                      />
-                      <DropdownMenuItem className="text-destructive">
-                        Remove
+                      <DropdownMenuItem>
+                        <Share2 className="mr-2 h-4 w-4" />
+                        Share
                       </DropdownMenuItem>
+                      <DropdownMenuItem>Move</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </td>
@@ -1260,7 +1590,7 @@ function TableView({
   )
 }
 
-function BoardView({ items }: { items: typeof mockItems }) {
+function BoardView({ items }: { items: MockCatalogItem[] }) {
   const columns = [
     { id: "new", title: "New", items: items.slice(0, 3) },
     { id: "in-progress", title: "In Progress", items: items.slice(3, 5) },

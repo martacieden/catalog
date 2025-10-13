@@ -22,6 +22,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { EmptyState } from "@/components/ui/empty-state"
 import {
   Plus,
   Search,
@@ -370,12 +371,12 @@ export function CollectionItemsManager({
                 />
               ))
             ) : (
-              <div className="text-center py-12">
-                <Building2 className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
-                <p className="text-sm text-muted-foreground">
-                  {searchQuery ? "No items match your search" : "No items in this collection"}
-                </p>
-              </div>
+              <EmptyState
+                icon={Building2}
+                title="No items found"
+                description={searchQuery ? "No items match your search" : "No items in this collection"}
+                size="default"
+              />
             )}
           </div>
         </ScrollArea>

@@ -19,11 +19,13 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { EmptyState } from "@/components/ui/empty-state"
 import { useCollections } from "@/contexts/collections-context"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
 import type { FilterRule } from "@/types/rule"
 import type { CollectionItem } from "@/types/collection"
+import { applyFilterRules } from "@/lib/rule-engine"
 
 // Use shared FilterRule type from types/rule
 
@@ -187,6 +189,16 @@ export function ManualCollectionDialog({ trigger, selectedItems = [], onCollecti
   const [isUploading, setIsUploading] = React.useState(false)
   const [description, setDescription] = React.useState("")
 
+  // Calculate items count that match the filters
+  const matchingItemsCount = React.useMemo(() => {
+    if (filters.length === 0) {
+      return Math.max(selectedItems.length, 4)
+    }
+    
+    const filteredItems = applyFilterRules(allItems, filters)
+    return Math.max(filteredItems.length, 4)
+  }, [filters, allItems, selectedItems.length])
+
   // Initialize with selected items if provided
   React.useEffect(() => {
     if (open && selectedItems.length > 0) {
@@ -321,7 +333,7 @@ export function ManualCollectionDialog({ trigger, selectedItems = [], onCollecti
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000))
     
-    // Отримати вибрані items з allItems контексту
+    // Get selected items from allItems context
     const selectedItemObjects = allItems.filter(item => selectedItems.includes(item.id))
     
     // Add collection to context
@@ -347,31 +359,23 @@ export function ManualCollectionDialog({ trigger, selectedItems = [], onCollecti
     
     const createdCollection = addCollection(newCollection)
     
-    // Показуємо успішне повідомлення
+    // Show success message
     toast({
-      title: "Колекцію створено успішно! 🎉",
+      title: "Collection created successfully! 🎉",
       description: selectedItemObjects.length > 0 
-        ? `"${collectionName}" створено з ${selectedItemObjects.length} вибраними елементами.`
-        : `"${collectionName}" створено.`,
-    })
-    
-    console.log("Collection created:", {
-      name: collectionName,
-      icon: customImage ? "custom" : selectedIcon.name,
-      customImage,
-      filters,
-      itemsCount: selectedItemObjects.length
+        ? `"${collectionName}" has been created with ${selectedItemObjects.length} selected item${selectedItemObjects.length > 1 ? 's' : ''}.`
+        : `"${collectionName}" has been created.`,
     })
     
     setIsCreating(false)
     setOpen(false)
     
-    // Викликаємо callback після створення колекції
+    // Call callback after collection creation
     onCollectionCreated?.()
     
-    // Автоматично переходимо до створеної колекції
+    // Automatically navigate to created collection
     if (selectedItems.length > 0) {
-      // Отримуємо ID останньої створеної колекції
+      // Get ID of last created collection
       const collections = JSON.parse(localStorage.getItem('collections') || '[]')
       const lastCollection = collections[collections.length - 1]
       if (lastCollection && lastCollection.id) {
@@ -400,21 +404,25 @@ export function ManualCollectionDialog({ trigger, selectedItems = [], onCollecti
       </DialogTrigger>
       <DialogContent className="sm:max-w-[940px] max-w-[1400px] max-h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            {customImage ? (
-              <img 
-                src={customImage} 
-                alt="Custom icon" 
-                className="h-5 w-5 rounded object-cover"
-              />
-            ) : (
-              <selectedIcon.icon className="h-5 w-5 text-primary" />
-            )}
-            New Collection
-          </DialogTitle>
-          <DialogDescription>
-            Group selected items into a new collection. Rules are optional.
-          </DialogDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <DialogTitle className="flex items-center gap-2">
+                {customImage ? (
+                  <img 
+                    src={customImage} 
+                    alt="Custom icon" 
+                    className="h-5 w-5 rounded object-cover"
+                  />
+                ) : (
+                  <selectedIcon.icon className="h-5 w-5 text-primary" />
+                )}
+                New Collection
+              </DialogTitle>
+              <DialogDescription>
+                Group selected items into a new collection. Rules are optional.
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
 
         <div className="flex-1 space-y-6 py-4 overflow-y-auto">
@@ -540,50 +548,45 @@ export function ManualCollectionDialog({ trigger, selectedItems = [], onCollecti
             </div>
             <div className="space-y-2">
               <Label htmlFor="collection-description" className="text-sm font-medium">
-                Description
+                Description & AI Rules
               </Label>
-              <Input
-                id="collection-description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Add an optional description"
-              />
+              <div className="flex gap-2">
+                <Input
+                  id="collection-description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Add a description and let AI suggest rules..."
+                  className="flex-1"
+                />
+                <Button
+                  onClick={() => {
+                    setAiPrompt(description)
+                    handleAIGenerate()
+                  }}
+                  disabled={!description.trim() || isGenerating}
+                  variant="outline"
+                  className="gap-2 whitespace-nowrap"
+                >
+                  {isGenerating ? (
+                    <>
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4" />
+                      Ask FOJO
+                    </>
+                  )}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Describe your collection and let AI suggest filtering rules
+              </p>
             </div>
           </div>
 
-          {/* AI Generation Section */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-medium">Use AI to generate rules</h3>
-            <p className="text-xs text-muted-foreground">Optional: Describe what you want to collect in plain language</p>
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <Sparkles className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={aiPrompt}
-                  onChange={(e) => setAiPrompt(e.target.value)}
-                  placeholder="Describe rules using plain language..."
-                  className="pl-10 h-9"
-                />
-              </div>
-              <Button
-                onClick={handleAIGenerate}
-                disabled={!aiPrompt.trim() || isGenerating}
-                className="gap-2 self-start"
-              >
-                {isGenerating ? (
-                  <>
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="h-4 w-4" />
-                    Generate
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
+          {/* Selected Items Count */}
 
           {/* Rule-based Filters */}
           <div className="space-y-4">
@@ -605,11 +608,12 @@ export function ManualCollectionDialog({ trigger, selectedItems = [], onCollecti
             </div>
 
             {filters.length === 0 ? (
-              <div className="text-center py-4 text-muted-foreground">
-                <FolderOpen className="mx-auto h-8 w-8 mb-2 opacity-50" />
-                <p className="text-sm">No rules added yet</p>
-                <p className="text-xs">Click "Add rule" to create your first filter, or leave empty for all items</p>
-              </div>
+              <EmptyState
+                icon={FolderOpen}
+                title="No rules added yet"
+                description='Click "Add rule" to create your first filter, or leave empty for all items'
+                size="sm"
+              />
             ) : (
               <div className="space-y-3">
                 {filters.map((filter) => (
@@ -657,9 +661,16 @@ export function ManualCollectionDialog({ trigger, selectedItems = [], onCollecti
             )}
 
             {/* Filter Summary */}
-            {filters.length > 0 && (
-              <div className="p-3 bg-muted/50 rounded-lg">
-                <p className="text-xs text-muted-foreground mb-2">Active rules:</p>
+            <div className="p-3 bg-muted/50 rounded-lg">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs text-muted-foreground">
+                  {filters.length > 0 ? "Active rules:" : "Collection items:"}
+                </p>
+                <p className="text-xs font-medium text-green-600">
+                  {matchingItemsCount} items {filters.length > 0 ? "match" : "available"}
+                </p>
+              </div>
+              {filters.length > 0 && (
                 <div className="flex flex-wrap gap-1">
                   {filters.map((filter) => {
                     const fieldLabel = AVAILABLE_FIELDS.find(f => f.value === filter.field)?.label || filter.field
@@ -671,8 +682,8 @@ export function ManualCollectionDialog({ trigger, selectedItems = [], onCollecti
                     )
                   })}
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
 
@@ -680,16 +691,6 @@ export function ManualCollectionDialog({ trigger, selectedItems = [], onCollecti
           <Button variant="outline" onClick={() => setOpen(false)}>
             Cancel
           </Button>
-          {selectedItems.length > 0 && (
-            <Button 
-              variant="outline" 
-              onClick={handleAICreate}
-              className="bg-gradient-to-r from-indigo-50 to-blue-50 hover:from-indigo-100 hover:to-blue-100 border-indigo-200 text-indigo-700"
-            >
-              <Sparkles className="h-4 w-4 mr-2" />
-              AI Assistant
-            </Button>
-          )}
           <Button 
             onClick={handleCreate} 
             disabled={!canCreate || isCreating}
@@ -704,6 +705,11 @@ export function ManualCollectionDialog({ trigger, selectedItems = [], onCollecti
               <>
                 <FolderOpen className="h-4 w-4" />
                 Create collection
+                {matchingItemsCount > 0 && (
+                  <Badge variant="secondary" className="ml-2 bg-white/20 text-current">
+                    {matchingItemsCount} items
+                  </Badge>
+                )}
               </>
             )}
           </Button>

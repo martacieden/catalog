@@ -134,17 +134,17 @@ export function validateSync(collection: Collection): {
   const errors: string[] = []
   const warnings: string[] = []
   
-  // Перевірка чи є правила
+  // Check if rules exist
   if (!collection.filters || collection.filters.length === 0) {
     errors.push('No rules defined for auto-sync')
   }
   
-  // Перевірка чи увімкнено auto-sync
+  // Check if auto-sync is enabled
   if (!collection.autoSync) {
     warnings.push('Auto-sync is disabled for this collection')
   }
   
-  // Перевірка чи є елементи
+  // Check if items exist
   if (!collection.items || collection.items.length === 0) {
     warnings.push('Collection is empty')
   }

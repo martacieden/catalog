@@ -90,7 +90,7 @@ export function AppSidebar() {
             <CheckSquare className={cn("h-4 w-4 flex-shrink-0", !isCollapsed && "mr-2")} />
             {!isCollapsed && <span className="truncate">Tasks</span>}
           </Button>
-          <Link href="/catalog">
+          <Link href="/catalog?view=dashboard">
             <Button
               variant={activeItem === "catalog" ? "secondary" : "ghost"}
               className={cn("w-full", isCollapsed ? "justify-center px-0" : "justify-start")}

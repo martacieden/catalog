@@ -21,6 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { EmptyState } from "@/components/ui/empty-state"
 import {
   Building2,
   Car,
@@ -56,6 +57,7 @@ interface ItemsTableProps {
   onBulkDelete?: () => void
   onBulkCreateCollection?: () => void
   onBulkPin?: () => void
+  onBulkExclude?: () => void
 }
 
 export function ItemsTable({
@@ -73,6 +75,7 @@ export function ItemsTable({
   onBulkDelete,
   onBulkCreateCollection,
   onBulkPin,
+  onBulkExclude,
 }: ItemsTableProps) {
   const allSelected = items.length > 0 && items.every((item) => selectedIds.has(item.id))
   const someSelected = items.some((item) => selectedIds.has(item.id)) && !allSelected
@@ -133,10 +136,12 @@ export function ItemsTable({
 
   if (items.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <Building2 className="h-12 w-12 text-muted-foreground/50 mb-4" />
-        <p className="text-sm text-muted-foreground">{emptyMessage}</p>
-      </div>
+      <EmptyState
+        icon={Building2}
+        title="No items found"
+        description={emptyMessage}
+        size="default"
+      />
     )
   }
 
@@ -246,6 +251,16 @@ export function ItemsTable({
                     >
                       <Pin className="mr-2 h-4 w-4" />
                       Pin items
+                    </Button>
+                  )}
+                  {onBulkExclude && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={onBulkExclude}
+                    >
+                      <X className="mr-2 h-4 w-4" />
+                      Exclude items
                     </Button>
                   )}
                   {onBulkDelete && (

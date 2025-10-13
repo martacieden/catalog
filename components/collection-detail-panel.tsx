@@ -23,6 +23,7 @@ import {
   FileText,
   RotateCcw,
   Share2,
+  ArrowLeft,
 } from "lucide-react"
 
 interface CollectionDetailPanelProps {
@@ -174,6 +175,11 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
       <div className="bg-white border-b border-gray-200 px-6 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
+            <Button variant="ghost" size="sm" onClick={onClose}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+            
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-2">
                 <h1 className="text-lg font-semibold">{collection.name}</h1>

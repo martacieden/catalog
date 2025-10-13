@@ -98,9 +98,9 @@ export function CollectionDetailView({ collectionId, onClose }: CollectionDetail
     return (
       <div className="flex flex-col items-center justify-center h-[60vh]">
         <p className="text-muted-foreground mb-4">Collection not found</p>
-        <Button onClick={() => router.back()} variant="outline">
+        <Button onClick={() => router.push("/catalog?view=dashboard")} variant="outline">
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Go Back
+          Back to Dashboard
         </Button>
       </div>
     )
@@ -133,7 +133,7 @@ export function CollectionDetailView({ collectionId, onClose }: CollectionDetail
     if (onClose) {
       onClose()
     } else {
-      router.back()
+      router.push("/catalog?view=dashboard")
     }
   }
 
@@ -227,8 +227,8 @@ export function CollectionDetailView({ collectionId, onClose }: CollectionDetail
     const duplicated = duplicateCollection(collectionId)
     if (duplicated) {
       toast({
-        title: "Колекцію дубльовано",
-        description: `Створено копію "${duplicated.name}"`,
+        title: "Collection duplicated",
+        description: `Created a copy of "${duplicated.name}"`,
       })
     }
   }
@@ -236,8 +236,8 @@ export function CollectionDetailView({ collectionId, onClose }: CollectionDetail
   const handleDelete = () => {
     removeCollection(collectionId)
     toast({
-      title: "Колекцію видалено",
-      description: `"${collection.name}" було видалено.`,
+      title: "Collection deleted",
+      description: `"${collection.name}" has been deleted.`,
     })
     handleBack()
   }
@@ -245,8 +245,8 @@ export function CollectionDetailView({ collectionId, onClose }: CollectionDetail
   const handleSyncNow = () => {
     if (!collection.autoSync || !collection.filters || collection.filters.length === 0) {
       toast({
-        title: "Неможливо синхронізувати",
-        description: "Увімкніть автосинхронізацію та налаштуйте правила.",
+        title: "Cannot sync",
+        description: "Please enable auto-sync and configure rules first.",
         variant: "destructive",
       })
       return
@@ -608,8 +608,8 @@ export function CollectionDetailView({ collectionId, onClose }: CollectionDetail
             onAnalyze={() => {
               // TODO: Implement analyze
               toast({
-                title: "Функція в розробці",
-                description: "Детальна аналітика буде доступна найближчим часом",
+                title: "Coming soon",
+                description: "Detailed analytics will be available soon",
               })
             }}
             onSuggestRules={() => {

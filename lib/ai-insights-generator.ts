@@ -3,7 +3,7 @@
  * Генерація інсайтів та рекомендацій для колекцій
  */
 
-import type { Collection, CollectionItem, AIInsight, CollectionStats } from "@/types/collection"
+import type { Collection, CollectionItem, CollectionAIInsight, CollectionStats } from "@/types/collection"
 import type { FilterRule } from "@/types/rule"
 
 /**
@@ -12,8 +12,8 @@ import type { FilterRule } from "@/types/rule"
 export function generateInsights(
   collection: Collection,
   stats?: CollectionStats | null
-): AIInsight[] {
-  const insights: AIInsight[] = []
+): CollectionAIInsight[] {
+  const insights: CollectionAIInsight[] = []
   
   // Інсайти про кількість елементів
   if (collection.itemCount === 0) {
@@ -80,7 +80,7 @@ export function generateInsights(
   
   // Інсайти зі статистики
   if (stats) {
-    // Перевірка розподілу по категоріях
+    // Check category distribution
     const categoryCount = Object.keys(stats.itemsByCategory || {}).length
     if (categoryCount > 5) {
       insights.push({
@@ -92,7 +92,7 @@ export function generateInsights(
       })
     }
     
-    // Перевірка вартості
+    // Check value
     if (stats.totalValue && stats.totalValue > 0) {
       insights.push({
         id: 'total-value',
@@ -263,15 +263,15 @@ export function generateContextualResponse(
   // Питання про правила
   if (lowerMessage.includes('правил') || lowerMessage.includes('автомат')) {
     if (collection.filters && collection.filters.length > 0) {
-      return `У колекції налаштовано ${collection.filters.length} правил(о). Автосинхронізація ${
-        collection.autoSync ? 'увімкнена' : 'вимкнена'
+      return `The collection has ${collection.filters.length} rule${collection.filters.length > 1 ? 's' : ''} configured. Auto-sync is ${
+        collection.autoSync ? 'enabled' : 'disabled'
       }. ${
         collection.lastSyncedAt 
-          ? `Остання синхронізація: ${new Date(collection.lastSyncedAt).toLocaleString('uk-UA')}.`
-          : 'Синхронізація ще не виконувалась.'
+          ? `Last sync: ${new Date(collection.lastSyncedAt).toLocaleString('en-US')}.`
+          : 'Not synced yet.'
       }`
     } else {
-      return 'У цій колекції ще не налаштовані правила автоматичного наповнення. Хочете щоб я запропонував правила на основі поточних елементів?'
+      return 'This collection does not have auto-fill rules configured yet. Would you like me to suggest rules based on current items?'
     }
   }
   

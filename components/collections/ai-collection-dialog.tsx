@@ -12,12 +12,10 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { ItemsTable } from "@/components/collections/items-table"
 import {
   Sparkles,
   Bot,
-  Search,
-  Check,
-  X,
   Send,
   Plus,
   RotateCcw,
@@ -50,8 +48,9 @@ export function AICollectionDialog({
   // Form state
   const [collectionName, setCollectionName] = useState("")
   const [collectionDescription, setCollectionDescription] = useState("")
-  const [searchQuery, setSearchQuery] = useState("")
-  const [categoryFilter, setCategoryFilter] = useState("all")
+  
+  // Selection state
+  const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set())
   
   // Chat state
   const [messages, setMessages] = useState<ChatMessage[]>([])
@@ -61,6 +60,8 @@ export function AICollectionDialog({
   // Initialize AI explanation when dialog opens
   useEffect(() => {
     if (open && selectedItems.length > 0) {
+      // Select all items by default
+      setSelectedItemIds(new Set(selectedItems.map(item => item.id)))
       generateAIExplanation()
     }
   }, [open, selectedItems])
@@ -179,10 +180,13 @@ These rules would help automatically include similar high-value properties in th
     }
     
     try {
+      // Get only selected items
+      const itemsToInclude = selectedItems.filter(item => selectedItemIds.has(item.id))
+      
       const newCollection = addCollection({
         name: collectionName,
         description: collectionDescription,
-        items: selectedItems,
+        items: itemsToInclude,
         type: "ai-generated",
         autoSync: false,
         filters: [],
@@ -194,7 +198,7 @@ These rules would help automatically include similar high-value properties in th
       
       toast({
         title: "Collection created",
-        description: `"${collectionName}" created with ${selectedItems.length} items.`,
+        description: `"${collectionName}" created with ${itemsToInclude.length} items.`,
       })
       
       onCollectionCreated?.()
@@ -208,18 +212,11 @@ These rules would help automatically include similar high-value properties in th
     }
   }
   
-  const filteredItems = selectedItems.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesCategory = categoryFilter === "all" || item.category === categoryFilter
-    return matchesSearch && matchesCategory
-  })
-  
-  const categories = [...new Set(selectedItems.map(item => item.category))]
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[98vw] sm:max-w-[1172px] max-h-[95vh] w-[98vw] p-0">
-        <DialogHeader className="px-8 py-3">
+      <DialogContent className="max-w-[98vw] sm:max-w-[1172px] max-h-[95vh] w-[98vw] p-0 flex flex-col">
+        <DialogHeader className="flex-shrink-0 px-8 py-3">
           <div className="flex items-center gap-3 mb-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500/20 to-blue-500/20 shadow-sm">
               <Sparkles className="h-5 w-5 text-indigo-600" />
@@ -236,40 +233,6 @@ These rules would help automatically include similar high-value properties in th
         <div className="flex-1 flex min-h-0 border-t border-gray-200 -mt-2">
           {/* Left Panel - Collection Details */}
           <div className="flex-1 flex flex-col min-h-0 border-r border-gray-200">
-            {/* Header with selection info */}
-            <div className="flex-shrink-0 px-6 py-3 bg-gray-50 border-b border-gray-200 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-600" />
-                    <span className="text-sm font-medium text-gray-700">
-                      Select all items ({selectedItems.length}/{selectedItems.length})
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="relative">
-                    <Search className="absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 text-gray-400" />
-                    <Input
-                      placeholder="Search items..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-7 pr-3 py-1.5 text-xs w-40"
-                    />
-                  </div>
-                  <select
-                    value={categoryFilter}
-                    onChange={(e) => setCategoryFilter(e.target.value)}
-                    className="px-2 py-1.5 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white"
-                  >
-                    <option value="all">All Categories</option>
-                    {categories.map(category => (
-                      <option key={category} value={category}>{category}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </div>
             
             {/* Collection Form */}
             <div className="flex-1 min-h-0 overflow-auto">
@@ -302,70 +265,16 @@ These rules would help automatically include similar high-value properties in th
                   
                   {/* Items Table */}
                   <div className="space-y-3">
-                    <Label>Selected Items ({filteredItems.length})</Label>
+                    <Label>Selected Items ({selectedItemIds.size} of {selectedItems.length})</Label>
                     <div className="border rounded-lg overflow-hidden">
-                      <div className="overflow-x-auto">
-                        <table className="w-full min-w-[600px]">
-                          <thead className="sticky top-0 bg-white z-10 border-b">
-                            <tr>
-                              <th className="w-12 px-4 py-3 text-left text-sm font-medium text-gray-500"></th>
-                              <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Name</th>
-                              <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">ID</th>
-                              <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Category</th>
-                              <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">People</th>
-                              <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Date</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {filteredItems.map((item, index) => (
-                              <tr key={item.id} className="border-b border-gray-100 hover:bg-blue-50/50 transition-all duration-200 group cursor-pointer">
-                                <td className="px-4 py-3">
-                                  <div className="flex items-center justify-center">
-                                    <Check className="h-4 w-4 text-green-600" />
-                                  </div>
-                                </td>
-                                <td className="px-4 py-3">
-                                  <div className="flex items-center gap-3">
-                                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
-                                      <Sparkles className="h-4 w-4" />
-                                    </div>
-                                    <span className="font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
-                                      {item.name}
-                                    </span>
-                                  </div>
-                                </td>
-                                <td className="px-4 py-3">
-                                  <Badge variant="outline" className="font-mono text-xs">
-                                    {item.idCode || `ITEM-${String(index + 1).padStart(3, '0')}`}
-                                  </Badge>
-                                </td>
-                                <td className="px-4 py-3">
-                                  <Badge variant="secondary" className="text-xs">
-                                    {item.category}
-                                  </Badge>
-                                </td>
-                                <td className="px-4 py-3">
-                                  <div className="flex items-center gap-1">
-                                    <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
-                                      <span className="text-xs text-blue-600">👤</span>
-                                    </div>
-                                    <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
-                                      <span className="text-xs text-blue-600">👤</span>
-                                    </div>
-                                    <span className="text-xs text-gray-500 ml-1">+1</span>
-                                  </div>
-                                </td>
-                                <td className="px-4 py-3">
-                                  <div className="flex items-center gap-1 text-xs text-gray-500">
-                                    <span>📅</span>
-                                    <span>{new Date(item.createdAt || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                                  </div>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
+                      <ItemsTable
+                        items={selectedItems}
+                        selectedIds={selectedItemIds}
+                        onSelectionChange={setSelectedItemIds}
+                        showSelection={true}
+                        showActions={false}
+                        emptyMessage="No items selected"
+                      />
                     </div>
                   </div>
                 </div>
@@ -383,7 +292,7 @@ These rules would help automatically include similar high-value properties in th
                   className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Create ({selectedItems.length} items)
+                  Create ({selectedItemIds.size} items)
                 </Button>
               </div>
             </div>
@@ -392,7 +301,7 @@ These rules would help automatically include similar high-value properties in th
           {/* Right Panel - AI Assistant */}
           <div className="w-80 bg-gray-50 flex flex-col">
             {/* AI Assistant Header */}
-            <div className="flex items-center gap-2 p-4 border-b border-gray-200 bg-white">
+            <div className="flex-shrink-0 flex items-center gap-2 p-4 border-b border-gray-200 bg-white">
               <div className="w-6 h-6 rounded bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
                 <Bot className="h-3 w-3 text-white" />
               </div>
