@@ -177,7 +177,7 @@ export function SmartSearchQuery() {
           <button
             key={filter.id}
             onClick={() => handleQuickFilterClick(filter)}
-            className={`inline-flex items-center gap-1.5 px-2.5 h-[30px] rounded-md text-xs font-medium transition-all duration-200 ${
+            className={`inline-flex items-center gap-1.5 px-2 h-[24px] rounded-md text-xs font-medium transition-all duration-200 ${
               activeFilter === filter.id
                 ? 'bg-blue-100 text-blue-700 border-2 border-blue-300'
                 : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200 hover:border-slate-300'
@@ -186,7 +186,6 @@ export function SmartSearchQuery() {
             aria-label={`Apply filter: ${filter.label} - ${filter.description}`}
             role="button"
           >
-            <span className="text-base" aria-hidden="true">{filter.icon}</span>
             <span>{filter.label}</span>
           </button>
         ))}

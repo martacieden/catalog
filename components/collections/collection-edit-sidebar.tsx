@@ -19,6 +19,7 @@ import {
   Filter,
   Sparkles,
   Info,
+  Trash2,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
@@ -98,6 +99,34 @@ export function CollectionEditSidebar({
     onOpenChange(false)
   }
 
+  const handleDelete = async () => {
+    if (!confirm(`Are you sure you want to delete "${collection.name}"? This action cannot be undone.`)) {
+      return
+    }
+    
+    setIsSaving(true)
+    
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      toast({
+        title: "Collection deleted",
+        description: `"${collection.name}" has been permanently deleted.`,
+      })
+      
+      onOpenChange(false)
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete collection. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   if (!open) return null
 
   return (
@@ -112,14 +141,9 @@ export function CollectionEditSidebar({
       <div className="fixed right-0 top-0 h-full w-96 bg-white shadow-xl border-l border-gray-200 flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100">
-              <Settings className="h-4 w-4 text-blue-600" />
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold">Edit Collection</h2>
-              <p className="text-sm text-muted-foreground">{collection.name}</p>
-            </div>
+          <div>
+            <h2 className="text-lg font-semibold">Edit Collection</h2>
+            <p className="text-sm text-muted-foreground">{collection.name}</p>
           </div>
           <Button
             variant="ghost"
@@ -207,45 +231,29 @@ export function CollectionEditSidebar({
 
           <Separator />
 
-          {/* Filter Rules */}
+          {/* Delete Collection */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-muted-foreground" />
-              <h3 className="font-medium">Filter Rules</h3>
+              <Trash2 className="h-4 w-4 text-muted-foreground" />
+              <h3 className="font-medium">Delete Collection</h3>
             </div>
             
             <div className="space-y-3">
               <p className="text-sm text-muted-foreground">
-                Define rules to automatically filter items in this collection.
+                Once you delete a collection, there is no going back. Please be certain.
               </p>
-              
-              <RuleBuilder
-                rules={rules}
-                onChange={setRules}
-                items={[]}
-                showPreview={false}
-                maxRules={10}
-              />
-              
-              {rules.length > 0 && (
-                <div className="p-3 bg-gray-50 border rounded-lg">
-                  <p className="text-xs font-medium text-gray-700 mb-2">Current Rules:</p>
-                  <div className="space-y-1">
-                    {rules.map((rule, index) => (
-                      <div key={rule.id || index} className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-xs">
-                          {index + 1}
-                        </Badge>
-                        <span className="text-xs text-gray-600">
-                          {rule.field} {rule.operator} {rule.value}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+              <Button
+                variant="outline"
+                onClick={handleDelete}
+                disabled={isSaving}
+                className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete Collection
+              </Button>
             </div>
           </div>
+
         </div>
 
         {/* Footer */}

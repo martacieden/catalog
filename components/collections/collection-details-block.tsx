@@ -339,7 +339,7 @@ export function CollectionDetailsBlock({
           {filterChips.length > 0 && (
             <>
               {collection.description && <Separator />}
-              <div className="space-y-4">
+              <div className="space-y-4 py-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">Filter criteria</span>
                   <button className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1">

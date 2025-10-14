@@ -57,7 +57,7 @@ export function InsightCard({ insight, className, onClick, onViewDetails }: Insi
   return (
     <div 
       className={cn(
-        "flex flex-col gap-2 p-3 rounded-lg border min-h-[80px] cursor-pointer transition-colors hover:opacity-80 relative",
+        "flex flex-col gap-2 p-3 rounded-lg border min-h-[60px] cursor-pointer transition-colors hover:opacity-80 relative",
         config.bgColor,
         config.borderColor,
         className

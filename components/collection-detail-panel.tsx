@@ -470,25 +470,14 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
           
           <div className="flex items-center gap-2">
             {/* Action Buttons */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Settings className="h-4 w-4 mr-2" />
-                  Settings
-                  <ChevronDown className="h-4 w-4 ml-1" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setEditSidebarOpen(true)}>
-                  <Edit3 className="h-4 w-4 mr-2" />
-                  Edit collection details
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSettingsDialogOpen(true)}>
-                  <Settings className="h-4 w-4 mr-2" />
-                  Collection settings
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setEditSidebarOpen(true)}
+            >
+              <Settings className="h-4 w-4 mr-2" />
+              Settings
+            </Button>
             
             <Button 
               variant="outline" 
@@ -811,6 +800,12 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
           collection={collection}
           open={rulesModalOpen}
           onOpenChange={setRulesModalOpen}
+          onSave={async (rules) => {
+            // TODO: Implement save logic
+            console.log('Saving rules:', rules)
+            // Here you would typically call an API to save the rules
+            // await updateCollectionRules(collection.id, rules)
+          }}
         />
       )}
 

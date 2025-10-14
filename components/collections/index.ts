@@ -16,3 +16,4 @@ export { SyncPreviewDialog } from "./sync-preview-dialog"
 // AI & Rules
 export { CollectionAIAssistant } from "./collection-ai-assistant"
 export { RuleBuilder } from "./rule-builder"
+export { RulesModal } from "./rules-modal"

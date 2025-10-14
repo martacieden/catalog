@@ -136,148 +136,36 @@ export function RuleBuilder({
 
   return (
     <div className="space-y-4">
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="visual">
-            <Lightbulb className="h-4 w-4 mr-2" />
-            Visual Builder
-          </TabsTrigger>
-          <TabsTrigger value="json">
-            <Code className="h-4 w-4 mr-2" />
-            JSON Editor
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Visual Builder */}
-        <TabsContent value="visual" className="space-y-4 mt-4">
-          {/* Header with Templates */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                onClick={handleAddRule}
-                disabled={rules.length >= maxRules}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Rule
-              </Button>
-
-              {rules.length > 1 && (
-                <Button size="sm" variant="outline" onClick={handleOptimize}>
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Optimize
-                </Button>
-              )}
-            </div>
-
-            <TemplatesPopover onApply={handleApplyTemplate} />
-          </div>
-
-          {/* Rules List */}
-          {rules.length === 0 ? (
-            <div className="text-center py-12 border-2 border-dashed rounded-lg">
-              <Sparkles className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
-              <p className="text-sm text-muted-foreground mb-4">
-                No rules defined yet
-              </p>
-              <div className="flex items-center justify-center gap-2">
-                <Button size="sm" onClick={handleAddRule}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Rule
-                </Button>
-                <TemplatesPopover onApply={handleApplyTemplate} />
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {rules.map((rule, index) => (
-                <RuleEditor
-                  key={rule.id}
-                  rule={rule}
-                  index={index}
-                  items={items}
-                  onUpdate={(updates) => handleUpdateRule(rule.id, updates)}
-                  onRemove={() => handleRemoveRule(rule.id)}
-                />
-              ))}
-            </div>
-          )}
-
-          {/* Validation Feedback */}
-          {validation.errors.length > 0 && (
-            <div className="p-3 border border-red-200 bg-red-50 rounded-lg space-y-2">
-              <div className="flex items-center gap-2 text-red-700 font-medium text-sm">
-                <AlertCircle className="h-4 w-4" />
-                Validation Errors
-              </div>
-              {validation.errors.map((error, i) => (
-                <p key={i} className="text-xs text-red-600">
-                  • {error.message} (Field: {error.field})
-                </p>
-              ))}
-            </div>
-          )}
-
-          {validation.warnings && validation.warnings.length > 0 && (
-            <div className="p-3 border border-yellow-200 bg-yellow-50 rounded-lg space-y-2">
-              <div className="flex items-center gap-2 text-yellow-700 font-medium text-sm">
-                <AlertCircle className="h-4 w-4" />
-                Warnings
-              </div>
-              {validation.warnings.map((warning, i) => (
-                <p key={i} className="text-xs text-yellow-600">
-                  • {warning.message}
-                </p>
-              ))}
-            </div>
-          )}
-        </TabsContent>
-
-        {/* JSON Editor */}
-        <TabsContent value="json" className="space-y-4 mt-4">
-          <div className="space-y-2">
-            <Label>JSON Rules</Label>
-            <textarea
-              value={jsonText}
-              onChange={(e) => setJsonText(e.target.value)}
-              className="w-full h-64 p-3 border rounded-lg font-mono text-sm"
-              placeholder="Enter JSON rules..."
-            />
-            {jsonError && (
-              <p className="text-sm text-red-600 flex items-center gap-2">
-                <AlertCircle className="h-4 w-4" />
-                {jsonError}
-              </p>
-            )}
-          </div>
-          <Button onClick={handleApplyJSON}>
-            <CheckCircle className="h-4 w-4 mr-2" />
-            Apply JSON
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            onClick={handleAddRule}
+            disabled={rules.length >= maxRules}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Rule
           </Button>
-        </TabsContent>
-      </Tabs>
+        </div>
+      </div>
 
-      {/* Preview */}
-      {showPreview && items.length > 0 && rules.length > 0 && (
-        <div className="p-4 border rounded-lg bg-blue-50 border-blue-200">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-blue-900">
-              Preview
-            </span>
-            <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-              {matchedCount} items match | {rules.length} rules active
-            </Badge>
-          </div>
-          <div className="w-full h-2 bg-blue-200 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-blue-600 transition-all"
-              style={{
-                width: `${items.length > 0 ? (matchedCount / items.length) * 100 : 0}%`,
-              }}
+      {/* Rules List */}
+      {rules.length > 0 && (
+        <div className="space-y-2">
+          {rules.map((rule, index) => (
+            <RuleEditor
+              key={rule.id}
+              rule={rule}
+              index={index}
+              items={items}
+              onUpdate={(updates) => handleUpdateRule(rule.id, updates)}
+              onRemove={() => handleRemoveRule(rule.id)}
             />
-          </div>
+          ))}
         </div>
       )}
+
     </div>
   )
 }
@@ -296,76 +184,181 @@ function RuleEditor({
   onUpdate: (updates: Partial<FilterRule>) => void
   onRemove: () => void
 }) {
-  const fieldSuggestions = React.useMemo(
-    () => (items.length > 0 ? getFieldSuggestions(items) : []),
-    [items]
-  )
-
-  const operatorSuggestions = React.useMemo(
-    () => (items.length > 0 ? getOperatorSuggestions(rule.field, items) : []),
-    [rule.field, items]
-  )
-
   const needsValue = !["is_empty", "is_not_empty"].includes(rule.operator)
 
-  const explanation = explainRule(rule)
+  // Get field display name
+  const getFieldDisplayName = (field: string) => {
+    const fieldMap: Record<string, string> = {
+      name: "Name",
+      value: "Value", 
+      category: "Category",
+      status: "Status",
+      rating: "Rating",
+      createdBy: "Created by",
+      createdOn: "Created on",
+      lastUpdate: "Last update",
+      pinned: "Pinned",
+      sharedWith: "Shared with"
+    }
+    return fieldMap[field] || field
+  }
 
-  return (
-    <div className="p-4 border rounded-lg bg-white space-y-3">
-      <div className="flex items-center justify-between">
-        <Badge variant="outline" className="text-xs">
-          Rule {index + 1}
-        </Badge>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onRemove}
-          className="h-7 w-7 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
-      </div>
+  // Get operator display name
+  const getOperatorDisplayName = (operator: string) => {
+    const operatorMap: Record<string, string> = {
+      equals: "is",
+      not_equals: "is not",
+      contains: "contains",
+      not_contains: "does not contain",
+      starts_with: "starts with",
+      ends_with: "ends with",
+      is_empty: "is empty",
+      is_not_empty: "is not empty",
+      greater_than: "more than",
+      less_than: "less than",
+      greater_than_or_equal: "at least",
+      less_than_or_equal: "at most",
+      in: "is any of",
+      not_in: "is not any of"
+    }
+    return operatorMap[operator] || operator.replace(/_/g, " ")
+  }
 
-      <div className="flex items-center gap-2">
-        {/* Field Select */}
-        <select 
-          className="w-32 px-3 py-2 border rounded-md text-sm"
-          value={rule.field}
-          onChange={(e) => onUpdate({ field: e.target.value })}
-        >
-          <option value="">Select field...</option>
-          {fieldSuggestions.map((field) => (
-            <option key={field} value={field}>{field}</option>
-          ))}
-        </select>
-        
-        {/* Operator Select */}
+  // Get value input based on field type
+  const getValueInput = () => {
+    if (!needsValue) return null
+
+    if (rule.field === "category") {
+      return (
         <select
-          className="w-40 px-3 py-2 border rounded-md text-sm"
-          value={rule.operator}
-          onChange={(e) => onUpdate({ operator: e.target.value as FilterOperator })}
+          className="flex-1 px-3 py-2 border rounded-md text-sm"
+          value={rule.value as string}
+          onChange={(e) => onUpdate({ value: e.target.value })}
         >
-          <option value="">Select operator...</option>
-          {operatorSuggestions.map((op) => (
-            <option key={op} value={op}>{op.replace(/_/g, " ")}</option>
-          ))}
+          <option value="">Select category...</option>
+          <option value="Legal entities">Legal entities</option>
+          <option value="Properties">Properties</option>
+          <option value="Vehicles">Vehicles</option>
+          <option value="Aviation">Aviation</option>
+          <option value="Maritime">Maritime</option>
+          <option value="Organizations">Organizations</option>
+          <option value="Events">Events</option>
+          <option value="Pets">Pets</option>
+          <option value="Obligations">Obligations</option>
         </select>
-        
-        {/* Value Input */}
+      )
+    }
+
+    if (rule.field === "status") {
+      return (
+        <select
+          className="flex-1 px-3 py-2 border rounded-md text-sm"
+          value={rule.value as string}
+          onChange={(e) => onUpdate({ value: e.target.value })}
+        >
+          <option value="">Select status...</option>
+          <option value="Available">Available</option>
+          <option value="Active">Active</option>
+          <option value="Maintenance">Maintenance</option>
+          <option value="Inactive">Inactive</option>
+          <option value="Sold">Sold</option>
+          <option value="Rented">Rented</option>
+        </select>
+      )
+    }
+
+    if (rule.field === "rating") {
+      return (
+        <input
+          className="flex-1 px-3 py-2 border rounded-md text-sm"
+          type="number"
+          min="1"
+          max="5"
+          value={rule.value as string}
+          onChange={(e) => onUpdate({ value: e.target.value })}
+          placeholder="4"
+        />
+      )
+    }
+
+    if (rule.field === "value") {
+      return (
         <input
           className="flex-1 px-3 py-2 border rounded-md text-sm"
           type="text"
           value={rule.value as string}
           onChange={(e) => onUpdate({ value: e.target.value })}
-          placeholder={needsValue ? "Enter value..." : "Not required"}
-          disabled={!needsValue}
+          placeholder="$1,000,000"
         />
-      </div>
+      )
+    }
 
-      {/* Explanation */}
-      <div className="p-2 bg-gray-50 rounded text-xs text-muted-foreground">
-        {explanation}
-      </div>
+    return (
+      <input
+        className="flex-1 px-3 py-2 border rounded-md text-sm"
+        type="text"
+        value={rule.value as string}
+        onChange={(e) => onUpdate({ value: e.target.value })}
+        placeholder="Enter value..."
+      />
+    )
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      {/* Field Select */}
+      <select 
+        className="w-32 px-3 py-2 border rounded-md text-sm"
+        value={rule.field}
+        onChange={(e) => onUpdate({ field: e.target.value })}
+      >
+        <option value="">Select field...</option>
+        <option value="name">Name</option>
+        <option value="value">Value</option>
+        <option value="category">Category</option>
+        <option value="status">Status</option>
+        <option value="rating">Rating</option>
+        <option value="createdBy">Created by</option>
+        <option value="createdOn">Created on</option>
+        <option value="lastUpdate">Last update</option>
+        <option value="pinned">Pinned</option>
+        <option value="sharedWith">Shared with</option>
+      </select>
+      
+      {/* Operator Select */}
+      <select
+        className="w-40 px-3 py-2 border rounded-md text-sm"
+        value={rule.operator}
+        onChange={(e) => onUpdate({ operator: e.target.value as FilterOperator })}
+      >
+        <option value="">Select operator...</option>
+        <option value="equals">is</option>
+        <option value="not_equals">is not</option>
+        <option value="contains">contains</option>
+        <option value="not_contains">does not contain</option>
+        <option value="starts_with">starts with</option>
+        <option value="ends_with">ends with</option>
+        <option value="is_empty">is empty</option>
+        <option value="is_not_empty">is not empty</option>
+        <option value="greater_than">more than</option>
+        <option value="less_than">less than</option>
+        <option value="greater_than_or_equal">at least</option>
+        <option value="less_than_or_equal">at most</option>
+        <option value="in">is any of</option>
+        <option value="not_in">is not any of</option>
+      </select>
+      
+      {/* Value Input */}
+      {getValueInput()}
+      
+      {/* Remove Button */}
+      <button
+        type="button"
+        onClick={onRemove}
+        className="p-2 text-gray-400 hover:text-red-600"
+      >
+        <Trash2 className="w-4 h-4" />
+      </button>
     </div>
   )
 }
