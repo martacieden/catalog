@@ -197,8 +197,13 @@ export function ManualCollectionDialog({ trigger, selectedItems = [], onCollecti
 
   // Calculate items count that match the filters
   const matchingItemsCount = React.useMemo(() => {
+    if (selectedItems.length > 0) {
+      // If items are selected, show the count of selected items
+      return selectedItems.length
+    }
+    
     if (filters.length === 0) {
-      return Math.max(selectedItems.length, 4)
+      return 4 // Default count when no filters and no selection
     }
     
     const filteredItems = applyFilterRules(allItems, filters)
@@ -664,7 +669,10 @@ export function ManualCollectionDialog({ trigger, selectedItems = [], onCollecti
                   {filters.length > 0 ? "Active rules:" : "Collection items:"}
                 </p>
                 <p className="text-xs font-medium text-green-600">
-                  {matchingItemsCount} items {filters.length > 0 ? "match" : "available"}
+                  {selectedItems.length > 0 
+                    ? `${selectedItems.length} items selected`
+                    : `${matchingItemsCount} items ${filters.length > 0 ? "match" : "available"}`
+                  }
                 </p>
               </div>
               {filters.length > 0 && (
@@ -702,9 +710,9 @@ export function ManualCollectionDialog({ trigger, selectedItems = [], onCollecti
               <>
                 <FolderOpen className="h-4 w-4" />
                 Create collection
-                {matchingItemsCount > 0 && (
+                {(selectedItems.length > 0 || matchingItemsCount > 0) && (
                   <Badge variant="secondary" className="ml-2 bg-white/20 text-current">
-                    {matchingItemsCount} items
+                    {selectedItems.length > 0 ? selectedItems.length : matchingItemsCount} items
                   </Badge>
                 )}
               </>

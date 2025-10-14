@@ -39,6 +39,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ManualCollectionDialog } from "@/components/manual-collection-dialog"
+import { EmptyCollectionDialog } from "@/components/empty-collection-dialog"
 import { AddSelectedToCollectionDialog } from "@/components/collections/add-selected-to-collection-dialog"
 import { AddItemModal } from "@/components/collections/add-item-modal"
 import { AICollectionPreviewDialog } from "@/components/ai-collection-preview-dialog"
@@ -191,6 +192,7 @@ export function CatalogView({ activeView = "catalog", onPinnedCountChange }: Cat
   const [isAISearching, setIsAISearching] = React.useState(false)
   const [showAIRecommendations, setShowAIRecommendations] = React.useState(false)
   const [collectionDialogOpen, setCollectionDialogOpen] = React.useState(false)
+  const [emptyCollectionDialogOpen, setEmptyCollectionDialogOpen] = React.useState(false)
   const [aiPreviewModalOpen, setAiPreviewModalOpen] = React.useState(false)
   const [currentRecommendation, setCurrentRecommendation] = React.useState(highValueAssetsRecommendation)
 
@@ -843,7 +845,7 @@ export function CatalogView({ activeView = "catalog", onPinnedCountChange }: Cat
                 <span className="sm:hidden">New Item</span>
               </Button>
               <Button 
-                onClick={() => setCollectionDialogOpen(true)} 
+                onClick={() => setEmptyCollectionDialogOpen(true)} 
                 size="sm" 
                 className="lg:size-default bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
               >
@@ -992,6 +994,19 @@ export function CatalogView({ activeView = "catalog", onPinnedCountChange }: Cat
         onOpenChange={setAiPreviewModalOpen}
         recommendation={currentRecommendation}
         onCreateCollection={handleCreateAICollection}
+      />
+
+      {/* Empty Collection Dialog */}
+      <EmptyCollectionDialog
+        open={emptyCollectionDialogOpen}
+        onOpenChange={setEmptyCollectionDialogOpen}
+        onCollectionCreated={() => {
+          setEmptyCollectionDialogOpen(false)
+          toast({
+            title: "Collection created",
+            description: "Your empty collection has been created successfully.",
+          })
+        }}
       />
 
     </div>
