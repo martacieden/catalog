@@ -100,8 +100,8 @@ export function ItemsGrid({
               {onBulkCreateCollection && (
                 <Button variant="outline" size="sm" onClick={onBulkCreateCollection}>
                   <Plus className="mr-1 sm:mr-2 h-4 w-4" />
-                  <span className="hidden sm:inline">Create new collection</span>
-                  <span className="sm:hidden">New</span>
+                  <span className="hidden sm:inline">Create Collection</span>
+                  <span className="sm:hidden">Create</span>
                 </Button>
               )}
               {onBulkAddToCollection && (

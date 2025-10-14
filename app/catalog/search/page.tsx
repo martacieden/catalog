@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { ArrowLeft, Search, Info, Plus, Download, Filter, X } from 'lucide-react'
+import { ArrowLeft, Search, Info, Plus, Download, Filter, X, FolderOpen } from 'lucide-react'
 import { AppSidebar } from '@/components/app-sidebar'
 import { CatalogSidebar } from '@/components/catalog-sidebar'
 import { Button } from '@/components/ui/button'
@@ -376,7 +376,7 @@ function SearchResultsContent() {
                       <span className="sm:hidden">Export</span>
                     </Button>
                     <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={handleCreateCollection}>
-                      <Plus className="mr-1 sm:mr-2 h-4 w-4" />
+                      <FolderOpen className="mr-1 sm:mr-2 h-4 w-4" />
                       <span className="hidden sm:inline">Create Collection</span>
                       <span className="sm:hidden">Create</span>
                     </Button>

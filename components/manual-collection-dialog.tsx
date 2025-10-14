@@ -39,7 +39,10 @@ interface ManualCollectionDialogProps {
 
 const AVAILABLE_FIELDS = [
   { value: "name", label: "Name" },
+  { value: "value", label: "Value" },
   { value: "category", label: "Category" },
+  { value: "status", label: "Status" },
+  { value: "rating", label: "Rating" },
   { value: "createdBy", label: "Created by" },
   { value: "createdOn", label: "Created on" },
   { value: "lastUpdate", label: "Last update" },
@@ -56,6 +59,12 @@ const OPERATORS: { value: FilterRule["operator"]; label: string }[] = [
   { value: 'ends_with', label: 'ends with' },
   { value: 'is_empty', label: 'is empty' },
   { value: 'is_not_empty', label: 'is not empty' },
+  { value: 'greater_than', label: 'more than' },
+  { value: 'less_than', label: 'less than' },
+  { value: 'greater_than_or_equal', label: 'at least' },
+  { value: 'less_than_or_equal', label: 'at most' },
+  { value: 'in', label: 'is any of' },
+  { value: 'not_in', label: 'is not any of' },
 ]
 
 const CATEGORY_OPTIONS = [
@@ -68,6 +77,15 @@ const CATEGORY_OPTIONS = [
   "Events",
   "Pets",
   "Obligations"
+]
+
+const STATUS_OPTIONS = [
+  "Available",
+  "Active", 
+  "Maintenance",
+  "Inactive",
+  "Sold",
+  "Rented"
 ]
 
 const COLLECTION_ICON_CATEGORIES = [
@@ -218,31 +236,54 @@ export function ManualCollectionDialog({ trigger, selectedItems = [], onCollecti
   }, [open, selectedItems])
 
   const handleAIGenerate = async () => {
-    if (!aiPrompt.trim()) return
+    if (!aiPrompt.trim()) {
+      toast({
+        title: "Description required",
+        description: "Please enter a description to generate AI rules.",
+        variant: "destructive"
+      })
+      return
+    }
     
     setIsGenerating(true)
     
-    // Simulate AI generation
-    await new Promise(resolve => setTimeout(resolve, 2000))
+    // Simulate AI generation - always return the same fixed set of rules
+    await new Promise(resolve => setTimeout(resolve, 1500))
     
-    // Mock AI response - in real app this would call AI API
     const generatedFilters: FilterRule[] = [
       {
         id: `ai-filter-${Date.now()}`,
-        field: "category",
-        operator: "equals",
-        value: "Legal entities"
+        field: 'value',
+        operator: 'greater_than' as const,
+        value: '1000000'
       },
       {
         id: `ai-filter-${Date.now() + 1}`,
-        field: "createdOn",
-        operator: "contains",
-        value: "2024"
+        field: 'category',
+        operator: 'equals' as const,
+        value: 'Properties'
+      },
+      {
+        id: `ai-filter-${Date.now() + 2}`,
+        field: 'status',
+        operator: 'equals' as const,
+        value: 'Active'
+      },
+      {
+        id: `ai-filter-${Date.now() + 3}`,
+        field: 'rating',
+        operator: 'greater_than_or_equal' as const,
+        value: '4'
       }
     ]
     
     setFilters(prev => [...prev, ...generatedFilters])
     setIsGenerating(false)
+    
+    toast({
+      title: "Rules generated",
+      description: `Generated ${generatedFilters.length} filtering rules based on your description.`,
+    })
   }
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {

@@ -5,7 +5,8 @@ import {
   Plus,
   Download,
   Info,
-  Search
+  Search,
+  FolderOpen
 } from 'lucide-react'
 import { Button } from './ui/button'
 import { Badge } from './ui/badge'
@@ -141,7 +142,7 @@ export function SearchResultsModal({
                 <ManualCollectionDialog
                   trigger={
                     <Button size="sm" variant="outline">
-                      <Plus className="h-4 w-4 mr-1" />
+                      <FolderOpen className="h-4 w-4 mr-1" />
                       Create Collection
                     </Button>
                   }

@@ -154,9 +154,9 @@ function AddOrCreateButton({ selectedIds, size = "sm", variant = "outline" }: { 
       <ManualCollectionDialog
         trigger={
           <Button variant={variant} size={size} className="bg-primary text-primary-foreground hover:bg-primary/90">
-            <Plus className="mr-1 sm:mr-2 h-4 w-4" />
-            <span className="hidden sm:inline">Create New Collection</span>
-            <span className="sm:hidden">New</span>
+            <FolderOpen className="mr-1 sm:mr-2 h-4 w-4" />
+            <span className="hidden sm:inline">Create Collection</span>
+            <span className="sm:hidden">Create</span>
           </Button>
         }
         selectedItems={selectedIds}
