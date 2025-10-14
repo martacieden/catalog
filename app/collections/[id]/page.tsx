@@ -13,6 +13,7 @@ export default function CollectionDetailPage() {
   const { getCollectionById } = useCollections()
   const [selectedOrganization, setSelectedOrganization] = useState("onb")
   const [pinnedCount] = useState(0)
+  const [activeView, setActiveView] = useState("dashboard")
   
   const collectionId = params.id as string
   console.log('🔍 Collection page - ID:', collectionId)
@@ -24,8 +25,13 @@ export default function CollectionDetailPage() {
   }
 
   const handleViewChange = (view: string) => {
-    // Navigate to catalog with the selected view
-    router.push(`/catalog?view=${view}`)
+    // If it's a collection ID, navigate to that collection
+    if (view !== "dashboard" && view !== "all-objects" && view !== "recently-viewed" && view !== "pinned") {
+      router.push(`/collections/${view}`)
+    } else {
+      // For main views, navigate to catalog
+      router.push(`/catalog?view=${view}`)
+    }
   }
 
   const handleCollectionSelect = (selectedCollectionId: string | null) => {
@@ -44,7 +50,7 @@ export default function CollectionDetailPage() {
       <div className="flex h-screen">
         <AppSidebar />
         <CatalogSidebar 
-          activeView="dashboard" 
+          activeView={activeView} 
           onViewChange={handleViewChange}
           onOrganizationChange={handleOrganizationChange}
           pinnedCount={pinnedCount}
@@ -73,11 +79,12 @@ export default function CollectionDetailPage() {
     <div className="flex h-screen">
       <AppSidebar />
       <CatalogSidebar 
-        activeView="dashboard" 
+        activeView={activeView} 
         onViewChange={handleViewChange}
         onOrganizationChange={handleOrganizationChange}
         pinnedCount={pinnedCount}
         onCollectionSelect={handleCollectionSelect}
+        onCollectionClick={handleViewChange}
         selectedCollectionId={collectionId}
       />
       <main className="flex-1 overflow-hidden">

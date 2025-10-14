@@ -82,13 +82,15 @@ export default function CatalogPage() {
         onOrganizationChange={handleOrganizationChange}
         pinnedCount={pinnedCount}
         onCollectionSelect={setSelectedCollectionId}
+        onCollectionClick={setActiveView}
         selectedCollectionId={selectedCollectionId}
       />
       <main className="flex-1 overflow-hidden">
-        {selectedCollectionId ? (
+        {/* Check if activeView is a collection ID */}
+        {activeView && activeView !== "dashboard" && activeView !== "all-objects" && activeView !== "recently-viewed" && activeView !== "pinned" ? (
           <CollectionDetailPanel 
-            collectionId={selectedCollectionId}
-            onClose={() => setSelectedCollectionId(null)}
+            collectionId={activeView}
+            onClose={() => setActiveView("dashboard")}
           />
         ) : activeView === "dashboard" ? (
           <div className="h-full overflow-auto bg-background p-6">

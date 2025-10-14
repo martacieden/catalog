@@ -26,12 +26,10 @@ import {
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { CollectionSettingsDialog } from "@/components/collection-settings-dialog"
-import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ManualCollectionDialog } from "@/components/manual-collection-dialog"
 import { Badge } from "@/components/ui/badge"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useCollections } from "@/contexts/collections-context"
 import { EmptyState } from "@/components/ui/empty-state"
 import { MOCK_CATALOG_ITEMS } from "@/lib/mock-data"
@@ -157,6 +155,7 @@ interface CatalogSidebarProps {
   onOrganizationChange?: (organizationId: string) => void
   pinnedCount?: number
   onCollectionSelect?: (collectionId: string | null) => void
+  onCollectionClick?: (collectionId: string) => void
   selectedCollectionId?: string | null
 }
 
@@ -166,6 +165,7 @@ export function CatalogSidebar({
   onOrganizationChange, 
   pinnedCount = 0,
   onCollectionSelect,
+  onCollectionClick,
   selectedCollectionId
 }: CatalogSidebarProps) {
   const { collections } = useCollections()
@@ -219,7 +219,7 @@ export function CatalogSidebar({
             </Select>
           </div>
 
-          {/* Dashboard Tab */}
+          {/* Main Navigation Items */}
           <Button
             variant={activeView === "dashboard" ? "secondary" : "ghost"}
             className="w-full justify-start"
@@ -261,63 +261,75 @@ export function CatalogSidebar({
             )}
           </Button>
 
-          {/* Collections Section */}
-          <div className="mt-4">
-            <div className="mb-3 flex w-full items-center justify-between px-2 hover:bg-accent/50 rounded-md py-1 transition-colors group">
-              <button
-                onClick={() => setCollectionsExpanded(!collectionsExpanded)}
-                className="flex items-center gap-2 flex-1"
-              >
+          {/* Collections - Now at the same level */}
+          {collections.length > 0 && (
+            <>
+              {/* Visual separator */}
+              <div className="my-2 border-t border-sidebar-border"></div>
+              
+              {/* Collections header with create button */}
+              <div className="mb-2 flex w-full items-center justify-between px-2">
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Collections</h3>
-                {collectionsExpanded ? (
-                  <ChevronDown className="h-3 w-3 text-muted-foreground" />
-                ) : (
-                  <ChevronRight className="h-3 w-3 text-muted-foreground" />
-                )}
-              </button>
-              <ManualCollectionDialog
-                trigger={
-                  <button
-                    className="opacity-60 hover:opacity-100 transition-opacity p-1 hover:bg-accent rounded-sm"
-                    title="Create new collection"
-                  >
-                    <Plus className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-                  </button>
-                }
-                onCollectionCreated={() => {
-                  // Collection will be automatically updated via context
-                }}
-              />
-            </div>
+                <ManualCollectionDialog
+                  trigger={
+                    <button
+                      className="opacity-60 hover:opacity-100 transition-opacity p-1 hover:bg-accent rounded-sm"
+                      title="Create new collection"
+                    >
+                      <Plus className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                    </button>
+                  }
+                  onCollectionCreated={() => {
+                    // Collection will be automatically updated via context
+                  }}
+                />
+              </div>
 
-            {collectionsExpanded && (
-              <>
-                {collections.length === 0 ? (
-                  <EmptyState
-                    icon={Folder}
-                    title="No collections yet"
-                    description="Group items into collections to organize your objects"
-                    size="sm"
-                    className="px-2"
+              {/* Collections list */}
+              <div className="space-y-1">
+                {collections.map((collection) => (
+                  <CollectionItem
+                    key={collection.id}
+                    collection={collection}
+                    activeView={activeView}
+                    onCollectionClick={handleCollectionClick}
+                    onCollectionSelect={onCollectionSelect}
+                    selectedCollectionId={selectedCollectionId}
                   />
-                ) : (
-                  <div className="space-y-1">
-                    {collections.map((collection) => (
-                      <CollectionItem
-                        key={collection.id}
-                        collection={collection}
-                        activeView={activeView}
-                        onCollectionClick={handleCollectionClick}
-                        onCollectionSelect={onCollectionSelect}
-                        selectedCollectionId={selectedCollectionId}
-                      />
-                    ))}
-                  </div>
-                )}
+                ))}
+              </div>
+            </>
+          )}
 
-              </>
-            )}
-          </div>
+          {/* Empty state for collections */}
+          {collections.length === 0 && (
+            <>
+              <div className="my-2 border-t border-sidebar-border"></div>
+              <div className="mb-2 flex w-full items-center justify-between px-2">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Collections</h3>
+                <ManualCollectionDialog
+                  trigger={
+                    <button
+                      className="opacity-60 hover:opacity-100 transition-opacity p-1 hover:bg-accent rounded-sm"
+                      title="Create new collection"
+                    >
+                      <Plus className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                    </button>
+                  }
+                  onCollectionCreated={() => {
+                    // Collection will be automatically updated via context
+                  }}
+                />
+              </div>
+              <EmptyState
+                icon={Folder}
+                title="No collections yet"
+                description="Group items into collections to organize your objects"
+                size="sm"
+                className="px-2"
+              />
+            </>
+          )}
 
         </div>
       </ScrollArea>
@@ -360,50 +372,28 @@ function CollectionItem({
   }
 
   return (
-    <div className="relative group">
-      <ContextMenu>
-        <ContextMenuTrigger>
-          <Button
-            variant={isSelected ? "secondary" : "ghost"}
-            className="w-full justify-start text-sm font-normal"
+    <div className="relative group z-10">
+      <Button
+        variant={isSelected ? "secondary" : "ghost"}
+        className="w-full justify-start text-sm font-normal"
             onClick={() => {
-              if (onCollectionSelect) {
-                onCollectionSelect(isSelected ? null : collection.id)
-              } else if (onCollectionClick) {
+              if (onCollectionClick) {
                 onCollectionClick(collection.id)
+              } else if (onCollectionSelect) {
+                onCollectionSelect(isSelected ? null : collection.id)
               } else {
                 // Fallback to old navigation
                 router.push(`/collections/${collection.id}`)
               }
             }}
-          >
-            {getIcon()}
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="ml-2 flex-1 text-left overflow-hidden pr-2" style={{ minWidth: 0, width: 0 }}>
-                    <span className="block overflow-hidden text-ellipsis whitespace-nowrap !text-ellipsis !overflow-hidden !whitespace-nowrap">{collection.name}</span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="top" align="center">
-                  <p className="max-w-xs break-words">{collection.name}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            {/* Show count by default, show actions on hover */}
-            <span className="ml-auto text-xs text-muted-foreground flex-shrink-0 group-hover:hidden">{collection.itemCount || 0}</span>
-          </Button>
-        </ContextMenuTrigger>
-        <ContextMenuContent>
-          <ContextMenuItem>Open</ContextMenuItem>
-          <ContextMenuItem>
-            <Share2 className="mr-2 h-4 w-4" />
-            Share
-          </ContextMenuItem>
-          <ContextMenuItem>Rename</ContextMenuItem>
-          <ContextMenuItem className="text-destructive">Remove Collection</ContextMenuItem>
-        </ContextMenuContent>
-      </ContextMenu>
+      >
+        {getIcon()}
+        <div className="ml-2 flex-1 text-left overflow-hidden pr-2" style={{ minWidth: 0, width: 0 }}>
+          <span className="block overflow-hidden text-ellipsis whitespace-nowrap !text-ellipsis !overflow-hidden !whitespace-nowrap">{collection.name}</span>
+        </div>
+        {/* Show count by default, show actions on hover */}
+        <span className="ml-auto text-xs text-muted-foreground flex-shrink-0 group-hover:hidden">{collection.itemCount || 0}</span>
+      </Button>
       
       {/* Hover Actions Menu */}
       <DropdownMenu>
@@ -417,32 +407,48 @@ function CollectionItem({
             <MoreVertical className="h-3 w-3" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" side="right">
+        <DropdownMenuContent align="end" side="right" className="z-50">
           <DropdownMenuItem onClick={(e) => {
             e.stopPropagation()
-            if (onCollectionSelect) {
-              onCollectionSelect(collection.id)
-            } else if (onCollectionClick) {
+            console.log('🔍 Dropdown Open clicked for collection:', collection.id)
+            if (onCollectionClick) {
+              console.log('🔍 Using onCollectionClick')
               onCollectionClick(collection.id)
+            } else if (onCollectionSelect) {
+              console.log('🔍 Using onCollectionSelect')
+              onCollectionSelect(collection.id)
             } else {
+              console.log('🔍 Using router.push fallback')
               router.push(`/collections/${collection.id}`)
             }
           }}>
             <Eye className="mr-2 h-4 w-4" />
             Open
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+          <DropdownMenuItem onClick={(e) => {
+            e.stopPropagation()
+            console.log('🔍 Dropdown Share clicked for collection:', collection.id)
+            // TODO: Implement share functionality
+          }}>
             <Share2 className="mr-2 h-4 w-4" />
             Share
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+          <DropdownMenuItem onClick={(e) => {
+            e.stopPropagation()
+            console.log('🔍 Dropdown Rename clicked for collection:', collection.id)
+            // TODO: Implement rename functionality
+          }}>
             <Edit3 className="mr-2 h-4 w-4" />
             Rename
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem 
             className="text-destructive"
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation()
+              console.log('🔍 Dropdown Remove clicked for collection:', collection.id)
+              // TODO: Implement remove functionality
+            }}
           >
             <Trash2 className="mr-2 h-4 w-4" />
             Remove Collection

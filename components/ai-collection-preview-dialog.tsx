@@ -2457,17 +2457,17 @@ export function AICollectionPreviewDialog({
                       
                       {/* Filter Badges */}
                       <div className="flex flex-wrap gap-2">
-                        <span className="px-3 py-1.5 bg-green-50 border border-green-200 rounded-full text-sm">
-                          💰 Value &gt; $1M
+                        <span className="px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-full text-sm">
+                          Value &gt; $1M
                         </span>
-                        <span className="px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-full text-sm">
-                          🏢 Premium categories
+                        <span className="px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-full text-sm">
+                          Premium categories
                         </span>
-                        <span className="px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-full text-sm">
-                          ✅ Active status
+                        <span className="px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-full text-sm">
+                          Active status
                         </span>
-                        <span className="px-3 py-1.5 bg-yellow-50 border border-yellow-200 rounded-full text-sm">
-                          ⭐ Rating ≥ 4
+                        <span className="px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-full text-sm">
+                          Rating ≥ 4
                         </span>
                       </div>
                     </div>

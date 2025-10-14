@@ -139,9 +139,9 @@ function AddOrCreateButton({ selectedIds, size = "sm", variant = "outline" }: { 
       {collections.length > 0 && (
         <AddSelectedToCollectionDialog
           trigger={
-            <Button variant={variant} size={size}>
+            <Button variant={variant} size={size} className="bg-blue-600 text-white hover:bg-blue-700">
               <Plus className="mr-1 sm:mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">Add to collection</span>
+              <span className="hidden sm:inline">Add to Collection</span>
               <span className="sm:hidden">Add to</span>
             </Button>
           }
@@ -152,9 +152,9 @@ function AddOrCreateButton({ selectedIds, size = "sm", variant = "outline" }: { 
       {/* Create new collection button */}
       <ManualCollectionDialog
         trigger={
-          <Button variant={variant} size={size}>
+          <Button variant={variant} size={size} className="bg-primary text-primary-foreground hover:bg-primary/90">
             <Plus className="mr-1 sm:mr-2 h-4 w-4" />
-            <span className="hidden sm:inline">Create new collection</span>
+            <span className="hidden sm:inline">Create New Collection</span>
             <span className="sm:hidden">New</span>
           </Button>
         }
@@ -832,9 +832,24 @@ export function CatalogView({ activeView = "catalog", onPinnedCountChange }: Cat
                   <Square className="h-4 w-4" />
                 </Button>
               </div>
-              <Button onClick={() => setAddItemModalOpen(true)} size="sm" className="lg:size-default">
+              <Button 
+                onClick={() => setAddItemModalOpen(true)} 
+                size="sm" 
+                variant="outline"
+                className="lg:size-default"
+              >
                 <Plus className="mr-1 lg:mr-2 h-4 w-4" />
-                <span className="hidden sm:inline">Add</span>
+                <span className="hidden sm:inline">Create New Item</span>
+                <span className="sm:hidden">New Item</span>
+              </Button>
+              <Button 
+                onClick={() => setCollectionDialogOpen(true)} 
+                size="sm" 
+                className="lg:size-default bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
+              >
+                <FolderOpen className="mr-1 lg:mr-2 h-4 w-4" />
+                <span className="hidden sm:inline">Create Collection</span>
+                <span className="sm:hidden">Collection</span>
               </Button>
             </div>
           </div>
@@ -959,11 +974,9 @@ export function CatalogView({ activeView = "catalog", onPinnedCountChange }: Cat
 
       {/* Collection Creation Dialog */}
       <ManualCollectionDialog
-        trigger={
-          <div style={{ display: 'none' }}>
-            {/* Hidden trigger - dialog will be opened programmatically */}
-          </div>
-        }
+        trigger={<div style={{ display: 'none' }} />}
+        open={collectionDialogOpen}
+        onOpenChange={setCollectionDialogOpen}
         onCollectionCreated={() => {
           setCollectionDialogOpen(false)
           toast({
@@ -1090,9 +1103,9 @@ function DashboardView({
             action={
               <ManualCollectionDialog
                 trigger={
-                  <Button size="sm">
+                  <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm">
                     <Plus className="mr-2 h-4 w-4" />
-                    Create
+                    Create Collection
                   </Button>
                 }
               />
