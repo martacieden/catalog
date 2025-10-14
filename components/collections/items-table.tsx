@@ -49,6 +49,7 @@ interface ItemsTableProps {
   onItemDelete?: (item: CollectionItem) => void
   showSelection?: boolean
   showActions?: boolean
+  showBulkActions?: boolean
   emptyMessage?: string
   onBulkDelete?: () => void
   onBulkCreateCollection?: () => void
@@ -68,6 +69,7 @@ export function ItemsTable({
   onItemDelete,
   showSelection = true,
   showActions = true,
+  showBulkActions = true,
   emptyMessage = "No items in this collection",
   onBulkDelete,
   onBulkCreateCollection,
@@ -148,7 +150,7 @@ export function ItemsTable({
   return (
     <div className="space-y-0">
       {/* Bulk Actions Bar */}
-      {selectedCount > 0 && (
+      {selectedCount > 0 && showBulkActions && (
         <div className="sticky top-0 z-10 -mt-2 mb-4 rounded-lg border border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 px-4 py-3 shadow-sm">
           <div className="w-full flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2 sm:gap-4">

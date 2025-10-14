@@ -152,6 +152,10 @@ function SearchResultsContent() {
     setResults(mockResults)
     setTotalResults(mockResults.length)
     setCollectionCount(4)
+    
+    // Автоматично вибираємо всі елементи за замовчуванням
+    const allItemIds = new Set(mockResults.map(result => result.id))
+    setSelectedItems(allItemIds)
   }, [searchQuery])
 
   // Convert results to CollectionItems
@@ -363,29 +367,31 @@ function SearchResultsContent() {
                   )}
                 </div>
                 
-                {/* Right side - Always visible actions */}
-                <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
-                  <Button size="sm" variant="outline" onClick={handleExport}>
-                    <Download className="mr-1 sm:mr-2 h-4 w-4" />
-                    <span className="hidden sm:inline">Export</span>
-                    <span className="sm:hidden">Export</span>
-                  </Button>
-                  <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={handleCreateCollection}>
-                    <Plus className="mr-1 sm:mr-2 h-4 w-4" />
-                    <span className="hidden sm:inline">Create Collection</span>
-                    <span className="sm:hidden">Create</span>
-                  </Button>
-                  <AddSelectedToCollectionDialog
-                    trigger={
-                      <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-                        <Plus className="mr-1 sm:mr-2 h-4 w-4" />
-                        <span className="hidden sm:inline">Add to Collection</span>
-                        <span className="sm:hidden">Add</span>
-                      </Button>
-                    }
-                    selectedItemIds={getItemsToWorkWith()}
-                  />
-                </div>
+                {/* Right side - Bulk action buttons (only when items selected) */}
+                {selectedItems.size > 0 && (
+                  <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+                    <Button size="sm" variant="outline" onClick={handleExport}>
+                      <Download className="mr-1 sm:mr-2 h-4 w-4" />
+                      <span className="hidden sm:inline">Export</span>
+                      <span className="sm:hidden">Export</span>
+                    </Button>
+                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={handleCreateCollection}>
+                      <Plus className="mr-1 sm:mr-2 h-4 w-4" />
+                      <span className="hidden sm:inline">Create Collection</span>
+                      <span className="sm:hidden">Create</span>
+                    </Button>
+                    <AddSelectedToCollectionDialog
+                      trigger={
+                        <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                          <Plus className="mr-1 sm:mr-2 h-4 w-4" />
+                          <span className="hidden sm:inline">Add to Collection</span>
+                          <span className="sm:hidden">Add</span>
+                        </Button>
+                      }
+                      selectedItemIds={getItemsToWorkWith()}
+                    />
+                  </div>
+                )}
               </div>
             </div>
 
@@ -400,6 +406,7 @@ function SearchResultsContent() {
                   onSortChange={handleSortChange}
                   showSelection={true}
                   showActions={false}
+                  showBulkActions={false}
                   emptyMessage="No search results found"
                 />
               ) : (
