@@ -444,26 +444,6 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
         {/* Table Controls */}
         <div className="flex items-center justify-between mb-4 mt-4">
           <div className="flex items-center gap-2">
-            {/* View Toggle */}
-            <div className="flex items-center border rounded-md">
-              <Button
-                variant={layout === "grid" ? "secondary" : "ghost"}
-                size="sm"
-                onClick={() => setLayout("grid")}
-                className="rounded-r-none"
-              >
-                <Grid3x3 className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={layout === "table" ? "secondary" : "ghost"}
-                size="sm"
-                onClick={() => setLayout("table")}
-                className="rounded-none border-x"
-              >
-                <Square className="h-4 w-4" />
-              </Button>
-            </div>
-            
             {/* Table Controls */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -481,6 +461,26 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
             >
               <Filter className="h-4 w-4 mr-2" />
               Table Filters
+            </Button>
+          </div>
+          
+          {/* View Toggle */}
+          <div className="flex items-center border rounded-md">
+            <Button
+              variant={layout === "grid" ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => setLayout("grid")}
+              className="rounded-r-none"
+            >
+              <Grid3x3 className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={layout === "table" ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => setLayout("table")}
+              className="rounded-none border-x"
+            >
+              <Square className="h-4 w-4" />
             </Button>
           </div>
         </div>

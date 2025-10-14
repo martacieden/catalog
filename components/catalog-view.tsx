@@ -42,9 +42,11 @@ import { ManualCollectionDialog } from "@/components/manual-collection-dialog"
 import { EmptyCollectionDialog } from "@/components/empty-collection-dialog"
 import { AddSelectedToCollectionDialog } from "@/components/collections/add-selected-to-collection-dialog"
 import { AddItemModal } from "@/components/collections/add-item-modal"
+import { ItemsTable } from "@/components/collections/items-table"
 import { AICollectionPreviewDialog } from "@/components/ai-collection-preview-dialog"
 import { SearchToCollection } from "@/components/search-to-collection"
 import { getUnsplashImageUrl, getRandomUnsplashImage } from "@/lib/unsplash"
+import { CardItemThumbnail } from "@/lib/collection-utils"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useCollections } from "@/contexts/collections-context"
@@ -103,33 +105,6 @@ function getCategoryBgColor(category: string) {
   return colorMap[category] || "bg-gray-50 border-gray-200"
 }
 
-// Компонент для відображення в картковому вигляді (великий розмір)
-const CardItemThumbnail = ({ item }: { item: any }) => {
-  const CategoryIcon = getCategoryIcon(item.category, "h-8 w-8")
-  const bgColorClass = getCategoryBgColor(item.category)
-  
-  return (
-    <div className={`relative h-24 w-full rounded-lg overflow-hidden flex items-center justify-center ${bgColorClass}`}>
-      <div className="h-12 w-12 flex items-center justify-center rounded-lg bg-white shadow-sm">
-        {CategoryIcon}
-      </div>
-    </div>
-  )
-}
-
-// Компонент для відображення в табличному вигляді (малий розмір)
-const TableItemThumbnail = ({ item }: { item: any }) => {
-  const CategoryIcon = getCategoryIcon(item.category, "h-5 w-5")
-  const bgColorClass = getCategoryBgColor(item.category)
-  
-  return (
-    <div className={`relative h-12 w-12 rounded-lg overflow-hidden flex items-center justify-center ${bgColorClass}`}>
-      <div className="h-8 w-8 flex items-center justify-center rounded-lg bg-white shadow-sm">
-        {CategoryIcon}
-      </div>
-    </div>
-  )
-}
 
 function AddOrCreateButton({ selectedIds, size = "sm", variant = "outline" }: { selectedIds: string[]; size?: any; variant?: any }) {
   const { collections } = useCollections()
@@ -192,6 +167,7 @@ export function CatalogView({ activeView = "catalog", onPinnedCountChange }: Cat
   const [isAISearching, setIsAISearching] = React.useState(false)
   const [showAIRecommendations, setShowAIRecommendations] = React.useState(false)
   const [collectionDialogOpen, setCollectionDialogOpen] = React.useState(false)
+  const [manualCollectionDialogOpen, setManualCollectionDialogOpen] = React.useState(false)
   const [emptyCollectionDialogOpen, setEmptyCollectionDialogOpen] = React.useState(false)
   const [aiPreviewModalOpen, setAiPreviewModalOpen] = React.useState(false)
   const [currentRecommendation, setCurrentRecommendation] = React.useState(highValueAssetsRecommendation)
@@ -407,8 +383,15 @@ export function CatalogView({ activeView = "catalog", onPinnedCountChange }: Cat
   }
 
   const handleCreateCollectionFromSelected = () => {
-    // This will be handled by the AI Collection Dialog
-    // TODO: Implement collection creation from selected items
+    if (selectedItems.size === 0) {
+      toast({
+        title: "No items selected",
+        description: "Please select items to create a collection",
+        variant: "destructive"
+      })
+      return
+    }
+    setManualCollectionDialogOpen(true)
   }
 
 
@@ -814,26 +797,8 @@ export function CatalogView({ activeView = "catalog", onPinnedCountChange }: Cat
               </div>
             </div>
 
-            {/* Right group: View toggle, Add */}
+            {/* Right group: Add buttons, View toggle */}
             <div className="flex items-center gap-2 lg:gap-3 flex-shrink-0">
-              <div className="flex items-center border border-border rounded-md p-1">
-                <Button
-                  variant={viewMode === "grid" ? "default" : "ghost"}
-                  size="sm"
-                  className="h-8 px-2 lg:px-3"
-                  onClick={() => setViewMode("grid")}
-                >
-                  <Grid3X3 className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={viewMode === "card" ? "default" : "ghost"}
-                  size="sm"
-                  className="h-8 px-2 lg:px-3"
-                  onClick={() => setViewMode("card")}
-                >
-                  <Square className="h-4 w-4" />
-                </Button>
-              </div>
               <Button 
                 onClick={() => setAddItemModalOpen(true)} 
                 size="sm" 
@@ -853,6 +818,24 @@ export function CatalogView({ activeView = "catalog", onPinnedCountChange }: Cat
                 <span className="hidden sm:inline">Create Collection</span>
                 <span className="sm:hidden">Collection</span>
               </Button>
+              <div className="flex items-center border border-border rounded-md p-1">
+                <Button
+                  variant={viewMode === "grid" ? "default" : "ghost"}
+                  size="sm"
+                  className="h-8 px-2 lg:px-3"
+                  onClick={() => setViewMode("grid")}
+                >
+                  <Grid3X3 className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={viewMode === "card" ? "default" : "ghost"}
+                  size="sm"
+                  className="h-8 px-2 lg:px-3"
+                  onClick={() => setViewMode("card")}
+                >
+                  <Square className="h-4 w-4" />
+              </Button>
+              </div>
             </div>
           </div>
 
@@ -902,19 +885,51 @@ export function CatalogView({ activeView = "catalog", onPinnedCountChange }: Cat
             )}
 
             {viewMode === "grid" ? (
-              <GridView 
-                items={filteredItems} 
-                selectedItems={selectedItems} 
-                onSelectItem={handleSelectItem}
-                onSelectAll={handleSelectAll}
-                allSelected={allSelected}
-                onPinSelected={handlePinSelected}
-                onUnpinSelected={handleUnpinSelected}
-                onCreateCollectionFromSelected={handleCreateCollectionFromSelected}
-                onClearSelection={() => setSelectedItems(new Set())}
-                onDeleteClick={handleDeleteClick}
-                activeView={activeView}
-                isCollectionView={isCollectionView()}
+              <ItemsTable 
+                items={filteredItems.map(item => ({
+                  ...item,
+                  people: item.people?.map(person => ({
+                    id: person.id,
+                    name: person.name,
+                    email: '',
+                    role: person.role as 'owner' | 'editor' | 'viewer' | undefined,
+                    avatar: '',
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                  })),
+                  createdBy: item.createdBy ? {
+                    id: '1',
+                    name: item.createdBy.name,
+                    email: '',
+                    role: 'owner' as const,
+                    avatar: item.createdBy.avatar,
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                  } : (item.people && item.people.length > 0 ? {
+                    id: item.people[0].id,
+                    name: item.people[0].name,
+                    email: '',
+                    role: 'owner' as const,
+                    avatar: '',
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                  } : {
+                    id: 'system',
+                    name: 'System',
+                    email: '',
+                    role: 'owner' as const,
+                    avatar: '',
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                  })
+                }))} 
+                selectedIds={selectedItems} 
+                onSelectionChange={setSelectedItems}
+                onItemDelete={(item) => handleDeleteClick()}
+                onBulkDelete={handleDeleteClick}
+                onBulkCreateCollection={handleCreateCollectionFromSelected}
+                onBulkPin={handlePinSelected}
+                emptyMessage="No items found"
               />
             ) : (
               <CardView 
@@ -1005,6 +1020,22 @@ export function CatalogView({ activeView = "catalog", onPinnedCountChange }: Cat
           toast({
             title: "Collection created",
             description: "Your empty collection has been created successfully.",
+          })
+        }}
+      />
+
+      {/* Manual Collection Dialog for Bulk Selection */}
+      <ManualCollectionDialog
+        trigger={<div />}
+        open={manualCollectionDialogOpen}
+        onOpenChange={setManualCollectionDialogOpen}
+        selectedItems={Array.from(selectedItems)}
+        onCollectionCreated={() => {
+          setManualCollectionDialogOpen(false)
+          setSelectedItems(new Set())
+          toast({
+            title: "Collection created",
+            description: `Collection created with ${selectedItems.size} selected items.`,
           })
         }}
       />
@@ -1303,286 +1334,7 @@ function CardView({
   )
 }
 
-function GridView({
-  items,
-  selectedItems,
-  onSelectItem,
-  onSelectAll,
-  allSelected,
-  onPinSelected,
-  onUnpinSelected,
-  onCreateCollectionFromSelected,
-  onClearSelection,
-  onDeleteClick,
-  activeView,
-  isCollectionView,
-}: {
-  items: MockCatalogItem[]
-  selectedItems: Set<string>
-  onSelectItem: (id: string, checked: boolean) => void
-  onSelectAll: (checked: boolean) => void
-  allSelected: boolean
-  onPinSelected: () => void
-  onUnpinSelected: () => void
-  onCreateCollectionFromSelected: () => void
-  onClearSelection: () => void
-  onDeleteClick: () => void
-  activeView: string
-  isCollectionView: boolean
-}) {
-  const indeterminate = selectedItems.size > 0 && selectedItems.size < items.length
-  const selectedCount = selectedItems.size
 
-  return (
-    <div className="rounded-lg border border-border bg-card">
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="border-b border-border bg-muted/50">
-            <tr>
-              <th className="w-12 p-4">
-                <Checkbox 
-                  checked={indeterminate ? "indeterminate" : allSelected} 
-                  onCheckedChange={onSelectAll}
-                  className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                />
-              </th>
-              <th className="p-4 text-left text-sm font-medium text-muted-foreground">Name</th>
-              <th className="p-4 text-left text-sm font-medium text-muted-foreground">ID</th>
-              <th className="p-4 text-left text-sm font-medium text-muted-foreground">Category</th>
-              <th className="p-4 text-left text-sm font-medium text-muted-foreground">Access</th>
-              <th className="p-4 text-left text-sm font-medium text-muted-foreground">Created by</th>
-              <th className="p-4 text-left text-sm font-medium text-muted-foreground">Created on</th>
-              <th className="p-4 text-left text-sm font-medium text-muted-foreground">Last update</th>
-              <th className="w-12 p-4"></th>
-            </tr>
-            {selectedCount > 0 && (
-              <tr className="border-b border-border bg-muted">
-                <td colSpan={8} className="p-4">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 sm:gap-4">
-                      <span className="text-sm font-medium">
-                        {selectedCount} item{selectedCount > 1 ? "s" : ""} selected
-                      </span>
-                      <Button variant="ghost" size="sm" onClick={onClearSelection}>
-                        <X className="mr-1 sm:mr-2 h-4 w-4" />
-                        <span className="hidden sm:inline">Clear selection</span>
-                        <span className="sm:hidden">Clear</span>
-                      </Button>
-                    </div>
-                    <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
-                      <AddOrCreateButton selectedIds={Array.from(selectedItems)} />
-                      {activeView === "pinned" ? (
-                        <Button variant="outline" size="sm" onClick={onUnpinSelected}>
-                          <Pin className="mr-1 sm:mr-2 h-4 w-4" />
-                          <span className="hidden sm:inline">Unpin items</span>
-                          <span className="sm:hidden">Unpin</span>
-                        </Button>
-                      ) : (
-                        <Button variant="outline" size="sm" onClick={onPinSelected}>
-                          <Pin className="mr-1 sm:mr-2 h-4 w-4" />
-                          <span className="hidden sm:inline">Pin items</span>
-                          <span className="sm:hidden">Pin</span>
-                        </Button>
-                      )}
-                      <Button variant="destructive" size="sm" onClick={onDeleteClick}>
-                        <span className="hidden sm:inline">{isCollectionView ? 'Remove items' : 'Delete items'}</span>
-                        <span className="sm:hidden">{isCollectionView ? 'Remove' : 'Delete'}</span>
-                      </Button>
-                    </div>
-                  </div>
-                </td>
-              </tr>
-            )}
-          </thead>
-          <tbody>
-            {items.map((item) => (
-              <tr
-                key={item.id}
-                className="border-b border-border transition-colors hover:bg-muted/50"
-              >
-                <td className="p-4">
-                  <Checkbox
-                    checked={selectedItems.has(item.id)}
-                    onCheckedChange={(checked) => onSelectItem(item.id, checked as boolean)}
-                    className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                  />
-                </td>
-                <td className="p-4">
-                  <div className="flex items-center gap-3">
-                    <TableItemThumbnail item={item} />
-                    <Link href={`/catalog/${item.id}`} className="font-medium hover:underline">
-                      {item.name}
-                    </Link>
-                  </div>
-                </td>
-                <td className="p-4">
-                  <Badge variant="outline" className="text-xs">
-                    {item.id}
-                  </Badge>
-                </td>
-                <td className="p-4">
-                  <Badge variant="secondary" className="text-xs">
-                    {item.category}
-                  </Badge>
-                </td>
-                <td className="p-4">
-                  <div className="flex items-center gap-1">
-                    {item.people && item.people.slice(0, 3).map((person, i) => (
-                      <div
-                        key={i}
-                        className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-sm font-medium text-gray-700"
-                        title={`${person.role}: ${person.name}`}
-                      >
-                        {person.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                      </div>
-                    ))}
-                    {item.people && item.people.length > 3 && (
-                      <span className="text-xs text-muted-foreground">+{item.people.length - 3}</span>
-                    )}
-                    {(!item.people || item.people.length === 0) && <span className="text-xs text-muted-foreground">No access info</span>}
-                  </div>
-                </td>
-                <td className="p-4">
-                  <div className="flex items-center gap-2">
-                    <Avatar className="h-6 w-6">
-                      <AvatarFallback className="text-xs">{item.createdBy?.avatar || '?'}</AvatarFallback>
-                    </Avatar>
-                    <span className="text-sm">{item.createdBy?.name || 'Unknown'}</span>
-                  </div>
-                </td>
-                <td className="p-4 text-sm text-muted-foreground">{item.createdOn}</td>
-                <td className="p-4 text-sm text-muted-foreground">{item.createdOn}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  )
-}
-
-function TableView({
-  items,
-  selectedItems,
-  onSelectItem,
-  onSelectAll,
-  allSelected,
-}: {
-  items: MockCatalogItem[]
-  selectedItems: Set<string>
-  onSelectItem: (id: string, checked: boolean) => void
-  onSelectAll: (checked: boolean) => void
-  allSelected: boolean
-}) {
-  const indeterminate = selectedItems.size > 0 && selectedItems.size < items.length
-  
-  return (
-    <div className="rounded-lg border border-border bg-card">
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="border-b border-border bg-muted/50">
-            <tr>
-              <th className="w-12 p-4">
-                <Checkbox 
-                  checked={indeterminate ? "indeterminate" : allSelected} 
-                  onCheckedChange={onSelectAll} 
-                />
-              </th>
-              <th className="p-4 text-left text-sm font-medium">Name</th>
-              <th className="p-4 text-left text-sm font-medium">ID</th>
-              <th className="p-4 text-left text-sm font-medium">Category</th>
-              <th className="p-4 text-left text-sm font-medium">Shared with</th>
-              <th className="p-4 text-left text-sm font-medium">Created by</th>
-              <th className="p-4 text-left text-sm font-medium">Created on</th>
-              <th className="p-4 text-left text-sm font-medium">Last update</th>
-              <th className="w-12 p-4"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item, index) => (
-              <tr key={index} className="border-b border-border transition-colors hover:bg-muted/50">
-                <td className="p-4">
-                  <Checkbox
-                    checked={selectedItems.has(item.id)}
-                    onCheckedChange={(checked) => onSelectItem(item.id, checked as boolean)}
-                    className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                  />
-                </td>
-                <td className="p-4">
-                  <div className="flex items-center gap-3">
-                    <TableItemThumbnail item={item} />
-                    <div className="flex items-center gap-2">
-                      <Link href={`/catalog/${item.id}`} className="font-medium hover:underline">
-                        {item.name}
-                      </Link>
-                      {item.pinned && <Pin className="h-3 w-3 text-primary" />}
-                    </div>
-                  </div>
-                </td>
-                <td className="p-4">
-                  <Badge variant="secondary" className="text-xs">
-                    {item.id}
-                  </Badge>
-                </td>
-                <td className="p-4 text-sm text-muted-foreground">{item.category}</td>
-                <td className="p-4">
-                  {item.people && item.people.length > 0 ? (
-                    <div className="flex -space-x-2">
-                      {item.people.slice(0, 3).map((person, i) => (
-                        <div
-                          key={i}
-                          className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-card bg-gray-100 text-sm font-medium text-gray-700"
-                          title={`${person.role}: ${person.name}`}
-                        >
-                          {person.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                        </div>
-                      ))}
-                      {item.people.length > 3 && (
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-card bg-muted text-sm">
-                          +{item.people.length - 3}
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <span className="text-sm text-muted-foreground">No access info</span>
-                  )}
-                </td>
-                <td className="p-4">
-                  <div className="flex items-center gap-2">
-                    <Avatar className="h-6 w-6">
-                      <AvatarFallback className="text-xs">{item.createdBy?.avatar || '?'}</AvatarFallback>
-                    </Avatar>
-                    <span className="text-sm">{item.createdBy?.name || 'Unknown'}</span>
-                  </div>
-                </td>
-                <td className="p-4 text-sm text-muted-foreground">{item.createdOn}</td>
-                <td className="p-4 text-sm text-muted-foreground">{item.lastUpdate}</td>
-                <td className="p-4">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem>View</DropdownMenuItem>
-                      <DropdownMenuItem>Edit</DropdownMenuItem>
-                      <DropdownMenuItem>Share</DropdownMenuItem>
-                      <DropdownMenuItem>Move</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <div className="flex items-center justify-between border-t border-border p-4">
-        <span className="text-sm text-muted-foreground">Rows: {items.length} | Filtered: 0</span>
-      </div>
-    </div>
-  )
-}
 
 function BoardView({ items }: { items: MockCatalogItem[] }) {
   const columns = [

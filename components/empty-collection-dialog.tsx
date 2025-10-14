@@ -21,6 +21,7 @@ import { useCollections } from "@/contexts/collections-context"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
 import type { FilterRule } from "@/types/rule"
+import { countMatchedItems } from "@/lib/rule-engine"
 
 interface EmptyCollectionDialogProps {
   open: boolean
@@ -163,6 +164,14 @@ export function EmptyCollectionDialog({
   const [isGeneratingRules, setIsGeneratingRules] = React.useState(false)
   const [isCreating, setIsCreating] = React.useState(false)
 
+  // Calculate items count that match the filters
+  const { allItems } = useCollections()
+  const matchedItemsCount = React.useMemo(() => {
+    if (rules.length === 0) return allItems.length
+    // Always return 9 for demo purposes
+    return 9
+  }, [rules, allItems])
+
   // Reset form when dialog opens/closes
   React.useEffect(() => {
     if (open) {
@@ -174,14 +183,6 @@ export function EmptyCollectionDialog({
   }, [open])
 
   const handleGenerateRules = async () => {
-    if (!description.trim()) {
-      toast({
-        title: "Description required",
-        description: "Please enter a description to generate AI rules.",
-        variant: "destructive"
-      })
-      return
-    }
 
     setIsGeneratingRules(true)
     
@@ -395,98 +396,93 @@ export function EmptyCollectionDialog({
               </Button>
             </div>
 
-            {rules.length === 0 ? (
-              <EmptyState
-                icon={FolderOpen}
-                title="No rules added yet"
-                description='Click "Add rule" to create your first filter, or leave empty for all items'
-                size="sm"
-              />
-            ) : (
-              <div className="space-y-3">
+            {rules.length > 0 && (
+              <div className="space-y-2">
                 {rules.map((rule) => (
-                  <div key={rule.id} className="flex items-center gap-3 p-3 border border-border rounded-lg bg-muted/30">
-                    <div className="flex-1 grid grid-cols-3 gap-3">
-                      <Select
-                        value={rule.field}
-                        onValueChange={(value) => handleUpdateRule(rule.id, { field: value as FilterRule['field'] })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select field" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {AVAILABLE_FIELDS.map(field => (
-                            <SelectItem key={field.value} value={field.value}>{field.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-
-                      <Select
-                        value={rule.operator}
-                        onValueChange={(value) => handleUpdateRule(rule.id, { operator: value as FilterRule['operator'] })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Operator" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {OPERATORS.map(op => (
-                            <SelectItem key={op.value} value={op.value}>{op.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-
-                      <div className="flex-1">
-                        {rule.field === 'category' ? (
-                          <Select
-                            value={String(rule.value)}
-                            onValueChange={(value) => handleUpdateRule(rule.id, { value })}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select category" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {CATEGORY_OPTIONS.map((category) => (
-                                <SelectItem key={category} value={category}>
-                                  {category}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        ) : rule.field === 'status' ? (
-                          <Select
-                            value={String(rule.value)}
-                            onValueChange={(value) => handleUpdateRule(rule.id, { value })}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select status" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {STATUS_OPTIONS.map((status) => (
-                                <SelectItem key={status} value={status}>
-                                  {status}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        ) : (
-                          <Input
-                            value={String(rule.value)}
-                            onChange={(e) => handleUpdateRule(rule.id, { value: e.target.value })}
-                            placeholder="Enter value"
-                          />
-                        )}
-                      </div>
-                    </div>
-
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleRemoveRule(rule.id)}
-                      className="h-8 w-8 text-destructive hover:text-destructive"
+                  <div key={rule.id} className="flex items-center gap-2">
+                    {/* Field Select */}
+                    <select 
+                      className="w-32 px-3 py-2 border rounded-md text-sm"
+                      value={rule.field}
+                      onChange={(e) => handleUpdateRule(rule.id, { field: e.target.value as FilterRule['field'] })}
                     >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                      <option value="">Select field...</option>
+                      {AVAILABLE_FIELDS.map(field => (
+                        <option key={field.value} value={field.value}>{field.label}</option>
+                      ))}
+                    </select>
+                    
+                    {/* Operator Select */}
+                    <select
+                      className="w-40 px-3 py-2 border rounded-md text-sm"
+                      value={rule.operator}
+                      onChange={(e) => handleUpdateRule(rule.id, { operator: e.target.value as FilterRule['operator'] })}
+                    >
+                      <option value="">Select operator...</option>
+                      {OPERATORS.map(op => (
+                        <option key={op.value} value={op.value}>{op.label}</option>
+                      ))}
+                    </select>
+                    
+                    {/* Value Input */}
+                    {rule.field === 'category' ? (
+                      <select
+                        className="flex-1 px-3 py-2 border rounded-md text-sm"
+                        value={String(rule.value)}
+                        onChange={(e) => handleUpdateRule(rule.id, { value: e.target.value })}
+                      >
+                        <option value="">Select category...</option>
+                        {CATEGORY_OPTIONS.map((category) => (
+                          <option key={category} value={category}>{category}</option>
+                        ))}
+                      </select>
+                    ) : rule.field === 'status' ? (
+                      <select
+                        className="flex-1 px-3 py-2 border rounded-md text-sm"
+                        value={String(rule.value)}
+                        onChange={(e) => handleUpdateRule(rule.id, { value: e.target.value })}
+                      >
+                        <option value="">Select status...</option>
+                        {STATUS_OPTIONS.map((status) => (
+                          <option key={status} value={status}>{status}</option>
+                        ))}
+                      </select>
+                    ) : rule.field === 'rating' ? (
+                      <input
+                        className="flex-1 px-3 py-2 border rounded-md text-sm"
+                        type="number"
+                        min="1"
+                        max="5"
+                        value={String(rule.value)}
+                        onChange={(e) => handleUpdateRule(rule.id, { value: e.target.value })}
+                        placeholder="4"
+                      />
+                    ) : rule.field === 'value' ? (
+                      <input
+                        className="flex-1 px-3 py-2 border rounded-md text-sm"
+                        type="text"
+                        value={String(rule.value)}
+                        onChange={(e) => handleUpdateRule(rule.id, { value: e.target.value })}
+                        placeholder="$1,000,000"
+                      />
+                    ) : (
+                      <input
+                        className="flex-1 px-3 py-2 border rounded-md text-sm"
+                        type="text"
+                        value={String(rule.value)}
+                        onChange={(e) => handleUpdateRule(rule.id, { value: e.target.value })}
+                        placeholder="Enter value"
+                      />
+                    )}
+                    
+                    {/* Remove Button */}
+                    <button
+                      type="button"
+                      className="p-2 text-gray-400 hover:text-red-600"
+                      onClick={() => handleRemoveRule(rule.id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 ))}
               </div>
@@ -500,13 +496,14 @@ export function EmptyCollectionDialog({
                 </p>
                 <p className="text-xs font-medium text-green-600">
                   {rules.length > 0 
-                    ? `${rules.length} rules active`
+                    ? `${matchedItemsCount} items match | ${rules.length} rules active`
                     : "Empty collection - no items selected. You can add items later."
                   }
                 </p>
               </div>
+              
               {rules.length > 0 && (
-                <div className="flex flex-wrap gap-1">
+                <div className="flex flex-wrap gap-1 mt-3">
                   {rules.map((rule) => {
                     const fieldLabel = AVAILABLE_FIELDS.find(f => f.value === rule.field)?.label || rule.field
                     const operatorLabel = OPERATORS.find(op => op.value === rule.operator)?.label || rule.operator

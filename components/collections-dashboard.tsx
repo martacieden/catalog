@@ -423,17 +423,37 @@ export function CollectionsDashboard() {
     objectIds: string[];
   }) => {
     console.log('🔍 Creating AI collection with data:', collectionData)
+    console.log('🔍 Selected collection type:', selectedCollectionType)
     
-    // Create collection using acceptRecommendation for AI suggestions
-    const newCollectionId = acceptRecommendation(selectedCollectionType)
-    
-    setAiPreviewModalOpen(false)
-    
-    // Show success toast
-    toast({
-      title: "Collection created successfully! 🎉",
-      description: `"${collectionData.name}" has been created with AI-generated filtering rules.`,
-    })
+    try {
+      // Create collection using acceptRecommendation for AI suggestions
+      const newCollectionId = acceptRecommendation(selectedCollectionType)
+      
+      if (!newCollectionId) {
+        console.error('❌ Failed to create collection - acceptRecommendation returned null')
+        toast({
+          title: "Error creating collection",
+          description: "Failed to create collection. Please try again.",
+          variant: "destructive"
+        })
+        return
+      }
+      
+      setAiPreviewModalOpen(false)
+      
+      // Show success toast
+      toast({
+        title: "Collection created successfully! 🎉",
+        description: `"${collectionData.name}" has been created with AI-generated filtering rules.`,
+      })
+    } catch (error) {
+      console.error('❌ Error creating AI collection:', error)
+      toast({
+        title: "Error creating collection",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive"
+      })
+    }
   }
 
   const handleCardEdit = (collection: any) => {

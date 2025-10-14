@@ -213,7 +213,6 @@ export function ManualCollectionDialog({ trigger, selectedItems = [], onCollecti
   const [isUploading, setIsUploading] = React.useState(false)
   const [description, setDescription] = React.useState("")
 
-  // Calculate items count that match the filters
   const matchingItemsCount = React.useMemo(() => {
     if (selectedItems.length > 0) {
       // If items are selected, show the count of selected items
@@ -236,14 +235,6 @@ export function ManualCollectionDialog({ trigger, selectedItems = [], onCollecti
   }, [open, selectedItems])
 
   const handleAIGenerate = async () => {
-    if (!aiPrompt.trim()) {
-      toast({
-        title: "Description required",
-        description: "Please enter a description to generate AI rules.",
-        variant: "destructive"
-      })
-      return
-    }
     
     setIsGenerating(true)
     
@@ -650,54 +641,47 @@ export function ManualCollectionDialog({ trigger, selectedItems = [], onCollecti
               </Button>
             </div>
 
-            {filters.length === 0 ? (
-              <EmptyState
-                icon={FolderOpen}
-                title="No rules added yet"
-                description='Click "Add rule" to create your first filter, or leave empty for all items'
-                size="sm"
-              />
-            ) : (
-              <div className="space-y-3">
+            {filters.length > 0 && (
+              <div className="space-y-2">
                 {filters.map((filter) => (
-                  <div key={filter.id} className="flex items-center gap-3 p-3 border border-border rounded-lg bg-muted/30">
-                    <div className="flex-1 grid grid-cols-3 gap-3">
-                      <Select value={filter.field} onValueChange={(value) => updateFilter(filter.id, "field", value)}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select field" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {AVAILABLE_FIELDS.map(field => (
-                            <SelectItem key={field.value} value={field.value}>{field.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-
-                      <Select value={filter.operator} onValueChange={(value) => updateFilter(filter.id, "operator", value)}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Operator" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {OPERATORS.map(op => (
-                            <SelectItem key={op.value} value={op.value}>{op.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-
-                      <div className="flex-1">
-                        {getValueInput(filter)}
-                      </div>
-                    </div>
-
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeFilter(filter.id)}
-                      className="h-8 w-8 text-destructive hover:text-destructive"
+                  <div key={filter.id} className="flex items-center gap-2">
+                    {/* Field Select */}
+                    <select 
+                      className="w-32 px-3 py-2 border rounded-md text-sm"
+                      value={filter.field}
+                      onChange={(e) => updateFilter(filter.id, "field", e.target.value)}
                     >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                      <option value="">Select field...</option>
+                      {AVAILABLE_FIELDS.map(field => (
+                        <option key={field.value} value={field.value}>{field.label}</option>
+                      ))}
+                    </select>
+                    
+                    {/* Operator Select */}
+                    <select
+                      className="w-40 px-3 py-2 border rounded-md text-sm"
+                      value={filter.operator}
+                      onChange={(e) => updateFilter(filter.id, "operator", e.target.value)}
+                    >
+                      <option value="">Select operator...</option>
+                      {OPERATORS.map(op => (
+                        <option key={op.value} value={op.value}>{op.label}</option>
+                      ))}
+                    </select>
+                    
+                    {/* Value Input */}
+                    <div className="flex-1">
+                      {getValueInput(filter)}
+                    </div>
+                    
+                    {/* Remove Button */}
+                    <button
+                      type="button"
+                      className="p-2 text-gray-400 hover:text-red-600"
+                      onClick={() => removeFilter(filter.id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 ))}
               </div>
@@ -712,12 +696,15 @@ export function ManualCollectionDialog({ trigger, selectedItems = [], onCollecti
                 <p className="text-xs font-medium text-green-600">
                   {selectedItems.length > 0 
                     ? `${selectedItems.length} items selected`
-                    : `${matchingItemsCount} items ${filters.length > 0 ? "match" : "available"}`
+                    : filters.length > 0 
+                      ? `${matchingItemsCount} items match | ${filters.length} rules active`
+                      : `${matchingItemsCount} items available`
                   }
                 </p>
               </div>
+              
               {filters.length > 0 && (
-                <div className="flex flex-wrap gap-1">
+                <div className="flex flex-wrap gap-1 mt-3">
                   {filters.map((filter) => {
                     const fieldLabel = AVAILABLE_FIELDS.find(f => f.value === filter.field)?.label || filter.field
                     const operatorLabel = OPERATORS.find(op => op.value === filter.operator)?.label || filter.operator

@@ -598,14 +598,33 @@ export function getCategoryIcon(category: string): React.ReactNode {
 }
 
 /**
+ * Get background color for category
+ */
+function getCategoryBgColor(category: string): string {
+  const colorMap: Record<string, string> = {
+    "Legal entities": "bg-blue-100",
+    "Properties": "bg-green-100", 
+    "Vehicles": "bg-orange-100",
+    "Aviation": "bg-sky-100",
+    "Maritime": "bg-cyan-100",
+    "Organizations": "bg-purple-100",
+    "Events": "bg-pink-100",
+    "Pets": "bg-yellow-100",
+    "Obligations": "bg-red-100",
+  }
+  return colorMap[category] || "bg-gray-100"
+}
+
+/**
  * Standardized card thumbnail component
  */
 export function CardItemThumbnail({ item }: { item: any }) {
   const CategoryIcon = getCategoryIcon(item.category)
+  const bgColorClass = getCategoryBgColor(item.category)
   
   return (
-    <div className="relative h-24 w-full rounded-lg overflow-hidden flex items-center justify-center" style={{ backgroundColor: '#DEE7F3' }}>
-      <div className="h-12 w-12 flex items-center justify-center rounded-lg">
+    <div className={`relative h-24 w-full rounded-lg overflow-hidden flex items-center justify-center ${bgColorClass}`}>
+      <div className="h-12 w-12 flex items-center justify-center rounded-lg bg-white shadow-sm">
         {CategoryIcon}
       </div>
     </div>

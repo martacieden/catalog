@@ -10,11 +10,19 @@ export interface InsightData {
   message: string
   type: 'success' | 'warning' | 'info'
   icon: string
+  aiDetails?: {
+    title: string
+    description: string
+    items: string[]
+    recommendations: string[]
+    actions: string[]
+  }
 }
 
 interface InsightCardProps {
   insight: InsightData
   className?: string
+  onClick?: () => void
 }
 
 const typeConfig = {
@@ -35,20 +43,20 @@ const typeConfig = {
   }
 }
 
-export function InsightCard({ insight, className }: InsightCardProps) {
+export function InsightCard({ insight, className, onClick }: InsightCardProps) {
   const config = typeConfig[insight.type]
 
   return (
-    <div className={cn(
-      "flex flex-col gap-2 p-2 rounded-lg border min-h-[70px]",
-      config.bgColor,
-      config.borderColor,
-      className
-    )}>
-      <div className="flex items-center gap-2">
-        <span className="text-lg">{insight.icon}</span>
-        <h4 className="text-sm font-medium text-foreground">{insight.title}</h4>
-      </div>
+    <div 
+      className={cn(
+        "flex flex-col gap-2 p-2 rounded-lg border min-h-[70px] cursor-pointer transition-colors hover:opacity-80",
+        config.bgColor,
+        config.borderColor,
+        className
+      )}
+      onClick={onClick}
+    >
+      <h4 className="text-sm font-medium text-foreground">{insight.title}</h4>
       <p className="text-xs text-muted-foreground leading-relaxed">
         {insight.message}
       </p>

@@ -97,27 +97,6 @@ export function ItemsGrid({
               </Button>
             </div>
             <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
-              {onBulkCreateCollection && (
-                <Button variant="outline" size="sm" onClick={onBulkCreateCollection}>
-                  <Plus className="mr-1 sm:mr-2 h-4 w-4" />
-                  <span className="hidden sm:inline">Create Collection</span>
-                  <span className="sm:hidden">Create</span>
-                </Button>
-              )}
-              {onBulkAddToCollection && (
-                <Button variant="outline" size="sm" onClick={onBulkAddToCollection}>
-                  <Plus className="mr-1 sm:mr-2 h-4 w-4" />
-                  <span className="hidden sm:inline">Add to collection</span>
-                  <span className="sm:hidden">Add to</span>
-                </Button>
-              )}
-              {onBulkPin && (
-                <Button variant="outline" size="sm" onClick={onBulkPin}>
-                  <Pin className="mr-1 sm:mr-2 h-4 w-4" />
-                  <span className="hidden sm:inline">Pin items</span>
-                  <span className="sm:hidden">Pin</span>
-                </Button>
-              )}
               {onBulkDelete && (
                 <Button variant="destructive" size="sm" onClick={onBulkDelete}>
                   <span className="hidden sm:inline">Remove items</span>

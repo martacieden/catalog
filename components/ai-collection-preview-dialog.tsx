@@ -2479,7 +2479,7 @@ export function AICollectionPreviewDialog({
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <span className="text-sm text-green-600 font-medium">
-                              {rulePreviewCount} items match
+                              {rulePreviewCount} items match | {proposedRules.length} rules active
                             </span>
                           </div>
                           <button className="flex items-center gap-1 text-xs text-gray-600 hover:text-gray-800">
@@ -2675,109 +2675,41 @@ export function AICollectionPreviewDialog({
           </div>
 
             <div className="flex-1 min-h-0 overflow-auto">
-              <ScrollArea className="h-full">
-                <div className="px-6">
-                  <div className="overflow-x-auto overflow-y-auto">
-                    <table className="w-full min-w-[1000px]">
-              <thead className="sticky top-0 bg-white z-10 border-b">
-                <tr>
-                  <th className="w-12 px-4 py-3 text-left text-sm font-medium text-gray-500"></th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 min-w-[200px]">Name</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">ID</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Category</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Status</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Location</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Value</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">People</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredItems.map((item) => {
-                  const ItemIcon = getItemIcon(item.type)
-                  const currentStatus = itemStatuses[item.id] || item.status.toLowerCase()
-                  const statusInfo = getStatusInfo(currentStatus)
-                  
-                  return (
-                    <tr 
-                      key={item.id} 
-                      className="border-b border-gray-100 hover:bg-blue-50/50 transition-all duration-200 group cursor-pointer"
-                      onClick={() => {
-                        // Toggle selection on row click
-                        const newSelected = new Set(selectedItems)
-                        if (selectedItems.has(item.id)) {
-                          newSelected.delete(item.id)
-                        } else {
-                          newSelected.add(item.id)
-                        }
-                        setSelectedItems(newSelected)
-                      }}
-                    >
-                      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                        <Checkbox
-                          checked={selectedItems.has(item.id)}
-                          onCheckedChange={(checked) => handleSelectItem(item.id, checked as boolean)}
-                          className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                        />
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <ItemThumbnail item={item} />
-                          <span className="font-medium text-gray-900 group-hover:text-blue-600 transition-colors whitespace-nowrap">{item.name}</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <Badge variant="outline" className="text-xs bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 border-blue-200 font-mono whitespace-nowrap">
-                          {item.idCode}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3">
-                        <Badge 
-                          variant="secondary" 
-                          className={`text-xs whitespace-nowrap ${getCategoryColor(item.type)}`}
-                        >
-                          {item.type}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3">
-                        <Badge variant="outline" className="text-xs whitespace-nowrap">
-                          {statusInfo.label}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="text-xs text-gray-600 whitespace-nowrap">{item.location || 'N/A'}</span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="text-xs font-medium text-gray-900 whitespace-nowrap">
-                          {item.value ? `$${item.value.toLocaleString()}` : '-'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-1">
-                          {Array.from({ length: Math.min(item.people, 2) }).map((_, index) => (
-                            <div key={index} className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
-                              <User className="h-3 w-3 text-blue-600" />
-                            </div>
-                          ))}
-                          {item.people > 2 && (
-                            <span className="text-xs text-gray-500 ml-1">+{item.people - 2}</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-1 text-xs text-gray-500 whitespace-nowrap">
-                          <Calendar className="h-3 w-3" />
-                          <span>{item.date}</span>
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-                </div>
-              </ScrollArea>
+              <div className="px-6">
+                <ItemsTable 
+                  items={filteredItems.map(item => ({
+                    ...item,
+                    category: item.type,
+                    idCode: item.idCode,
+                    status: itemStatuses[item.id] || item.status,
+                    location: item.location,
+                    value: item.value,
+                    people: Array.from({ length: item.people || 0 }).map((_, i) => ({
+                      id: `person-${i}`,
+                      name: `Person ${i + 1}`,
+                      email: '',
+                      role: 'viewer' as const,
+                      avatar: '',
+                      createdAt: new Date(),
+                      updatedAt: new Date()
+                    })),
+                    createdBy: {
+                      id: '1',
+                      name: 'System',
+                      email: '',
+                      role: 'owner' as const,
+                      avatar: '',
+                      createdAt: new Date(),
+                      updatedAt: new Date()
+                    },
+                    createdAt: new Date(item.date || Date.now()),
+                    lastUpdated: item.date
+                  }))} 
+                  selectedIds={selectedItems} 
+                  onSelectionChange={setSelectedItems}
+                  emptyMessage="No items found"
+                />
+              </div>
         </div>
 
             {/* Buttons - Cancel and Create in same row */}

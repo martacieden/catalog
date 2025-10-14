@@ -884,8 +884,13 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
   }, [aiRecommendations])
 
   const acceptRecommendation = useCallback((id: string): string | null => {
+    console.log('🔍 acceptRecommendation called with ID:', id);
+    console.log('🔍 Available AI Recommendations:', aiRecommendations.map(rec => rec.id));
     const recommendation = aiRecommendations.find(rec => rec.id === id)
-    if (!recommendation) return null
+    if (!recommendation) {
+      console.error('❌ Recommendation not found for ID:', id);
+      return null;
+    }
 
     // Get objects for this specific recommendation
     const filteredObjects = MOCK_CATALOG_ITEMS.filter(item => 

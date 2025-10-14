@@ -265,7 +265,7 @@ export function RuleBuilder({
               Preview
             </span>
             <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-              {matchedCount} / {items.length} items match
+              {matchedCount} items match | {rules.length} rules active
             </Badge>
           </div>
           <div className="w-full h-2 bg-blue-200 rounded-full overflow-hidden">
@@ -326,52 +326,40 @@ function RuleEditor({
         </Button>
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
-        {/* Field */}
-        <div className="space-y-1">
-          <Label className="text-xs">Field</Label>
-          <Select value={rule.field} onValueChange={(value) => onUpdate({ field: value })}>
-            <SelectTrigger className="h-9">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {fieldSuggestions.map((field) => (
-                <SelectItem key={field} value={field}>
-                  {field}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Operator */}
-        <div className="space-y-1">
-          <Label className="text-xs">Operator</Label>
-          <Select value={rule.operator} onValueChange={(value) => onUpdate({ operator: value as FilterOperator })}>
-            <SelectTrigger className="h-9">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {operatorSuggestions.map((op) => (
-                <SelectItem key={op} value={op}>
-                  {op.replace(/_/g, " ")}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Value */}
-        <div className="space-y-1">
-          <Label className="text-xs">Value</Label>
-          <Input
-            value={rule.value as string}
-            onChange={(e) => onUpdate({ value: e.target.value })}
-            placeholder={needsValue ? "Enter value..." : "Not required"}
-            disabled={!needsValue}
-            className="h-9"
-          />
-        </div>
+      <div className="flex items-center gap-2">
+        {/* Field Select */}
+        <select 
+          className="w-32 px-3 py-2 border rounded-md text-sm"
+          value={rule.field}
+          onChange={(e) => onUpdate({ field: e.target.value })}
+        >
+          <option value="">Select field...</option>
+          {fieldSuggestions.map((field) => (
+            <option key={field} value={field}>{field}</option>
+          ))}
+        </select>
+        
+        {/* Operator Select */}
+        <select
+          className="w-40 px-3 py-2 border rounded-md text-sm"
+          value={rule.operator}
+          onChange={(e) => onUpdate({ operator: e.target.value as FilterOperator })}
+        >
+          <option value="">Select operator...</option>
+          {operatorSuggestions.map((op) => (
+            <option key={op} value={op}>{op.replace(/_/g, " ")}</option>
+          ))}
+        </select>
+        
+        {/* Value Input */}
+        <input
+          className="flex-1 px-3 py-2 border rounded-md text-sm"
+          type="text"
+          value={rule.value as string}
+          onChange={(e) => onUpdate({ value: e.target.value })}
+          placeholder={needsValue ? "Enter value..." : "Not required"}
+          disabled={!needsValue}
+        />
       </div>
 
       {/* Explanation */}

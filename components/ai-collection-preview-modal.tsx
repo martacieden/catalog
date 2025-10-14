@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { getObjectsForRecommendation, type AIRecommendation } from "@/lib/ai-recommendations";
 import { applyHighValueAssetsFilter } from "@/lib/collection-filters";
 import { MOCK_CATALOG_ITEMS } from "@/lib/mock-data";
+import { ItemsTable } from "@/components/collections/items-table";
 import { Building2, Home, Car, Plane, Ship, Diamond, Eye, EyeOff, Sparkles, Zap, Plus, Trash2, RotateCcw, X, ChevronDown, ChevronUp, Edit2, Check } from "lucide-react";
 
 interface AICollectionPreviewModalProps {
@@ -353,7 +354,7 @@ export function AICollectionPreviewModal({
                     <div className="border border-gray-200 rounded-lg p-3 bg-gray-50/50">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm text-green-600 font-medium">{filteredObjects.length} items match</span>
+                          <span className="text-sm text-green-600 font-medium">{filteredObjects.length} items match | {rules.length} rules active</span>
                         </div>
                         <button
                           onClick={() => setIsTableExpanded(!isTableExpanded)}
@@ -374,117 +375,37 @@ export function AICollectionPreviewModal({
                       </div>
                     {isTableExpanded && (
                       <div className="mt-4">
-                        <div className="rounded-lg border border-border bg-card max-h-64 overflow-auto">
-                      <Table>
-                        <TableHeader className="sticky top-0 bg-background z-10">
-                          <TableRow>
-                            <TableHead className="w-12">
-                              <Checkbox
-                                checked={indeterminate ? "indeterminate" : allSelected}
-                                onCheckedChange={handleSelectAll}
-                              />
-                            </TableHead>
-                            <TableHead className="cursor-pointer select-none hover:bg-muted/50">
-                              <div className="flex items-center">
-                                Name
-                                <span className="ml-1">↑</span>
-                              </div>
-                            </TableHead>
-                            <TableHead>ID Code</TableHead>
-                            <TableHead className="cursor-pointer select-none hover:bg-muted/50">
-                              <div className="flex items-center">Category</div>
-                            </TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead className="cursor-pointer select-none hover:bg-gray-50">
-                              <div className="flex items-center">Value</div>
-                            </TableHead>
-                            <TableHead className="cursor-pointer select-none hover:bg-gray-50">
-                              <div className="flex items-center">Rating</div>
-                            </TableHead>
-                            <TableHead>People</TableHead>
-                            <TableHead className="cursor-pointer select-none hover:bg-gray-50">
-                              <div className="flex items-center">Updated</div>
-                            </TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {(isTableExpanded ? filteredObjects : displayObjects).map((object) => (
-                            <TableRow key={object.id} className="group cursor-pointer">
-                              <TableCell>
-                                <Checkbox
-                                  checked={selectedObjects.has(object.id)}
-                                  onCheckedChange={(checked) => handleSelectObject(object.id, checked as boolean)}
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex items-center gap-3">
-                                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
-                                    {getCategoryIcon(object.category)}
-                                  </div>
-                                  <div className="flex flex-col">
-                                    <span className="font-medium text-sm group-hover:text-blue-600 transition-colors">
-                                      {object.name}
-                                    </span>
-                                  </div>
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <Badge variant="outline" className="text-xs font-mono bg-blue-50 text-blue-700 border-blue-200">
-                                  {object.idCode || object.id}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>
-                                <Badge variant="secondary" className="text-xs bg-gray-100 text-gray-700 border-gray-200">
-                                  {object.category}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>
-                                <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
-                                  {object.status}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>
-                                <span className="text-sm font-medium">
-                                  {object.value ? `$${(object.value / 1000000).toFixed(1)}M` : '—'}
-                                </span>
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex items-center gap-1">
-                                  <span className="text-sm">⭐</span>
-                                  <span className="text-sm">{object.guestRating || '—'}</span>
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex -space-x-1">
-                                  {object.people && object.people.slice(0, 2).map((person, i) => (
-                                    <div
-                                      key={i}
-                                      className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-background bg-gray-100 text-xs font-medium text-gray-700"
-                                      title={`${person.role}: ${person.name}`}
-                                    >
-                                      {person.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                                    </div>
-                                  ))}
-                                  {object.people && object.people.length > 2 && (
-                                    <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-background bg-muted text-xs">
-                                      +{object.people.length - 2}
-                                    </div>
-                                  )}
-                                  {(!object.people || object.people.length === 0) && (
-                                    <span className="text-xs text-muted-foreground">—</span>
-                                  )}
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <span className="text-xs text-muted-foreground">
-                                  {object.lastUpdated ? new Date(object.lastUpdated).toLocaleDateString() : '—'}
-                                </span>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                        </div>
+                        <ItemsTable 
+                          items={(isTableExpanded ? filteredObjects : displayObjects).map(object => ({
+                            ...object,
+                            idCode: object.idCode || object.id,
+                            status: object.status,
+                            value: object.value,
+                            people: object.people?.map(person => ({
+                              id: person.id,
+                              name: person.name,
+                              email: '',
+                              role: person.role as 'owner' | 'editor' | 'viewer' | undefined,
+                              avatar: '',
+                              createdAt: new Date(),
+                              updatedAt: new Date()
+                            })),
+                            createdBy: {
+                              id: '1',
+                              name: 'System',
+                              email: '',
+                              role: 'owner' as const,
+                              avatar: '',
+                              createdAt: new Date(),
+                              updatedAt: new Date()
+                            },
+                            createdAt: new Date(object.lastUpdated || Date.now()),
+                            lastUpdated: object.lastUpdated
+                          }))} 
+                          selectedIds={selectedObjects} 
+                          onSelectionChange={setSelectedObjects}
+                          emptyMessage="No objects found"
+                        />
                       </div>
                     )}
                     </div>
@@ -496,15 +417,6 @@ export function AICollectionPreviewModal({
             {/* Bottom Actions */}
             <div className="flex-shrink-0 px-4 py-3 bg-white border-t border-gray-200">
               <div className="flex justify-between items-center gap-3">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onOpenChange(false)}
-                  className="text-gray-600"
-                >
-                  <X className="h-4 w-4 mr-2" />
-                  Cancel
-                </Button>
                 <div className="flex gap-2">
                   <Button
                     variant="outline"

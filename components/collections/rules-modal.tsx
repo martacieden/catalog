@@ -272,54 +272,43 @@ export function RulesModal({ collection, open, onOpenChange }: RulesModalProps) 
                     </Button>
                   </div>
                   
-                  <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <Label className="text-xs">Field</Label>
-                      <Select
-                        value={editingRuleData.field}
-                        onValueChange={(value) => setEditingRuleData(prev => ({ ...prev, field: value }))}
-                      >
-                        <SelectTrigger className="text-sm">
-                          <SelectValue placeholder="Field" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="category">Category</SelectItem>
-                          <SelectItem value="status">Status</SelectItem>
-                          <SelectItem value="value">Value</SelectItem>
-                          <SelectItem value="rating">Rating</SelectItem>
-                          <SelectItem value="location">Location</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                  <div className="flex items-center gap-2">
+                    {/* Field Select */}
+                    <select 
+                      className="w-32 px-3 py-2 border rounded-md text-sm"
+                      value={editingRuleData.field}
+                      onChange={(e) => setEditingRuleData(prev => ({ ...prev, field: e.target.value }))}
+                    >
+                      <option value="">Select field...</option>
+                      <option value="category">Category</option>
+                      <option value="status">Status</option>
+                      <option value="value">Value</option>
+                      <option value="rating">Rating</option>
+                      <option value="location">Location</option>
+                    </select>
                     
-                    <div>
-                      <Label className="text-xs">Operator</Label>
-                      <Select
-                        value={editingRuleData.operator}
-                        onValueChange={(value) => setEditingRuleData(prev => ({ ...prev, operator: value }))}
-                      >
-                        <SelectTrigger className="text-sm">
-                          <SelectValue placeholder="Operator" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="equals">Equals</SelectItem>
-                          <SelectItem value="not_equals">Not Equals</SelectItem>
-                          <SelectItem value="contains">Contains</SelectItem>
-                          <SelectItem value="greater_than">Greater Than</SelectItem>
-                          <SelectItem value="less_than">Less Than</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    {/* Operator Select */}
+                    <select
+                      className="w-40 px-3 py-2 border rounded-md text-sm"
+                      value={editingRuleData.operator}
+                      onChange={(e) => setEditingRuleData(prev => ({ ...prev, operator: e.target.value }))}
+                    >
+                      <option value="">Select operator...</option>
+                      <option value="equals">Equals</option>
+                      <option value="not_equals">Not Equals</option>
+                      <option value="contains">Contains</option>
+                      <option value="greater_than">Greater Than</option>
+                      <option value="less_than">Less Than</option>
+                    </select>
                     
-                    <div>
-                      <Label className="text-xs">Value</Label>
-                      <Input
-                        value={editingRuleData.value}
-                        onChange={(e) => setEditingRuleData(prev => ({ ...prev, value: e.target.value }))}
-                        placeholder="Value"
-                        className="text-sm"
-                      />
-                    </div>
+                    {/* Value Input */}
+                    <input
+                      className="flex-1 px-3 py-2 border rounded-md text-sm"
+                      type="text"
+                      value={editingRuleData.value}
+                      onChange={(e) => setEditingRuleData(prev => ({ ...prev, value: e.target.value }))}
+                      placeholder="Enter value"
+                    />
                   </div>
                   
                   <div className="flex gap-2 mt-3">

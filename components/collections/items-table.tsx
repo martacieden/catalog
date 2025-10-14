@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { CollectionItem, CollectionSortOption } from "@/types/collection"
-import { formatValue, getCategoryColor, getStatusColor } from "@/lib/collection-utils"
+import { formatValue, getCategoryColor, getStatusColor, getCategoryIcon } from "@/lib/collection-utils"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
@@ -37,6 +37,36 @@ import {
   X,
   Plus,
 } from "lucide-react"
+
+// Функція для отримання кольору фону категорії
+const getCategoryBgColor = (category: string): string => {
+  const colorMap: Record<string, string> = {
+    "Legal entities": "bg-blue-100",
+    "Properties": "bg-green-100", 
+    "Vehicles": "bg-orange-100",
+    "Aviation": "bg-sky-100",
+    "Maritime": "bg-cyan-100",
+    "Organizations": "bg-purple-100",
+    "Events": "bg-pink-100",
+    "Pets": "bg-yellow-100",
+    "Obligations": "bg-red-100",
+  }
+  return colorMap[category] || "bg-gray-100"
+}
+
+// Компонент для відображення в табличному вигляді (малий розмір)
+const TableItemThumbnail = ({ item }: { item: any }) => {
+  const CategoryIcon = getCategoryIcon(item.category)
+  const bgColorClass = getCategoryBgColor(item.category)
+  
+  return (
+    <div className={`relative h-12 w-12 rounded-lg overflow-hidden flex items-center justify-center ${bgColorClass}`}>
+      <div className="h-8 w-8 flex items-center justify-center rounded-lg bg-white shadow-sm">
+        {CategoryIcon}
+      </div>
+    </div>
+  )
+}
 
 interface ItemsTableProps {
   items: CollectionItem[]
@@ -164,27 +194,6 @@ export function ItemsTable({
               </Button>
             </div>
             <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
-              {onBulkCreateCollection && (
-                <Button variant="outline" size="sm" onClick={onBulkCreateCollection}>
-                  <Plus className="mr-1 sm:mr-2 h-4 w-4" />
-                  <span className="hidden sm:inline">Create Collection</span>
-                  <span className="sm:hidden">Create</span>
-                </Button>
-              )}
-              {onBulkAddToCollection && (
-                <Button variant="outline" size="sm" onClick={onBulkAddToCollection}>
-                  <Plus className="mr-1 sm:mr-2 h-4 w-4" />
-                  <span className="hidden sm:inline">Add to collection</span>
-                  <span className="sm:hidden">Add to</span>
-                </Button>
-              )}
-              {onBulkPin && (
-                <Button variant="outline" size="sm" onClick={onBulkPin}>
-                  <Pin className="mr-1 sm:mr-2 h-4 w-4" />
-                  <span className="hidden sm:inline">Pin items</span>
-                  <span className="sm:hidden">Pin</span>
-                </Button>
-              )}
               {onBulkDelete && (
                 <Button variant="destructive" size="sm" onClick={onBulkDelete}>
                   <span className="hidden sm:inline">Remove items</span>
@@ -223,7 +232,7 @@ export function ItemsTable({
                 {getSortIcon("name")}
               </div>
             </TableHead>
-            <TableHead>ID Code</TableHead>
+            <TableHead>ID</TableHead>
             <TableHead
               className="cursor-pointer select-none hover:bg-muted/50"
               onClick={() => handleSort("status")}
@@ -233,16 +242,10 @@ export function ItemsTable({
                 {getSortIcon("status")}
               </div>
             </TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead
-              className="cursor-pointer select-none hover:bg-gray-50"
-              onClick={() => handleSort("value")}
-            >
-              <div className="flex items-center">
-                Value
-                {getSortIcon("value")}
-              </div>
-            </TableHead>
+            <TableHead>Access</TableHead>
+            <TableHead>Created by</TableHead>
+            <TableHead>Created on</TableHead>
+            <TableHead>Last update</TableHead>
             {showActions && <TableHead className="w-12"></TableHead>}
           </TableRow>
         </TableHeader>
@@ -263,9 +266,7 @@ export function ItemsTable({
               )}
               <TableCell>
                 <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
-                    {getItemIcon(item.type)}
-                  </div>
+                  <TableItemThumbnail item={item} />
                   <div className="flex flex-col">
                     <span className="font-medium text-sm group-hover:text-blue-600 transition-colors">
                       {item.name}
@@ -280,7 +281,7 @@ export function ItemsTable({
               </TableCell>
               <TableCell>
                 <Badge variant="outline" className="text-xs font-mono bg-blue-50 text-blue-700 border-blue-200">
-                  {item.idCode || 'N/A'}
+                  {item.idCode || item.id || 'N/A'}
                 </Badge>
               </TableCell>
               <TableCell>
@@ -289,18 +290,45 @@ export function ItemsTable({
                 </Badge>
               </TableCell>
               <TableCell>
-                {item.status && (
-                  <Badge variant="secondary" className={`text-xs ${getStatusColor(item.status)}`}>
-                    {item.status}
-                  </Badge>
-                )}
+                <div className="flex items-center gap-1">
+                  {item.people && item.people.length > 0 ? (
+                    <>
+                      {item.people.slice(0, 3).map((person: any, i: number) => (
+                        <div
+                          key={i}
+                          className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-sm font-medium text-gray-700"
+                          title={`${person.role}: ${person.name}`}
+                        >
+                          {person.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
+                        </div>
+                      ))}
+                      {item.people.length > 3 && (
+                        <span className="text-xs text-muted-foreground">+{item.people.length - 3}</span>
+                      )}
+                    </>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-sm font-medium text-gray-700">
+                        ?
+                      </div>
+                      <span className="text-xs text-muted-foreground">Private</span>
+                    </div>
+                  )}
+                </div>
               </TableCell>
               <TableCell>
-                {item.value ? (
-                  <span className="text-sm font-medium">{formatValue(item.value, item.currency)}</span>
-                ) : (
-                  <span className="text-sm text-muted-foreground">—</span>
-                )}
+                <div className="flex items-center gap-2">
+                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-xs font-medium text-gray-700">
+                    {item.createdBy?.name ? item.createdBy.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2) : 'S'}
+                  </div>
+                  <span className="text-sm">{item.createdBy?.name || 'System'}</span>
+                </div>
+              </TableCell>
+              <TableCell className="text-sm text-muted-foreground">
+                {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : 'N/A'}
+              </TableCell>
+              <TableCell className="text-sm text-muted-foreground">
+                {item.lastUpdated || (item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '—')}
               </TableCell>
               {showActions && (
                 <TableCell onClick={(e) => e.stopPropagation()}>
