@@ -35,11 +35,11 @@ import {
 interface CollectionDetailsBlockProps {
   collection: Collection
   items: CollectionItem[]
-  onOpenAIAssistant?: () => void
+  onOpenAIAssistant?: (insightData?: InsightData) => void
   onInsightClick?: (insightId: string, aiDetails: any) => void
 }
 
-// Функція для форматування правил у читабельний вигляд
+// Function to format rules into readable format
 const formatRule = (rule: FilterRule): string => {
   const { field, operator, value } = rule
   
@@ -75,11 +75,11 @@ const formatRule = (rule: FilterRule): string => {
   return `${fieldLabel} ${operatorLabel} "${value}"`
 }
 
-// Функція для генерації AI Summary
+// Function to generate AI Summary
 const generateAISummary = (collection: Collection, items: CollectionItem[]) => {
   const insights = []
   
-  // Аналіз кількості items
+  // Analysis of items count
   if (items.length === 0) {
     insights.push({
       type: 'warning',
@@ -108,7 +108,7 @@ const generateAISummary = (collection: Collection, items: CollectionItem[]) => {
     })
   }
   
-  // Аналіз типів items
+  // Analysis of item types
   const categories = items.reduce((acc, item) => {
     acc[item.category] = (acc[item.category] || 0) + 1
     return acc
@@ -136,7 +136,7 @@ const generateAISummary = (collection: Collection, items: CollectionItem[]) => {
     })
   }
   
-  // Аналіз статусів
+  // Analysis of statuses
   const statuses = items.reduce((acc, item) => {
     if (item.status) {
       acc[item.status] = (acc[item.status] || 0) + 1
@@ -163,7 +163,7 @@ const generateAISummary = (collection: Collection, items: CollectionItem[]) => {
     })
   }
   
-  // Аналіз правил
+  // Analysis of rules
   if (collection.filters && collection.filters.length > 0) {
     insights.push({
       type: 'success',
@@ -183,7 +183,7 @@ const generateAISummary = (collection: Collection, items: CollectionItem[]) => {
     })
   }
   
-  // Аналіз дат створення
+  // Analysis of creation dates
   const now = new Date()
   const recentItems = items.filter(item => {
     if (!item.createdAt) return false
@@ -224,7 +224,12 @@ export function CollectionDetailsBlock({
 }: CollectionDetailsBlockProps) {
   const [isCollapsed, setIsCollapsed] = React.useState(false)
   
-  // СПРОЩЕНІ AI INSIGHTS - тільки 3 найважливіші (реальні дані для 9 items)
+  const handleViewInsightDetails = (insight: InsightData) => {
+    // Open AI Assistant with insight data instead of modal
+    onOpenAIAssistant?.(insight)
+  }
+  
+  // SIMPLIFIED AI INSIGHTS - only 3 most important (real data for 9 items)
   const staticInsights: InsightData[] = [
     {
       id: 'maintenance-alert',
@@ -234,22 +239,22 @@ export function CollectionDetailsBlock({
       icon: '⚠️',
       aiDetails: {
         title: '⚠️ Maintenance Alert: HVAC Filter Replacement Needed',
-        description: 'Я виявив, що 4 ваші об\'єкти потребують заміни фільтрів HVAC протягом наступних 30 днів. Своєчасна заміна фільтрів є критично важливою для підтримки якості повітря, ефективності системи та запобігання дорогим поломкам.',
+        description: 'I found that 4 of your properties require HVAC filter replacement within the next 30 days. Timely filter replacement is critical for maintaining air quality, system efficiency, and preventing expensive breakdowns.',
         items: [
-          'Property A: Останнє обслуговування: 15.03.2023. Рекомендована заміна: до 20.07.2024.',
-          'Property B: Останнє обслуговування: 01.04.2023. Рекомендована заміна: до 05.08.2024.',
-          'Property C: Останнє обслуговування: 10.04.2023. Рекомендована заміна: до 15.08.2024.',
-          'Property D: Останнє обслуговування: 25.04.2023. Рекомендована заміна: до 30.08.2024.'
+          'Property A: Last maintenance: 15.03.2023. Recommended replacement: by 20.07.2024.',
+          'Property B: Last maintenance: 01.04.2023. Recommended replacement: by 05.08.2024.',
+          'Property C: Last maintenance: 10.04.2023. Recommended replacement: by 15.08.2024.',
+          'Property D: Last maintenance: 25.04.2023. Recommended replacement: by 30.08.2024.'
         ],
         recommendations: [
-          'Запланувати обслуговування: Зв\'яжіться з вашими підрядниками для планування заміни фільтрів.',
-          'Перевірити запаси фільтрів: Переконайтеся, що у вас є необхідні типи та розміри фільтрів.',
-          'Отримати пропозиції: Якщо ви шукаєте нового постачальника послуг, я можу допомогти знайти кваліфікованих підрядників у вашому регіоні.'
+          'Schedule maintenance: Contact your contractors to plan filter replacement.',
+          'Check filter inventory: Make sure you have the necessary filter types and sizes.',
+          'Get quotes: If you\'re looking for a new service provider, I can help you find qualified contractors in your area.'
         ],
         actions: [
-          'Створити завдання для кожного об\'єкта в системі управління завданнями',
-          'Надати список рекомендованих постачальників HVAC послуг',
-          'Згенерувати звіт про історію обслуговування цих об\'єктів'
+          'Create tasks for each property in the task management system',
+          'Provide a list of recommended HVAC service providers',
+          'Generate a maintenance history report for these properties'
         ]
       }
     },
@@ -260,22 +265,22 @@ export function CollectionDetailsBlock({
       type: 'warning',
       icon: '🛡️',
       aiDetails: {
-        title: '🛡️ Insurance Gap: Відсутнє покриття від повеней',
-        description: 'Я виявив, що 3 ваші об\'єкти не мають покриття від повеней. Це створює значний ризик, особливо якщо ці об\'єкти розташовані в зонах, схильних до затоплень.',
+        title: '🛡️ Insurance Gap: Missing Flood Coverage',
+        description: 'I found that 3 of your properties lack flood insurance coverage. This creates significant risk, especially if these properties are located in flood-prone areas.',
         items: [
-          'Property X: Розташований у зоні помірного ризику повеней.',
-          'Property Y: Розташований у зоні високого ризику повеней.',
-          'Property Z: Розташований у зоні низького ризику, але з потенційними змінами клімату.'
+          'Property X: Located in moderate flood risk zone.',
+          'Property Y: Located in high flood risk zone.',
+          'Property Z: Located in low risk zone, but with potential climate changes.'
         ],
         recommendations: [
-          'Оцінити ризики: Перевірте поточні карти зон затоплення для цих об\'єктів.',
-          'Зв\'язатися зі страховими агентами: Отримайте пропозиції щодо страхування від повеней.',
-          'Переглянути існуючі поліси: Переконайтеся, що інші ваші об\'єкти мають адекватне покриття.'
+          'Assess risks: Check current flood zone maps for these properties.',
+          'Contact insurance agents: Get quotes for flood insurance coverage.',
+          'Review existing policies: Ensure your other properties have adequate coverage.'
         ],
         actions: [
-          'Згенерувати звіт про географічне розташування об\'єктів та їхні зони ризику повеней',
-          'Надати контакти перевірених страхових брокерів, що спеціалізуються на комерційній нерухомості',
-          'Порівняти пропозиції від різних страхових компаній'
+          'Generate a report on geographic location of properties and their flood risk zones',
+          'Provide contacts of verified insurance brokers specializing in commercial real estate',
+          'Compare quotes from different insurance companies'
         ]
       }
     },
@@ -286,27 +291,27 @@ export function CollectionDetailsBlock({
       type: 'info',
       icon: '📈',
       aiDetails: {
-        title: '📈 Cost Optimization: Можливість економії на контрактах',
-        description: 'Я виявив, що ваші контракти на технічне обслуговування авіації підлягають поновленню, і є потенціал для економії до $200 000. Це чудова можливість переглянути умови та оптимізувати витрати.',
+        title: '📈 Cost Optimization: Contract Savings Opportunity',
+        description: 'I found that your aviation maintenance contracts are up for renewal, with potential savings of up to $200,000. This is a great opportunity to review terms and optimize costs.',
         items: [
-          'Контракти: Кілька контрактів на обслуговування авіаційного парку, термін дії яких закінчується протягом наступних 90 днів.',
-          'Потенційна економія: Аналіз ринку та історичних даних показує, що можна досягти економії до $200 000 шляхом переговорів або зміни постачальника.'
+          'Contracts: Several aviation fleet maintenance contracts expiring within the next 90 days.',
+          'Potential savings: Market analysis and historical data shows potential savings of up to $200,000 through negotiations or supplier changes.'
         ],
         recommendations: [
-          'Переглянути поточні контракти: Детально вивчіть умови, обсяги послуг та ціни.',
-          'Запросити нові пропозиції: Зверніться до інших постачальників послуг для отримання конкурентних пропозицій.',
-          'Провести переговори: Використайте отримані дані для переговорів з поточними або новими постачальниками.'
+          'Review current contracts: Thoroughly examine terms, service volumes, and pricing.',
+          'Request new proposals: Contact other service providers for competitive quotes.',
+          'Conduct negotiations: Use the data obtained for negotiations with current or new suppliers.'
         ],
         actions: [
-          'Згенерувати порівняльний звіт по умовах поточних контрактів та ринкових пропозицій',
-          'Надати список потенційних нових постачальників послуг з обслуговування авіації',
-          'Запланувати зустрічі з ключовими зацікавленими сторонами для обговорення стратегії переговорів'
+          'Generate a comparative report on current contract terms and market proposals',
+          'Provide a list of potential new aviation maintenance service providers',
+          'Schedule meetings with key stakeholders to discuss negotiation strategy'
         ]
       }
     }
   ]
   
-  // Конвертуємо фільтри в формат FilterChipData
+  // Convert filters to FilterChipData format
   const filterChips: FilterChipData[] = collection.filters?.map((filter, index) => ({
     id: `filter-${index}`,
     field: filter.field,
@@ -392,6 +397,7 @@ export function CollectionDetailsBlock({
                           onOpenAIAssistant()
                         }
                       }}
+                      onViewDetails={() => handleViewInsightDetails(insight)}
                     />
                   ))}
                 </div>

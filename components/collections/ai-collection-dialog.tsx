@@ -132,7 +132,7 @@ These items work well together because they represent a balanced portfolio of pr
   const generateAIResponse = (userInput: string): string => {
     const input = userInput.toLowerCase()
     
-    if (input.includes('name') || input.includes('назва')) {
+    if (input.includes('name')) {
       return `Based on your ${selectedItems.length} properties, I suggest:
       
 **"Premium Property Portfolio"** - emphasizes the high-value nature
@@ -142,7 +142,7 @@ These items work well together because they represent a balanced portfolio of pr
 Which style appeals to you most?`
     }
     
-    if (input.includes('description') || input.includes('опис')) {
+    if (input.includes('description')) {
       return `Here's a compelling description for your collection:
 
 "*A carefully curated selection of premium properties representing diverse real estate opportunities. This collection combines luxury villas, estates, and penthouses, offering investors a balanced portfolio with strong appreciation potential and rental income opportunities.*"
@@ -150,13 +150,13 @@ Which style appeals to you most?`
 Would you like me to adjust the tone or focus on any specific aspect?`
     }
     
-    if (input.includes('rules') || input.includes('фільтри')) {
+    if (input.includes('rules')) {
       return `I can suggest some smart filtering rules for this collection:
 
-🔍 **Value-based**: Properties above $1M
-📅 **Date-based**: Added in the last 6 months  
-📍 **Location-based**: Premium locations only
-⭐ **Rating-based**: Properties with 4+ star ratings
+**Value-based**: Amount - more than - $1,000,000
+**Date-based**: Created Date - is after - 6 months ago  
+**Location-based**: Location - contains - Premium
+**Rating-based**: Rating - is at least - 4
 
 These rules would help automatically include similar high-value properties in the future. Would you like me to set up any of these filters?`
     }

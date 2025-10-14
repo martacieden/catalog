@@ -29,10 +29,11 @@ interface CollectionAIAssistantProps {
   onAnalyze?: () => void
   onSuggestRules?: () => void
   onExport?: () => void
+  initialInsightData?: any
 }
 
 /**
- * AI асистент для колекцій - sidebar з чатом та інсайтами
+ * AI assistant for collections - sidebar with chat and insights
  */
 export function CollectionAIAssistant({
   collectionId,
@@ -43,12 +44,23 @@ export function CollectionAIAssistant({
   onAnalyze,
   onSuggestRules,
   onExport,
+  initialInsightData,
 }: CollectionAIAssistantProps) {
   const { getCollectionById, getCollectionStats } = useCollections()
   const { toast } = useToast()
 
   const collection = getCollectionById(collectionId)
   const stats = getCollectionStats(collectionId)
+  const [showInsightDetails, setShowInsightDetails] = React.useState(false)
+
+  // Show insight details when initialInsightData is provided
+  React.useEffect(() => {
+    if (initialInsightData && open) {
+      setShowInsightDetails(true)
+    } else {
+      setShowInsightDetails(false)
+    }
+  }, [initialInsightData, open])
 
   // AI message processing
   const handleAIMessage = (message: string) => {
@@ -59,7 +71,27 @@ export function CollectionAIAssistant({
   if (!collection) return null
 
   // Initial messages for chat - welcome message as first chat message
-  const initialMessages = [
+  const initialMessages = showInsightDetails && initialInsightData ? [
+    {
+      id: "insight-details",
+      type: "ai" as const,
+      content: `I've analyzed your collection and found an important insight: **${initialInsightData.title}**
+
+${initialInsightData.aiDetails?.description || initialInsightData.message}
+
+**Affected Assets:** ${initialInsightData.aiDetails?.items?.length || 0} items
+**Recommendations:** ${initialInsightData.aiDetails?.recommendations?.length || 0} suggestions
+
+How would you like me to help you address this issue?`,
+      timestamp: new Date(),
+      suggestions: [
+        "Create task",
+        "View related docs",
+        "Contact team",
+        "Schedule maintenance",
+      ],
+    },
+  ] : [
     {
       id: "welcome",
       type: "ai" as const,

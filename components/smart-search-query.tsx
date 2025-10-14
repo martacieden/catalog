@@ -38,28 +38,28 @@ interface SmartSuggestion {
 const quickFilters: QuickFilter[] = [
   {
     id: 'high-value',
-    label: 'High Value',
+    label: 'Amount - more than - $100,000',
     icon: '💰',
     query: 'value > 100000',
     description: 'Items worth over $100k'
   },
   {
     id: 'recently-updated',
-    label: 'Updated This Week',
+    label: 'Updated Date - is after - 7 days ago',
     icon: '📅',
     query: 'updated >= 7d',
     description: 'Modified in last 7 days'
   },
   {
     id: 'shared-with-me',
-    label: 'Shared With Me',
+    label: 'Shared Status - is - true',
     icon: '👥',
     query: 'shared = true AND owner != me',
     description: 'Collections others shared with you'
   },
   {
     id: 'needs-attention',
-    label: 'Needs Review',
+    label: 'Status - is any of - Pending, Flagged',
     icon: '🔴',
     query: 'status = "pending" OR flagged = true',
     description: 'Items requiring action'

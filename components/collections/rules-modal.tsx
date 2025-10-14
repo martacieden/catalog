@@ -65,7 +65,37 @@ export function RulesModal({ collection, open, onOpenChange }: RulesModalProps) 
   
   if (!collection) return null
 
-  const hasRules = collection.filters && collection.filters.length > 0
+  // Default rules for High Value Assets collection
+  const defaultRules: FilterRule[] = [
+    {
+      id: 'rule-1',
+      field: 'value',
+      operator: 'greater_than',
+      value: 1000000
+    },
+    {
+      id: 'rule-2', 
+      field: 'category',
+      operator: 'in',
+      value: ['Properties', 'Aviation', 'Maritime']
+    },
+    {
+      id: 'rule-3',
+      field: 'status',
+      operator: 'equals',
+      value: 'Active'
+    },
+    {
+      id: 'rule-4',
+      field: 'guestRating',
+      operator: 'greater_than_or_equal',
+      value: 4
+    }
+  ]
+
+  // Use default rules if no rules are defined
+  const displayRules = collection.filters && collection.filters.length > 0 ? collection.filters : defaultRules
+  const hasRules = displayRules.length > 0
   
   // State for editing rules
   const [editingRule, setEditingRule] = React.useState<FilterRule | null>(null)
@@ -149,6 +179,28 @@ export function RulesModal({ collection, open, onOpenChange }: RulesModalProps) 
           </DialogDescription>
         </DialogHeader>
 
+        {/* Collection Metadata */}
+        <div className="grid grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
+          <div>
+            <p className="text-xs font-medium text-gray-600 mb-1">Access</p>
+            <p className="text-sm text-gray-900">
+              {collection.isPublic ? 'Public' : 'Private'}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs font-medium text-gray-600 mb-1">Created by</p>
+            <p className="text-sm text-gray-900">
+              {collection.createdBy?.name || 'Unknown'}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs font-medium text-gray-600 mb-1">Created on</p>
+            <p className="text-sm text-gray-900">
+              {collection.createdAt ? new Date(collection.createdAt).toLocaleDateString() : 'Unknown'}
+            </p>
+          </div>
+        </div>
+
         <div className="space-y-4">
           {!hasRules ? (
             <div className="text-center py-8">
@@ -166,7 +218,7 @@ export function RulesModal({ collection, open, onOpenChange }: RulesModalProps) 
             <>
               <div className="flex items-center justify-between">
                 <p className="text-sm text-muted-foreground">
-                  {collection.filters?.length || 0} rule{(collection.filters?.length || 0) > 1 ? 's' : ''} defined
+                  {displayRules.length} rule{displayRules.length > 1 ? 's' : ''} defined
                 </p>
                 <div className="flex items-center gap-2">
                   <Button 
@@ -186,7 +238,7 @@ export function RulesModal({ collection, open, onOpenChange }: RulesModalProps) 
               </div>
 
               <div className="space-y-3">
-                {collection.filters?.map((rule, index) => (
+                {displayRules.map((rule, index) => (
                   <div key={rule.id || index} className="flex items-center justify-between p-3 border rounded-lg bg-muted/50">
                     <div className="flex items-center gap-3">
                       <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-medium">

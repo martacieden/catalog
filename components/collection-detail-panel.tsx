@@ -3,10 +3,16 @@
 import * as React from "react"
 import { useCollections } from "@/contexts/collections-context"
 import { useToast } from "@/hooks/use-toast"
-import { CollectionItem, CollectionSortOption, CollectionFilter } from "@/types/collection"
+import { Collection, CollectionItem, CollectionSortOption, CollectionFilter } from "@/types/collection"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { CollectionDetailsBlock } from "./collections/collection-details-block"
 import { ItemsTable } from "./collections/items-table"
 import { ItemsGrid } from "./collections/items-grid"
@@ -15,6 +21,11 @@ import { CollectionItemsManager } from "./collections/collection-items-manager"
 import { AddItemsDialog } from "./collections/add-items-dialog"
 import { SyncPreviewDialog } from "./collections/sync-preview-dialog"
 import { CollectionAIAssistant } from "./collections/collection-ai-assistant"
+import { CollectionSettingsDialog } from "./collection-settings-dialog"
+import { ShareModal } from "./collections/share-modal"
+import { RulesModal } from "./collections/rules-modal"
+import { CollectionEditSidebar } from "./collections/collection-edit-sidebar"
+import { AvatarStack } from "./avatar-stack"
 import {
   Filter,
   Search,
@@ -23,6 +34,12 @@ import {
   Square,
   Bot,
   Sparkles,
+  Settings,
+  Share2,
+  Users,
+  FileText,
+  ChevronDown,
+  Edit3,
 } from "lucide-react"
 
 interface CollectionDetailPanelProps {
@@ -189,6 +206,43 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
   const [addItemsDialogOpen, setAddItemsDialogOpen] = React.useState(false)
   const [syncPreviewOpen, setSyncPreviewOpen] = React.useState(false)
   const [aiAssistantOpen, setAiAssistantOpen] = React.useState(false)
+  const [selectedInsight, setSelectedInsight] = React.useState<any>(null)
+  const [settingsDialogOpen, setSettingsDialogOpen] = React.useState(false)
+  const [shareModalOpen, setShareModalOpen] = React.useState(false)
+  const [rulesModalOpen, setRulesModalOpen] = React.useState(false)
+  const [editSidebarOpen, setEditSidebarOpen] = React.useState(false)
+  
+  // Mock users for avatar stack
+  const sharedUsers = [
+    {
+      id: "user-1",
+      name: "John Smith",
+      email: "john.smith@company.com",
+      avatar: undefined,
+      role: "owner" as const
+    },
+    {
+      id: "user-2", 
+      name: "Alice Johnson",
+      email: "alice.johnson@company.com",
+      avatar: undefined,
+      role: "editor" as const
+    },
+    {
+      id: "user-3",
+      name: "Bob Wilson",
+      email: "bob.wilson@company.com", 
+      avatar: undefined,
+      role: "viewer" as const
+    },
+    {
+      id: "user-4",
+      name: "Sarah Davis",
+      email: "sarah.davis@company.com",
+      avatar: undefined,
+      role: "viewer" as const
+    }
+  ]
   
   // Table specific state
   const [tableSearchQuery, setTableSearchQuery] = React.useState("")
@@ -357,6 +411,29 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
       description: "Export functionality will be available soon.",
     })
   }
+
+  const handleOpenAIAssistant = (insightData?: any) => {
+    setSelectedInsight(insightData)
+    setAiAssistantOpen(true)
+  }
+
+  const handleSaveCollection = (updatedCollection: Partial<Collection>) => {
+    if (!collectionId) return
+    
+    try {
+      updateCollection(collectionId, updatedCollection)
+      toast({
+        title: "Collection updated",
+        description: "Collection details have been saved successfully.",
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update collection.",
+        variant: "destructive",
+      })
+    }
+  }
   
   if (!collection) {
     return (
@@ -392,6 +469,53 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
           </div>
           
           <div className="flex items-center gap-2">
+            {/* Action Buttons */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Settings
+                  <ChevronDown className="h-4 w-4 ml-1" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setEditSidebarOpen(true)}>
+                  <Edit3 className="h-4 w-4 mr-2" />
+                  Edit collection details
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSettingsDialogOpen(true)}>
+                  <Settings className="h-4 w-4 mr-2" />
+                  Collection settings
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setShareModalOpen(true)}
+            >
+              <Share2 className="h-4 w-4 mr-2" />
+              Share
+            </Button>
+            
+            {/* Avatar Stack */}
+            <AvatarStack 
+              users={sharedUsers}
+              maxVisible={3}
+              size="sm"
+              className="ml-2"
+            />
+            
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setRulesModalOpen(true)}
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              Rule
+            </Button>
+            
             <Button 
               size="sm" 
               className="bg-primary hover:bg-primary/90"
@@ -411,7 +535,7 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
         <CollectionDetailsBlock 
           collection={collection} 
           items={processedItems}
-          onOpenAIAssistant={() => setAiAssistantOpen(true)}
+          onOpenAIAssistant={handleOpenAIAssistant}
           onInsightClick={(actionType, data) => {
             if (actionType === 'filter') {
               // Apply filter based on insight data
@@ -659,6 +783,97 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
           onAnalyze={handleAIAssistantAnalyze}
           onSuggestRules={handleAIAssistantSuggestRules}
           onExport={handleAIAssistantExport}
+          initialInsightData={selectedInsight}
+        />
+      )}
+
+      {/* Collection Settings Dialog */}
+      {collection && (
+        <div className={`fixed inset-0 z-50 ${settingsDialogOpen ? 'block' : 'hidden'}`}>
+          <div className="fixed inset-0 bg-black/50" onClick={() => setSettingsDialogOpen(false)} />
+          <div className="fixed inset-4 bg-white rounded-lg shadow-lg border overflow-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold flex items-center gap-2">
+                  <Settings className="h-5 w-5" />
+                  Collection Settings
+                </h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSettingsDialogOpen(false)}
+                >
+                  ×
+                </Button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Collection Name</label>
+                  <input
+                    type="text"
+                    value={collection.name}
+                    className="w-full px-3 py-2 border rounded-md"
+                    readOnly
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Description</label>
+                  <textarea
+                    value={collection.description || ''}
+                    className="w-full px-3 py-2 border rounded-md h-24"
+                    readOnly
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Collection Type</label>
+                  <input
+                    type="text"
+                    value={collection.type}
+                    className="w-full px-3 py-2 border rounded-md"
+                    readOnly
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Item Count</label>
+                  <input
+                    type="text"
+                    value={`${collection.itemCount} items`}
+                    className="w-full px-3 py-2 border rounded-md"
+                    readOnly
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Share Modal */}
+      {collection && (
+        <ShareModal
+          collection={collection}
+          open={shareModalOpen}
+          onOpenChange={setShareModalOpen}
+        />
+      )}
+
+      {/* Rules Modal */}
+      {collection && (
+        <RulesModal
+          collection={collection}
+          open={rulesModalOpen}
+          onOpenChange={setRulesModalOpen}
+        />
+      )}
+
+
+      {/* Collection Edit Sidebar */}
+      {collection && (
+        <CollectionEditSidebar
+          collection={collection}
+          open={editSidebarOpen}
+          onOpenChange={setEditSidebarOpen}
+          onSave={handleSaveCollection}
         />
       )}
     </div>

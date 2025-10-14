@@ -26,49 +26,49 @@ interface AIRecommendation {
 const AI_RECOMMENDATIONS: AIRecommendation[] = [
   {
     id: "high-value",
-    label: "High-value Assets",
+    label: "Amount - more than - $1,000,000",
     description: "Luxury items and high-value properties",
     icon: "💎"
   },
   {
     id: "recent-updates",
-    label: "Recent Updates",
+    label: "Updated Date - is after - 30 days ago",
     description: "Items updated in the last 30 days",
     icon: "📅"
   },
   {
     id: "real-estate",
-    label: "Real Estate",
+    label: "Category - is - Properties",
     description: "Properties and real estate assets",
     icon: "🏠"
   },
   {
     id: "vehicles",
-    label: "Vehicles",
+    label: "Category - is any of - Aviation, Maritime",
     description: "Cars, yachts, and transportation",
     icon: "🚗"
   },
   {
     id: "legal-entities",
-    label: "Legal Entities",
+    label: "Category - is - Legal entities",
     description: "Companies, organizations, and legal structures",
     icon: "🏢"
   },
   {
     id: "financial-docs",
-    label: "Financial Documents",
+    label: "Amount - is at least - $100,000",
     description: "Items with financial documentation",
     icon: "💰"
   },
   {
     id: "active-items",
-    label: "Active Items",
+    label: "Status - is - Active",
     description: "Currently active and operational items",
     icon: "✅"
   },
   {
     id: "budget-filtered",
-    label: "Budget Filtered",
+    label: "Rating - is at least - 4",
     description: "Items filtered by budget criteria",
     icon: "📊"
   }
@@ -87,25 +87,25 @@ const getSmartRecommendations = (query: string): AIRecommendation[] => {
     return [
       {
         id: "high-value-1m",
-        label: "High-value Assets Above 1M",
+        label: "Amount - more than - $1,000,000",
         description: "Luxury items and high-value properties above 1M",
         icon: "💎"
       },
       {
         id: "luxury-real-estate",
-        label: "Luxury Real Estate",
+        label: "Category - is - Properties",
         description: "Premium properties and luxury estates",
         icon: "🏰"
       },
       {
         id: "premium-vehicles",
-        label: "Premium Vehicles",
+        label: "Category - is any of - Aviation, Maritime",
         description: "Luxury cars, yachts, and private jets",
         icon: "🚗"
       },
       {
         id: "investment-assets",
-        label: "Investment Assets",
+        label: "Rating - is at least - 4",
         description: "High-value investment opportunities",
         icon: "📈"
       }
@@ -117,20 +117,20 @@ const getSmartRecommendations = (query: string): AIRecommendation[] => {
     recommendations.push(AI_RECOMMENDATIONS.find(r => r.id === 'legal-entities')!)
   }
   
-  if (lowerQuery.includes('budget') || lowerQuery.includes('бюджет') || lowerQuery.includes('financial')) {
+  if (lowerQuery.includes('budget') || lowerQuery.includes('financial')) {
     recommendations.push(AI_RECOMMENDATIONS.find(r => r.id === 'financial-docs')!)
     recommendations.push(AI_RECOMMENDATIONS.find(r => r.id === 'budget-filtered')!)
   }
   
-  if (lowerQuery.includes('active') || lowerQuery.includes('активні')) {
+  if (lowerQuery.includes('active')) {
     recommendations.push(AI_RECOMMENDATIONS.find(r => r.id === 'active-items')!)
   }
   
-  if (lowerQuery.includes('property') || lowerQuery.includes('нерухомість')) {
+  if (lowerQuery.includes('property')) {
     recommendations.push(AI_RECOMMENDATIONS.find(r => r.id === 'real-estate')!)
   }
   
-  if (lowerQuery.includes('vehicle') || lowerQuery.includes('транспорт')) {
+  if (lowerQuery.includes('vehicle')) {
     recommendations.push(AI_RECOMMENDATIONS.find(r => r.id === 'vehicles')!)
   }
   
@@ -138,7 +138,7 @@ const getSmartRecommendations = (query: string): AIRecommendation[] => {
     recommendations.push(AI_RECOMMENDATIONS.find(r => r.id === 'high-value')!)
   }
   
-  if (lowerQuery.includes('recent') || lowerQuery.includes('останні')) {
+  if (lowerQuery.includes('recent')) {
     recommendations.push(AI_RECOMMENDATIONS.find(r => r.id === 'recent-updates')!)
   }
   
@@ -192,7 +192,7 @@ export function AIFojoSearch({
     const filters = []
     
     // Extract year filters
-    const yearMatch = lowerQuery.match(/(\d{4})\s*рік|(\d{4})\s*year/)
+    const yearMatch = lowerQuery.match(/(\d{4})\s*year/)
     if (yearMatch) {
       const year = yearMatch[1] || yearMatch[2]
       filters.push({
@@ -203,7 +203,7 @@ export function AIFojoSearch({
     }
     
     // Extract budget/amount filters
-    const budgetMatch = lowerQuery.match(/бюджетом\s*вище\s*(\d+)|budget\s*above\s*(\d+)|вище\s*(\d+)|above\s*(\d+)/)
+    const budgetMatch = lowerQuery.match(/budget\s*above\s*(\d+)|above\s*(\d+)/)
     if (budgetMatch) {
       const amount = budgetMatch[1] || budgetMatch[2] || budgetMatch[3] || budgetMatch[4]
       filters.push({
@@ -214,7 +214,7 @@ export function AIFojoSearch({
     }
     
     // Extract status filters
-    if (lowerQuery.includes('активні') || lowerQuery.includes('active')) {
+    if (lowerQuery.includes('active')) {
       filters.push({
         field: 'status',
         operator: 'equals',
