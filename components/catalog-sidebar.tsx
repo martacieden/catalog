@@ -278,7 +278,7 @@ export function CatalogSidebar({
               <ManualCollectionDialog
                 trigger={
                   <button
-                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-accent rounded-sm"
+                    className="opacity-60 hover:opacity-100 transition-opacity p-1 hover:bg-accent rounded-sm"
                     title="Create new collection"
                   >
                     <Plus className="h-3 w-3 text-muted-foreground hover:text-foreground" />

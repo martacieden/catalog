@@ -552,7 +552,7 @@ export function ManualCollectionDialog({ trigger, selectedItems = [], onCollecti
                   id="collection-description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Add a description and let AI suggest rules..."
+                  placeholder="Describe your collection and let AI suggest filtering rules..."
                   className="flex-1"
                 />
                 <Button
@@ -567,18 +567,18 @@ export function ManualCollectionDialog({ trigger, selectedItems = [], onCollecti
                   {isGenerating ? (
                     <>
                       <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                      Generating...
+                      Generating rules...
                     </>
                   ) : (
                     <>
                       <Sparkles className="h-4 w-4" />
-                      Ask FOJO
+                      Generate rules
                     </>
                   )}
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Describe your collection and let AI suggest filtering rules
+                Describe your collection and AI will suggest smart filtering rules
               </p>
             </div>
           </div>

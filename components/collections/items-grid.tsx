@@ -20,6 +20,8 @@ import {
   Eye,
   Pin,
   Flag,
+  X,
+  Plus,
 } from "lucide-react"
 
 interface ItemsGridProps {
@@ -32,6 +34,10 @@ interface ItemsGridProps {
   showSelection?: boolean
   showActions?: boolean
   emptyMessage?: string
+  onBulkDelete?: () => void
+  onBulkCreateCollection?: () => void
+  onBulkAddToCollection?: () => void
+  onBulkPin?: () => void
 }
 
 export function ItemsGrid({
@@ -44,6 +50,10 @@ export function ItemsGrid({
   showSelection = true,
   showActions = true,
   emptyMessage = "No items in this collection",
+  onBulkDelete,
+  onBulkCreateCollection,
+  onBulkAddToCollection,
+  onBulkPin,
 }: ItemsGridProps) {
   
   const handleSelectItem = (id: string, checked: boolean) => {
@@ -68,8 +78,58 @@ export function ItemsGrid({
     )
   }
 
+  const selectedCount = selectedIds.size
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+    <div className="space-y-0">
+      {/* Bulk Actions Bar */}
+      {selectedCount > 0 && (
+        <div className="sticky top-0 z-10 -mt-2 mb-4 rounded-lg border border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 px-4 py-3 shadow-sm">
+          <div className="w-full flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <span className="text-sm font-medium">
+                {selectedCount} item{selectedCount > 1 ? "s" : ""} selected
+              </span>
+              <Button variant="ghost" size="sm" onClick={() => onSelectionChange?.(new Set())}>
+                <X className="mr-1 sm:mr-2 h-4 w-4" />
+                <span className="hidden sm:inline">Clear selection</span>
+                <span className="sm:hidden">Clear</span>
+              </Button>
+            </div>
+            <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+              {onBulkCreateCollection && (
+                <Button variant="outline" size="sm" onClick={onBulkCreateCollection}>
+                  <Plus className="mr-1 sm:mr-2 h-4 w-4" />
+                  <span className="hidden sm:inline">Create new collection</span>
+                  <span className="sm:hidden">New</span>
+                </Button>
+              )}
+              {onBulkAddToCollection && (
+                <Button variant="outline" size="sm" onClick={onBulkAddToCollection}>
+                  <Plus className="mr-1 sm:mr-2 h-4 w-4" />
+                  <span className="hidden sm:inline">Add to collection</span>
+                  <span className="sm:hidden">Add to</span>
+                </Button>
+              )}
+              {onBulkPin && (
+                <Button variant="outline" size="sm" onClick={onBulkPin}>
+                  <Pin className="mr-1 sm:mr-2 h-4 w-4" />
+                  <span className="hidden sm:inline">Pin items</span>
+                  <span className="sm:hidden">Pin</span>
+                </Button>
+              )}
+              {onBulkDelete && (
+                <Button variant="destructive" size="sm" onClick={onBulkDelete}>
+                  <span className="hidden sm:inline">Remove items</span>
+                  <span className="sm:hidden">Remove</span>
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {items.map((item) => (
         <div
           key={item.id}
@@ -167,6 +227,7 @@ export function ItemsGrid({
           </div>
         </div>
       ))}
+      </div>
     </div>
   )
 }

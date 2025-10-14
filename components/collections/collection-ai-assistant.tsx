@@ -58,7 +58,7 @@ export function CollectionAIAssistant({
 
   if (!collection) return null
 
-  // Initial messages for chat
+  // Initial messages for chat - welcome message as first chat message
   const initialMessages = [
     {
       id: "welcome",
@@ -67,7 +67,7 @@ export function CollectionAIAssistant({
       timestamp: new Date(),
       suggestions: [
         "Analyze collection",
-        "Suggest rules",
+        "Suggest rules", 
         "Show stats",
       ],
     },
@@ -101,28 +101,8 @@ export function CollectionAIAssistant({
 
         {/* Content */}
         <div className="flex-1 overflow-hidden flex flex-col">
-          {/* AI Welcome Message */}
-          <div className="px-6 py-4 bg-muted/30 border-b">
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground mb-3">
-                Hi! I'm your AI assistant for "{collection.name}". How can I help you today?
-              </p>
-              <div className="flex flex-wrap justify-center gap-2">
-                <Button variant="outline" size="sm" className="text-xs">
-                  Analyze collection
-                </Button>
-                <Button variant="outline" size="sm" className="text-xs">
-                  Suggest rules
-                </Button>
-                <Button variant="outline" size="sm" className="text-xs">
-                  Show stats
-                </Button>
-              </div>
-            </div>
-          </div>
-
           {/* AI Chat */}
-          <div className="border-t h-[400px]">
+          <div className="flex-1">
             <AIChat
               onMessage={handleAIMessage}
               initialMessages={initialMessages}

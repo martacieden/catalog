@@ -135,8 +135,8 @@ export function AIChatPanel({ recommendation, onSendMessage }: AIChatPanelProps)
         </div>
       </ScrollArea>
 
-      {/* Input */}
-      <div className="p-4 border-t border-gray-200 bg-white">
+      {/* Input - Fixed at bottom */}
+      <div className="p-4 border-t border-gray-200 bg-white sticky bottom-0 z-10">
         <div className="flex gap-2">
           <Textarea
             value={inputMessage}
@@ -159,6 +159,8 @@ export function AIChatPanel({ recommendation, onSendMessage }: AIChatPanelProps)
     </div>
   );
 }
+
+
 
 
 

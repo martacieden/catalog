@@ -48,7 +48,7 @@ export function AIRecommendationBanner({
             onClick={handleExplore}
             className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1 h-6 px-2 text-xs transition-colors hover:bg-blue-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           >
-            View collection
+            Create collection
             <ArrowRight className="w-3 h-3" />
           </Button>
           <Button

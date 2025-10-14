@@ -7,6 +7,9 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { InsightCard, InsightData } from "@/components/ui/insight-card"
+import { FilterChipsList, FilterChipData } from "@/components/ui/filter-chip"
+import { CollectionDetailsSection } from "@/components/ui/collapsible-section"
 import {
   Sparkles,
   Filter,
@@ -15,6 +18,18 @@ import {
   CheckCircle,
   TrendingUp,
   Bot,
+  ChevronDown,
+  ChevronUp,
+  Wrench,
+  Home,
+  BarChart3,
+  DollarSign,
+  Calendar,
+  ClipboardList,
+  ExternalLink,
+  Users,
+  FileText,
+  MessageSquare,
 } from "lucide-react"
 
 interface CollectionDetailsBlockProps {
@@ -201,46 +216,55 @@ const generateAISummary = (collection: Collection, items: CollectionItem[]) => {
   return insights
 }
 
-export function CollectionDetailsBlock({ collection, items, onOpenAIAssistant, onInsightClick }: CollectionDetailsBlockProps) {
-  // UNIFIED AI INSIGHTS - всі колекції показують однакові insights
-  const staticInsights: Array<{
-    type: 'success' | 'info' | 'warning'
-    icon: any
-    title: string
-    message: string
-    actionType: 'none' | 'filter' | 'ai_assistant'
-    data?: any
-  }> = [
+export function CollectionDetailsBlock({ 
+  collection, 
+  items, 
+  onOpenAIAssistant, 
+  onInsightClick
+}: CollectionDetailsBlockProps) {
+  const [isCollapsed, setIsCollapsed] = React.useState(false)
+  
+  // СПРОЩЕНІ AI INSIGHTS - тільки 3 найважливіші (реальні дані для 9 items)
+  const staticInsights: InsightData[] = [
     {
-      type: 'success',
-      icon: CheckCircle,
-      title: 'Premium Collection',
-      message: 'Great! This collection has 4 high-value items and is well-organized.',
-      actionType: 'none'
+      id: 'maintenance-alert',
+      title: 'Maintenance Alert',
+      message: '4 properties require HVAC filter replacement within 30 days',
+      type: 'warning',
+      icon: '⚠️'
     },
     {
+      id: 'insurance-gap',
+      title: 'Insurance Gap',
+      message: '3 properties missing flood insurance coverage',
+      type: 'warning',
+      icon: '🏠'
+    },
+    {
+      id: 'cost-optimization',
+      title: 'Cost Optimization',
+      message: 'Aviation maintenance contracts up for renewal - potential $200K savings',
       type: 'info',
-      icon: TrendingUp,
-      title: 'Mixed Categories',
-      message: 'Collection spans Properties, Aviation, and Maritime categories for diversified portfolio.',
-      actionType: 'filter',
-      data: { categories: ['Properties', 'Aviation', 'Maritime'] }
-    },
-    {
-      type: 'success',
-      icon: CheckCircle,
-      title: 'Smart Collection',
-      message: 'Collection uses 4 filter rules for automatic organization based on value and ratings.',
-      actionType: 'none'
-    },
+      icon: '💰'
+    }
   ]
   
+  // Конвертуємо фільтри в формат FilterChipData
+  const filterChips: FilterChipData[] = collection.filters?.map((filter, index) => ({
+    id: `filter-${index}`,
+    field: filter.field,
+    operator: filter.operator,
+    value: filter.value,
+    displayText: `${filter.field} ${filter.operator} ${filter.value}`
+  })) || []
+
   return (
-    <Card className="mb-6">
-      <CardHeader className="pb-0">
-      </CardHeader>
-      
-        <CardContent className="space-y-4">
+    <Card className="py-0">
+      <CardContent className="p-4">
+        <CollectionDetailsSection
+          defaultCollapsed={isCollapsed}
+          onToggle={setIsCollapsed}
+        >
           {/* Description */}
         {collection.description && (
           <div>
@@ -249,95 +273,68 @@ export function CollectionDetailsBlock({ collection, items, onOpenAIAssistant, o
           </div>
         )}
         
-        {/* Rules */}
-        {collection.filters && collection.filters.length > 0 && (
-          <>
-            {collection.description && <Separator />}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Filter criteria</span>
-                <button className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-pen w-3 h-3">
-                    <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path>
-                  </svg>
-                  Customize filters
-                </button>
+          {/* Rules */}
+          {filterChips.length > 0 && (
+            <>
+              {collection.description && <Separator />}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Filter criteria</span>
+                  <button className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-pen w-3 h-3">
+                      <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path>
+                    </svg>
+                    Customize filters
+                  </button>
+                </div>
+                <FilterChipsList filters={filterChips} />
+                {collection.autoSync && (
+                  <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+                    <Sparkles className="h-3 w-3" />
+                    Auto-sync enabled - collection updates automatically
+                  </p>
+                )}
               </div>
-              <div className="flex flex-wrap gap-2">
-                <span className="px-3 py-1.5 bg-green-50 border border-green-200 rounded-full text-sm">💰 Value &gt; $1M</span>
-                <span className="px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-full text-sm">🏢 Premium categories</span>
-                <span className="px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-full text-sm">✅ Active status</span>
-                <span className="px-3 py-1.5 bg-yellow-50 border border-yellow-200 rounded-full text-sm">⭐ Rating ≥ 4</span>
-              </div>
-              {collection.autoSync && (
-                <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-                  <Sparkles className="h-3 w-3" />
-                  Auto-sync enabled - collection updates automatically
-                </p>
-              )}
-            </div>
-          </>
-        )}
+            </>
+          )}
         
-        {/* AI Summary - Compact (Static for unified view) */}
-        {staticInsights.length > 0 && (
-          <>
-            {(collection.description || (collection.filters && collection.filters.length > 0)) && <Separator />}
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                  <Sparkles className="h-4 w-4" />
-                  AI Summary
-                </h4>
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="text-xs px-2 py-0.5">
-                    {staticInsights.length} insight{staticInsights.length > 1 ? 's' : ''}
-                  </Badge>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="h-6 px-2 text-xs"
-                    onClick={onOpenAIAssistant}
-                  >
-                    <Bot className="h-3 w-3 mr-1" />
-                    AI Assistant
-                  </Button>
+          {/* AI Insights */}
+          {staticInsights.length > 0 && (
+            <>
+              {(collection.description || filterChips.length > 0) && <Separator />}
+              <div>
+                <div className="flex items-center justify-between mb-4 mt-4">
+                  <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                    <Sparkles className="h-4 w-4" />
+                    AI Insights
+                  </h4>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="text-xs px-2 py-0.5">
+                      {staticInsights.length} insight{staticInsights.length > 1 ? 's' : ''}
+                    </Badge>
+                    <Button 
+                      variant="default" 
+                      size="sm" 
+                      className="h-7 px-3 text-sm bg-blue-600 hover:bg-blue-700 text-white"
+                      onClick={onOpenAIAssistant}
+                    >
+                      <Bot className="h-4 w-4 mr-1" />
+                      AI Fojo
+                    </Button>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  {staticInsights.map((insight) => (
+                    <InsightCard
+                      key={insight.id}
+                      insight={insight}
+                    />
+                  ))}
                 </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                {staticInsights.map((insight, index) => (
-                  <div 
-                    key={index} 
-                    className={`flex flex-col gap-2 p-3 rounded-lg transition-colors min-h-[90px] ${
-                      insight.type === 'warning' ? 'bg-amber-50 border border-amber-200' :
-                      insight.type === 'info' ? 'bg-blue-50 border border-blue-200' :
-                      'bg-green-50 border border-green-200'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <insight.icon className={`h-4 w-4 ${
-                        insight.type === 'warning' ? 'text-amber-600' :
-                        insight.type === 'info' ? 'text-blue-600' :
-                        'text-green-600'
-                      }`} />
-                      <p className="text-sm font-medium">{insight.title}</p>
-                      {insight.actionType !== 'none' && (
-                        <div className="ml-auto">
-                          {insight.actionType === 'ai_assistant' ? (
-                            <Bot className="h-3 w-3 text-muted-foreground" />
-                          ) : (
-                            <Filter className="h-3 w-3 text-muted-foreground" />
-                          )}
-                        </div>
-                      )}
-                    </div>
-                    <p className="text-xs text-muted-foreground leading-relaxed flex-1">{insight.message}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </>
-        )}
+            </>
+          )}
+        </CollectionDetailsSection>
       </CardContent>
     </Card>
   )

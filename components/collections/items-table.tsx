@@ -52,6 +52,7 @@ interface ItemsTableProps {
   emptyMessage?: string
   onBulkDelete?: () => void
   onBulkCreateCollection?: () => void
+  onBulkAddToCollection?: () => void
   onBulkPin?: () => void
   onBulkExclude?: () => void
 }
@@ -70,6 +71,7 @@ export function ItemsTable({
   emptyMessage = "No items in this collection",
   onBulkDelete,
   onBulkCreateCollection,
+  onBulkAddToCollection,
   onBulkPin,
   onBulkExclude,
 }: ItemsTableProps) {
@@ -141,9 +143,60 @@ export function ItemsTable({
     )
   }
 
+  const selectedCount = selectedIds.size
+
   return (
-    <div className="rounded-lg border border-border bg-card">
-      <Table>
+    <div className="space-y-0">
+      {/* Bulk Actions Bar */}
+      {selectedCount > 0 && (
+        <div className="sticky top-0 z-10 -mt-2 mb-4 rounded-lg border border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 px-4 py-3 shadow-sm">
+          <div className="w-full flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <span className="text-sm font-medium">
+                {selectedCount} item{selectedCount > 1 ? "s" : ""} selected
+              </span>
+              <Button variant="ghost" size="sm" onClick={() => onSelectionChange?.(new Set())}>
+                <X className="mr-1 sm:mr-2 h-4 w-4" />
+                <span className="hidden sm:inline">Clear selection</span>
+                <span className="sm:hidden">Clear</span>
+              </Button>
+            </div>
+            <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+              {onBulkCreateCollection && (
+                <Button variant="outline" size="sm" onClick={onBulkCreateCollection}>
+                  <Plus className="mr-1 sm:mr-2 h-4 w-4" />
+                  <span className="hidden sm:inline">Create new collection</span>
+                  <span className="sm:hidden">New</span>
+                </Button>
+              )}
+              {onBulkAddToCollection && (
+                <Button variant="outline" size="sm" onClick={onBulkAddToCollection}>
+                  <Plus className="mr-1 sm:mr-2 h-4 w-4" />
+                  <span className="hidden sm:inline">Add to collection</span>
+                  <span className="sm:hidden">Add to</span>
+                </Button>
+              )}
+              {onBulkPin && (
+                <Button variant="outline" size="sm" onClick={onBulkPin}>
+                  <Pin className="mr-1 sm:mr-2 h-4 w-4" />
+                  <span className="hidden sm:inline">Pin items</span>
+                  <span className="sm:hidden">Pin</span>
+                </Button>
+              )}
+              {onBulkDelete && (
+                <Button variant="destructive" size="sm" onClick={onBulkDelete}>
+                  <span className="hidden sm:inline">Remove items</span>
+                  <span className="sm:hidden">Remove</span>
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Table Container */}
+      <div className="rounded-lg border border-border bg-card">
+        <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
             {showSelection && (
@@ -191,70 +244,6 @@ export function ItemsTable({
             {showActions && <TableHead className="w-12"></TableHead>}
           </TableRow>
         </TableHeader>
-        {/* Bulk Actions Row */}
-        {selectedIds.size > 0 && (
-          <TableRow className="bg-blue-50 border-b-2 border-blue-200">
-            <TableCell colSpan={showSelection ? (showActions ? 10 : 9) : (showActions ? 9 : 8)} className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <span className="text-sm font-medium">
-                    {selectedIds.size} items selected
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onSelectionChange?.(new Set())}
-                  >
-                    <X className="mr-2 h-4 w-4" />
-                    Clear selection
-                  </Button>
-                </div>
-                <div className="flex items-center gap-2">
-                  {onBulkCreateCollection && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={onBulkCreateCollection}
-                    >
-                      <Plus className="mr-2 h-4 w-4" />
-                      Create new collection
-                    </Button>
-                  )}
-                  {onBulkPin && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={onBulkPin}
-                    >
-                      <Pin className="mr-2 h-4 w-4" />
-                      Pin items
-                    </Button>
-                  )}
-                  {onBulkExclude && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={onBulkExclude}
-                    >
-                      <X className="mr-2 h-4 w-4" />
-                      Exclude items
-                    </Button>
-                  )}
-                  {onBulkDelete && (
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={onBulkDelete}
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete items
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </TableCell>
-          </TableRow>
-        )}
         <TableBody>
           {items.map((item) => (
             <TableRow
@@ -347,6 +336,7 @@ export function ItemsTable({
           ))}
         </TableBody>
       </Table>
+      </div>
     </div>
   )
 }

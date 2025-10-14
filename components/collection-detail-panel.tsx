@@ -2,7 +2,6 @@
 
 import * as React from "react"
 import { useCollections } from "@/contexts/collections-context"
-import { useCollectionHistory } from "@/hooks/use-collection-history"
 import { useToast } from "@/hooks/use-toast"
 import { CollectionItem, CollectionSortOption, CollectionFilter } from "@/types/collection"
 import { Button } from "@/components/ui/button"
@@ -11,29 +10,17 @@ import { Badge } from "@/components/ui/badge"
 import { CollectionDetailsBlock } from "./collections/collection-details-block"
 import { ItemsTable } from "./collections/items-table"
 import { ItemsGrid } from "./collections/items-grid"
-import { RulesModal } from "./collections/rules-modal"
 import { AddItemModal } from "./collections/add-item-modal"
-import { ShareModal } from "./collections/share-modal"
-import { CollectionEditDialog } from "./collections/collection-edit-dialog"
 import { CollectionItemsManager } from "./collections/collection-items-manager"
 import { AddItemsDialog } from "./collections/add-items-dialog"
 import { SyncPreviewDialog } from "./collections/sync-preview-dialog"
 import { CollectionAIAssistant } from "./collections/collection-ai-assistant"
 import {
-  Settings,
   Filter,
   Search,
   Plus,
   Grid3x3,
-  List,
-  FileText,
-  RotateCcw,
-  Share2,
-  ArrowLeft,
-  Edit3,
-  Undo2,
-  Redo2,
-  Download,
+  Square,
   Bot,
   Sparkles,
 } from "lucide-react"
@@ -43,7 +30,7 @@ interface CollectionDetailPanelProps {
   onClose: () => void
 }
 
-// UNIFIED PLACEHOLDER DATA - всі колекції показують однакові дані
+// UNIFIED PLACEHOLDER DATA - всі колекції показують однакові дані (9 items)
 const PLACEHOLDER_ITEMS: CollectionItem[] = [
   {
     id: "placeholder-1",
@@ -93,6 +80,66 @@ const PLACEHOLDER_ITEMS: CollectionItem[] = [
     tags: ["corporate", "headquarters", "commercial", "premium"],
     lastUpdated: "2024-01-18T09:15:00Z",
   },
+  {
+    id: "placeholder-5",
+    name: "Mountain Resort Estate",
+    type: "property",
+    category: "Properties",
+    idCode: "RES-001",
+    status: "Active",
+    location: "Aspen, Colorado",
+    value: 12000000,
+    tags: ["resort", "mountain", "luxury", "ski"],
+    lastUpdated: "2024-01-15T10:20:00Z",
+  },
+  {
+    id: "placeholder-6",
+    name: "Helicopter Bell 429",
+    type: "aircraft",
+    category: "Aviation",
+    idCode: "AVI-002",
+    status: "Active",
+    location: "Los Angeles, CA",
+    value: 6000000,
+    tags: ["helicopter", "luxury", "transport"],
+    lastUpdated: "2024-01-12T16:45:00Z",
+  },
+  {
+    id: "placeholder-7",
+    name: "Superyacht Ocean Dream",
+    type: "yacht",
+    category: "Maritime",
+    idCode: "MAR-002",
+    status: "Active",
+    location: "Fort Lauderdale, FL",
+    value: 18000000,
+    tags: ["superyacht", "luxury", "caribbean"],
+    lastUpdated: "2024-01-10T12:30:00Z",
+  },
+  {
+    id: "placeholder-8",
+    name: "Tech Campus Building",
+    type: "property",
+    category: "Properties",
+    idCode: "TECH-001",
+    status: "Active",
+    location: "San Francisco, CA",
+    value: 35000000,
+    tags: ["tech", "campus", "commercial", "innovation"],
+    lastUpdated: "2024-01-08T14:15:00Z",
+  },
+  {
+    id: "placeholder-9",
+    name: "Business Jet Citation X",
+    type: "aircraft",
+    category: "Aviation",
+    idCode: "AVI-003",
+    status: "Active",
+    location: "Boston, MA",
+    value: 22000000,
+    tags: ["business-jet", "citation", "long-range"],
+    lastUpdated: "2024-01-05T09:00:00Z",
+  },
 ]
 
 export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetailPanelProps) {
@@ -100,8 +147,6 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
     getCollectionById, 
     bulkRemoveItems, 
     updateCollection,
-    removeCollection,
-    duplicateCollection,
     toggleAutoSync,
     getCollectionStats,
   } = useCollections()
@@ -120,12 +165,10 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
     itemCount: PLACEHOLDER_ITEMS.length,
   } : null
   
-  const { undo, redo, canUndo, canRedo, snapshot } = useCollectionHistory(collection)
-  
   // State
   const [searchQuery, setSearchQuery] = React.useState("")
   const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set())
-  const [layout, setLayout] = React.useState<"table" | "grid" | "list">("grid")
+  const [layout, setLayout] = React.useState<"table" | "grid" | "list">("table")
   const [sortOption, setSortOption] = React.useState<CollectionSortOption>({
     field: "name",
     direction: "asc",
@@ -141,10 +184,7 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
   })
   
   // Dialog states
-  const [rulesModalOpen, setRulesModalOpen] = React.useState(false)
   const [addItemModalOpen, setAddItemModalOpen] = React.useState(false)
-  const [shareModalOpen, setShareModalOpen] = React.useState(false)
-  const [editDialogOpen, setEditDialogOpen] = React.useState(false)
   const [itemsManagerOpen, setItemsManagerOpen] = React.useState(false)
   const [addItemsDialogOpen, setAddItemsDialogOpen] = React.useState(false)
   const [syncPreviewOpen, setSyncPreviewOpen] = React.useState(false)
@@ -256,7 +296,14 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
   const handleCreateCollectionFromSelected = () => {
     toast({
       title: "Coming soon",
-      description: "Create collection from selected items will be available soon.",
+      description: "Create new collection from selected items will be available soon.",
+    })
+  }
+  
+  const handleAddToCollection = () => {
+    toast({
+      title: "Coming soon",
+      description: "Add selected items to existing collection will be available soon.",
     })
   }
   
@@ -267,48 +314,6 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
     })
   }
   
-  // Additional handlers for enhanced functionality
-  const handleUndo = () => {
-    if (!collectionId) return
-    const previousState = undo()
-    if (previousState) {
-      updateCollection(collectionId, previousState.data)
-      toast({
-        title: "Undo successful",
-        description: "Previous state restored.",
-      })
-    }
-  }
-
-  const handleRedo = () => {
-    if (!collectionId) return
-    const nextState = redo()
-    if (nextState) {
-      updateCollection(collectionId, nextState.data)
-      toast({
-        title: "Redo successful",
-        description: "State restored.",
-      })
-    }
-  }
-
-  const handleExport = () => {
-    toast({
-      title: "Coming soon",
-      description: "Export functionality will be available soon.",
-    })
-  }
-
-  const handleDuplicate = () => {
-    if (!collectionId) return
-    const duplicated = duplicateCollection(collectionId)
-    if (duplicated) {
-      toast({
-        title: "Collection duplicated",
-        description: `Created a copy of "${duplicated.name}"`,
-      })
-    }
-  }
 
 
   const handleSyncNow = () => {
@@ -340,11 +345,17 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
   }
 
   const handleAIAssistantSuggestRules = () => {
-    setRulesModalOpen(true)
+    toast({
+      title: "Coming soon",
+      description: "Rules suggestion will be available soon.",
+    })
   }
 
   const handleAIAssistantExport = () => {
-    handleExport()
+    toast({
+      title: "Coming soon",
+      description: "Export functionality will be available soon.",
+    })
   }
   
   if (!collection) {
@@ -378,16 +389,6 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
                 Created by {collection.type === "ai-generated" ? "AI Assistant" : "User"} • {collection.createdAt ? new Date(collection.createdAt).toLocaleDateString() : '—'}
               </div>
             </div>
-            
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search items..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 w-64"
-              />
-            </div>
           </div>
           
           <div className="flex items-center gap-2">
@@ -399,29 +400,13 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
               <Plus className="h-4 w-4 mr-2" />
               Add Items
             </Button>
-            <Button variant="outline" size="sm" onClick={() => setShareModalOpen(true)}>
-              <Share2 className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setRulesModalOpen(true)}>
-              <FileText className="h-4 w-4" />
-            </Button>
-            
-            {/* Additional actions */}
-            {canUndo && (
-              <Button variant="outline" size="sm" onClick={handleUndo}>
-                <Undo2 className="h-4 w-4" />
-              </Button>
-            )}
-            {canRedo && (
-              <Button variant="outline" size="sm" onClick={handleRedo}>
-                <Redo2 className="h-4 w-4" />
-              </Button>
-            )}
-            <Button variant="outline" size="sm" onClick={handleExport}>
-              <Download className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleDuplicate}>
-              <Settings className="h-4 w-4" />
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setAddItemsDialogOpen(true)}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Create collection
             </Button>
           </div>
         </div>
@@ -465,7 +450,7 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
         />
         
         {/* Table Controls */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 mt-4">
           <div className="flex items-center gap-2">
             {/* View Toggle */}
             <div className="flex items-center border rounded-md">
@@ -483,7 +468,7 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
                 onClick={() => setLayout("table")}
                 className="rounded-none border-x"
               >
-                <List className="h-4 w-4" />
+                <Square className="h-4 w-4" />
               </Button>
             </div>
             
@@ -593,6 +578,10 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
               const item = processedItems.find(i => i.id === id)
               if (item) handleItemDelete(item)
             }}
+            onBulkDelete={handleBulkDelete}
+            onBulkCreateCollection={handleCreateCollectionFromSelected}
+            onBulkAddToCollection={handleAddToCollection}
+            onBulkPin={handlePinSelected}
             emptyMessage={
               searchQuery
                 ? "No items match your search criteria"
@@ -607,6 +596,7 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
             onItemDelete={handleItemDelete}
             onBulkDelete={handleBulkDelete}
             onBulkCreateCollection={handleCreateCollectionFromSelected}
+            onBulkAddToCollection={handleAddToCollection}
             onBulkPin={handlePinSelected}
             emptyMessage={
               searchQuery
@@ -616,13 +606,6 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
           />
         )}
       </div>
-
-      {/* Rules Modal */}
-      <RulesModal
-        collection={collection}
-        open={rulesModalOpen}
-        onOpenChange={setRulesModalOpen}
-      />
 
       {/* Add Item Modal */}
       <AddItemModal
@@ -637,20 +620,6 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
             description: "Collection updated with new item.",
           })
         }}
-      />
-
-      {/* Share Modal */}
-      <ShareModal
-        collection={collection}
-        open={shareModalOpen}
-        onOpenChange={setShareModalOpen}
-      />
-
-      {/* Collection Edit Dialog */}
-      <CollectionEditDialog
-        collection={collection}
-        open={editDialogOpen}
-        onOpenChange={setEditDialogOpen}
       />
 
 

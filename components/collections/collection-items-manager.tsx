@@ -4,6 +4,7 @@ import * as React from "react"
 import { CollectionItem } from "@/types/collection"
 import { useCollections } from "@/contexts/collections-context"
 import { Button } from "@/components/ui/button"
+import { ManualCollectionDialog } from "@/components/manual-collection-dialog"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -338,6 +339,15 @@ export function CollectionItemsManager({
                 </span>
               </div>
               <div className="flex items-center gap-2">
+                <ManualCollectionDialog
+                  trigger={
+                    <Button variant="outline" size="sm">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Collection
+                    </Button>
+                  }
+                  selectedItems={Array.from(selectedIds)}
+                />
                 <Button variant="outline" size="sm" onClick={handleBulkDelete}>
                   <Trash2 className="h-4 w-4 mr-2" />
                   Remove

@@ -17,6 +17,7 @@ import {
 } from './ui/dialog'
 import { ItemsTable } from './collections/items-table'
 import { CollectionItem, CollectionSortOption } from '@/types/collection'
+import { ManualCollectionDialog } from './manual-collection-dialog'
 
 interface SearchResult {
   id: string
@@ -137,6 +138,15 @@ export function SearchResultsModal({
                   <Plus className="h-4 w-4 mr-1" />
                   Add to Collection
                 </Button>
+                <ManualCollectionDialog
+                  trigger={
+                    <Button size="sm" variant="outline">
+                      <Plus className="h-4 w-4 mr-1" />
+                      Create Collection
+                    </Button>
+                  }
+                  selectedItems={Array.from(selectedItems)}
+                />
                 <Button size="sm" variant="outline">
                   <Download className="h-4 w-4 mr-1" />
                   Export

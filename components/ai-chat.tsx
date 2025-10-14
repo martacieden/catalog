@@ -26,6 +26,14 @@ interface AIChatProps {
   placeholder?: string
   disabled?: boolean
   className?: string
+  contextBadge?: string
+  quickActions?: Array<{
+    id: string
+    label: string
+    icon?: React.ReactNode
+    onClick: () => void
+  }>
+  onSuggestionClick?: (suggestion: string) => void
 }
 
 export function AIChat({
@@ -36,6 +44,9 @@ export function AIChat({
   placeholder = "Type a message...",
   disabled = false,
   className = "",
+  contextBadge,
+  quickActions = [],
+  onSuggestionClick,
 }: AIChatProps) {
   const [messages, setMessages] = React.useState<ChatMessage[]>(initialMessages)
   const [inputValue, setInputValue] = React.useState("")
@@ -119,15 +130,13 @@ export function AIChat({
   }
 
   const generateAIResponse = (userInput: string): string => {
-    const responses = [
-      "I've analyzed your request and created a collection based on your criteria. Here's what I found:",
-      "Great idea! I've grouped the items according to your parameters. Here are my recommendations:",
-      "Interesting request! I've created a collection that meets your needs. Check out the results:",
-      "I understood your request and prepared a suitable collection. Here's what came out:",
-      "Excellent request! I've analyzed the data and created an optimal collection for you:"
-    ]
+    const responses: Record<string, string> = {
+      "Analyze collection": "I've analyzed your collection and found some interesting insights. Your collection contains high-value assets with excellent diversification across categories. Here are the key findings:\n\n• Total value: $135.5M across 9 premium assets\n• Category distribution: Properties (44%), Aviation (33%), Maritime (22%)\n• All assets are currently active with high ratings\n• Maintenance alerts: 4 properties need HVAC filter replacement within 30 days",
+      "Suggest rules": "Based on your collection patterns, I suggest these smart filtering rules:\n\n• Value > $1M (captures premium assets)\n• Status = Active (ensures availability)\n• Rating ≥ 4 (maintains quality)\n• Category in [Properties, Aviation, Maritime] (diversification)\n\nThese rules will automatically include similar high-value assets as they become available.",
+      "Show stats": "Here are your collection statistics:\n\n📊 **Overview**\n• Total Items: 9\n• Total Value: $135,500,000\n• Average Value: $15,055,556\n\n📈 **Performance**\n• Active Items: 100%\n• High Rating Items: 100%\n• Categories: 3\n\n⚠️ **Alerts**\n• 4 properties need HVAC maintenance\n• 3 properties missing flood insurance",
+    }
     
-    return responses[Math.floor(Math.random() * responses.length)]
+    return responses[userInput] || "I understand your request. Let me help you with that."
   }
 
   const generateSuggestions = (userInput: string): string[] => {
@@ -144,6 +153,18 @@ export function AIChat({
 
   return (
     <div className={`flex flex-col h-full ${className}`}>
+      {/* Context Badge */}
+      {contextBadge && (
+        <div className="px-4 py-2 border-b bg-blue-50">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+            <span className="text-sm text-blue-700 font-medium">
+              Analyzing: {contextBadge}
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Messages Area */}
       <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
         <div className="space-y-4">
@@ -177,7 +198,37 @@ export function AIChat({
                         variant="ghost"
                         size="sm"
                         className="h-6 px-2 text-xs"
-                        onClick={() => setInputValue(suggestion)}
+                        onClick={() => {
+                          if (onSuggestionClick) {
+                            onSuggestionClick(suggestion)
+                          } else {
+                            // Default behavior - add as user message and generate AI response
+                            const userMessage: ChatMessage = {
+                              id: `user-${Date.now()}`,
+                              type: "user",
+                              content: suggestion,
+                              timestamp: new Date(),
+                            }
+                            
+                            setMessages(prev => [...prev, userMessage])
+                            
+                            // Generate AI response
+                            setIsGenerating(true)
+                            setTimeout(() => {
+                              const aiMessage: ChatMessage = {
+                                id: `ai-${Date.now()}`,
+                                type: "ai",
+                                content: generateAIResponse(suggestion),
+                                timestamp: new Date(),
+                                suggestions: generateSuggestions(suggestion),
+                                canRegenerate: true,
+                              }
+                              
+                              setMessages(prev => [...prev, aiMessage])
+                              setIsGenerating(false)
+                            }, 1000)
+                          }
+                        }}
                       >
                         {suggestion}
                       </Button>
@@ -240,8 +291,28 @@ export function AIChat({
         </div>
       </ScrollArea>
 
-      {/* Input Area */}
-      <div className="border-t p-4">
+      {/* Quick Actions */}
+      {quickActions.length > 0 && (
+        <div className="px-4 py-2 border-t bg-gray-50">
+          <div className="flex gap-2 overflow-x-auto">
+            {quickActions.map((action) => (
+              <Button
+                key={action.id}
+                variant="outline"
+                size="sm"
+                onClick={action.onClick}
+                className="flex-shrink-0 h-7 px-3 text-xs"
+              >
+                {action.icon && <span className="mr-1">{action.icon}</span>}
+                {action.label}
+              </Button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Input Area - Fixed at bottom */}
+      <div className="border-t p-4 bg-background sticky bottom-0 z-10">
         <div className="flex gap-2">
           <Textarea
             value={inputValue}

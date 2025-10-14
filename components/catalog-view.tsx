@@ -9,7 +9,9 @@ import {
   LayoutGrid,
   Plus,
   Bell,
+  Settings,
   MoreVertical,
+  Share2,
   FileText,
   Tag,
   TrendingUp,
@@ -43,6 +45,8 @@ import { AddItemModal } from "@/components/collections/add-item-modal"
 import { AICollectionPreviewDialog } from "@/components/ai-collection-preview-dialog"
 import { SearchToCollection } from "@/components/search-to-collection"
 import { getUnsplashImageUrl, getRandomUnsplashImage } from "@/lib/unsplash"
+import { ShareModal } from "@/components/collections/share-modal"
+import { CollectionSettingsDialog } from "@/components/collection-settings-dialog"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useCollections } from "@/contexts/collections-context"
@@ -181,6 +185,7 @@ export function CatalogView({ activeView = "catalog", onPinnedCountChange }: Cat
   const [viewMode, setViewMode] = React.useState<"grid" | "card">("card")
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false)
   const [addItemModalOpen, setAddItemModalOpen] = React.useState(false)
+  const [shareModalOpen, setShareModalOpen] = React.useState(false)
   const [aiSuggestions, setAiSuggestions] = React.useState<any[]>([])
   const [showAiSuggestions, setShowAiSuggestions] = React.useState(false)
   const [aiCollectionDialogOpen, setAiCollectionDialogOpen] = React.useState(false)
@@ -733,6 +738,9 @@ export function CatalogView({ activeView = "catalog", onPinnedCountChange }: Cat
             <Button variant="ghost" size="icon">
               <Bell className="h-5 w-5" />
             </Button>
+            <Button variant="ghost" size="icon">
+              <Settings className="h-5 w-5" />
+            </Button>
             <Avatar className="h-8 w-8">
               <AvatarImage src="/placeholder.svg" />
               <AvatarFallback>JD</AvatarFallback>
@@ -751,7 +759,7 @@ export function CatalogView({ activeView = "catalog", onPinnedCountChange }: Cat
         <>
           {/* Toolbar */}
           <div className="flex items-center justify-between border-b border-border bg-card px-6 py-3 gap-2 lg:gap-4">
-            {/* Left group: Filters, Columns */}
+            {/* Left group: Filters, Columns, Search */}
             <div className="flex items-center gap-2 lg:gap-3 flex-shrink-0">
               <Button variant="outline" size="sm" onClick={() => setActiveFilters(activeFilters > 0 ? 0 : 2)}>
                 <Filter className="mr-1 lg:mr-2 h-4 w-4" />
@@ -766,49 +774,52 @@ export function CatalogView({ activeView = "catalog", onPinnedCountChange }: Cat
                 <Columns className="mr-1 lg:mr-2 h-4 w-4" />
                 <span className="hidden lg:inline">9/9 columns</span>
               </Button>
-            </div>
-            
-            {/* Center: Search with Fojo - адаптивна ширина */}
-            <div className="relative flex-1 min-w-0 max-w-xs sm:max-w-sm lg:max-w-md mx-1 sm:mx-2 lg:mx-4">
-              <div className="relative flex items-center bg-gray-50 rounded-lg border border-gray-200 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500">
-                <Search className="absolute left-2 sm:left-3 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Search with Fojo..."
-                  className="pl-8 sm:pl-10 pr-16 sm:pr-20 lg:pr-28 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-9 text-sm"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && searchQuery.trim()) {
-                      handleAISearch(searchQuery)
-                    }
-                  }}
-                />
-                <div className="absolute right-1 sm:right-2 flex items-center gap-1">
-                  <Button
-                    size="sm"
-                    onClick={() => handleAISearch(searchQuery)}
-                    disabled={!searchQuery.trim() || isAISearching}
-                    className="bg-blue-600 text-white hover:bg-blue-700 h-6 sm:h-7 px-1 sm:px-2 lg:px-3 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Sparkles className="h-3 w-3 sm:mr-1" />
-                    <span className="hidden sm:inline">Ask Fojo</span>
-                  </Button>
-                  {searchQuery && (
+              <div className="relative min-w-0 max-w-xs sm:max-w-sm lg:max-w-md">
+                <div className="relative flex items-center bg-gray-50 rounded-lg border border-gray-200 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500">
+                  <Search className="absolute left-2 sm:left-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Search with Fojo..."
+                    className="pl-8 sm:pl-10 pr-16 sm:pr-20 lg:pr-28 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-9 text-sm"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && searchQuery.trim()) {
+                        handleAISearch(searchQuery)
+                      }
+                    }}
+                  />
+                  <div className="absolute right-1 sm:right-2 flex items-center gap-1">
                     <Button
                       size="sm"
-                      variant="ghost"
-                      onClick={handleAIClear}
-                      className="h-6 sm:h-7 w-6 sm:w-7 p-0 text-gray-400 hover:text-gray-600"
+                      onClick={() => handleAISearch(searchQuery)}
+                      disabled={!searchQuery.trim() || isAISearching}
+                      className="bg-blue-600 text-white hover:bg-blue-700 h-6 sm:h-7 px-1 sm:px-2 lg:px-3 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <X className="h-3 w-3" />
+                      <Sparkles className="h-3 w-3 sm:mr-1" />
+                      <span className="hidden sm:inline">Ask Fojo</span>
                     </Button>
-                  )}
+                    {searchQuery && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={handleAIClear}
+                        className="h-6 sm:h-7 w-6 sm:w-7 p-0 text-gray-400 hover:text-gray-600"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Right group: View toggle, Add */}
+            {/* Right group: Share, Settings, View toggle, Add */}
             <div className="flex items-center gap-2 lg:gap-3 flex-shrink-0">
+              <Button variant="outline" size="sm" onClick={() => setShareModalOpen(true)} className="hidden md:flex">
+                <Share2 className="mr-1 lg:mr-2 h-4 w-4" />
+                <span className="hidden lg:inline">Share</span>
+              </Button>
+              <CollectionSettingsDialog collectionName={getPageTitle()} />
               <div className="flex items-center border border-border rounded-md p-1">
                 <Button
                   variant={viewMode === "grid" ? "default" : "ghost"}
@@ -951,6 +962,29 @@ export function CatalogView({ activeView = "catalog", onPinnedCountChange }: Cat
         }}
       />
 
+      {/* Share Modal */}
+      <ShareModal
+        collection={{
+          id: activeView,
+          name: getPageTitle(),
+          description: '',
+          icon: 'Folder',
+          filters: [],
+          type: 'manual',
+          tags: [],
+          items: [],
+          autoSync: false,
+          isPublic: false,
+          sharedWith: [],
+          viewCount: 0,
+          createdAt: new Date(),
+          createdBy: { id: '', name: '', email: '', avatar: '' },
+          updatedAt: new Date(),
+          itemCount: filteredItems.length,
+        }}
+        open={shareModalOpen}
+        onOpenChange={setShareModalOpen}
+      />
 
       {/* Collection Creation Dialog */}
       <ManualCollectionDialog
@@ -1534,6 +1568,10 @@ function TableView({
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem>View</DropdownMenuItem>
                       <DropdownMenuItem>Edit</DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Share2 className="mr-2 h-4 w-4" />
+                        Share
+                      </DropdownMenuItem>
                       <DropdownMenuItem>Move</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
