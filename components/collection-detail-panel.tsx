@@ -789,63 +789,11 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
 
       {/* Collection Settings Dialog */}
       {collection && (
-        <div className={`fixed inset-0 z-50 ${settingsDialogOpen ? 'block' : 'hidden'}`}>
-          <div className="fixed inset-0 bg-black/50" onClick={() => setSettingsDialogOpen(false)} />
-          <div className="fixed inset-4 bg-white rounded-lg shadow-lg border overflow-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold flex items-center gap-2">
-                  <Settings className="h-5 w-5" />
-                  Collection Settings
-                </h2>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSettingsDialogOpen(false)}
-                >
-                  ×
-                </Button>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Collection Name</label>
-                  <input
-                    type="text"
-                    value={collection.name}
-                    className="w-full px-3 py-2 border rounded-md"
-                    readOnly
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Description</label>
-                  <textarea
-                    value={collection.description || ''}
-                    className="w-full px-3 py-2 border rounded-md h-24"
-                    readOnly
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Collection Type</label>
-                  <input
-                    type="text"
-                    value={collection.type}
-                    className="w-full px-3 py-2 border rounded-md"
-                    readOnly
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Item Count</label>
-                  <input
-                    type="text"
-                    value={`${collection.itemCount} items`}
-                    className="w-full px-3 py-2 border rounded-md"
-                    readOnly
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <CollectionSettingsDialog
+          collectionName={collection.name}
+          open={settingsDialogOpen}
+          onOpenChange={setSettingsDialogOpen}
+        />
       )}
 
       {/* Share Modal */}

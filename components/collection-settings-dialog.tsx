@@ -32,11 +32,17 @@ interface CollectionMetadata {
 export function CollectionSettingsDialog({
   trigger,
   collectionName = "Legal Entities",
+  open: externalOpen,
+  onOpenChange: externalOnOpenChange,
 }: {
   trigger?: React.ReactNode
   collectionName?: string
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }) {
-  const [open, setOpen] = React.useState(false)
+  const [internalOpen, setInternalOpen] = React.useState(false)
+  const open = externalOpen !== undefined ? externalOpen : internalOpen
+  const setOpen = externalOnOpenChange || setInternalOpen
   const [metadata, setMetadata] = React.useState<CollectionMetadata>({
     name: collectionName,
     description: "Comprehensive database of all legal entities and corporate structures across all jurisdictions",

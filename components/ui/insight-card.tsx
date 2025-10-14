@@ -82,10 +82,7 @@ export function InsightCard({ insight, className, onClick, onViewDetails }: Insi
         {insight.message}
       </p>
       {insight.aiDetails && onViewDetails && (
-        <div className="flex items-center justify-between mt-2">
-          <span className="text-xs text-muted-foreground">
-            Click to view details
-          </span>
+        <div className="flex items-center justify-end mt-2">
           <Button
             variant="ghost"
             size="sm"
