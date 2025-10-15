@@ -24,9 +24,8 @@ import { CollectionAIAssistant } from "./collections/collection-ai-assistant"
 import { ShareModal } from "./collections/share-modal"
 import { RulesModal } from "./collections/rules-modal"
 import { CollectionEditSidebar } from "./collections/collection-edit-sidebar"
-import { SubcollectionsSection } from "./collections/subcollections-section"
+import { CollectionsGrid } from "./collections/collections-grid"
 import { CreateSubcollectionDialog } from "./collections/create-subcollection-dialog"
-import { CollectionBreadcrumb } from "./collections/collection-breadcrumb"
 import { AvatarStack } from "./avatar-stack"
 import { canCreateSubcollection } from "@/lib/collection-utils"
 import {
@@ -528,28 +527,17 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
     <div className="flex flex-col h-full bg-gray-50">
       {/* Header Layout */}
       <div className="bg-white border-b border-gray-200 px-6 py-3">
-        {/* Breadcrumb Navigation */}
-        {collectionPath.length > 0 && (
-          <div className="mb-3">
-            <CollectionBreadcrumb
-              path={collectionPath}
-              onNavigate={(id) => {
-                if (id) {
-                  handleOpenSubcollection(id)
-                } else {
-                  onClose()
-                }
-              }}
-              showHome={true}
-            />
-          </div>
-        )}
         
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-2">
-                <h1 className="text-lg font-semibold">{collection.name}</h1>
+                <h1 className="text-lg font-semibold">
+                  {collection.isSubcollection && collectionPath.length > 1 
+                    ? `${collectionPath[0].name} > ${collection.name}`
+                    : collection.name
+                  }
+                </h1>
                 <span className="text-muted-foreground">·</span>
                 <Badge variant="outline" className="text-xs">
                   {processedItems.length} items
@@ -647,19 +635,19 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
           }}
         />
 
-        {/* Subcollections Section */}
-        {canCreateSubcollection(collection) && (
-          <SubcollectionsSection
+        {/* Collections Section */}
+        {subcollections.length > 0 && (
+          <CollectionsGrid
             parentCollection={collection}
             subcollections={subcollections}
-            onCreateSubcollection={() => setCreateSubcollectionOpen(true)}
             onOpenSubcollection={handleOpenSubcollection}
             onEditSubcollection={handleEditSubcollection}
             onDeleteSubcollection={handleDeleteSubcollection}
             layout="grid"
-            showCreateButton={true}
+            showHeader={true}
           />
         )}
+
         
         {/* Table Controls */}
         <div className="flex items-center justify-between mb-4 mt-4">

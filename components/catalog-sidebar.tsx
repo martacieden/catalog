@@ -4,6 +4,7 @@ import React from "react"
 import { useRouter } from "next/navigation"
 import {
   Folder,
+  FolderPlus,
   Plus,
   Settings,
   LayoutDashboard,
@@ -25,6 +26,7 @@ import {
   Share2,
   Download,
   Edit,
+  Link,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -34,11 +36,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ManualCollectionDialog } from "@/components/manual-collection-dialog"
 import { Badge } from "@/components/ui/badge"
 import { useCollections } from "@/contexts/collections-context"
+import { CollectionType } from "@/types/collection"
 import { EmptyState } from "@/components/ui/empty-state"
+import { DependenciesSection, DependenciesIndicator } from "@/components/navigation/dependencies-section"
 import { MOCK_CATALOG_ITEMS } from "@/lib/mock-data"
 import { CollectionEditDialog } from "@/components/collections/collection-edit-dialog"
 import { ShareModal } from "@/components/collections/share-modal"
 import { RemoveCollectionDialog } from "@/components/remove-collection-dialog"
+import { CreateDependencyDialog } from "@/components/collections/create-dependency-dialog"
+import { CreateSubcollectionDialog } from "@/components/collections/create-subcollection-dialog"
 import { useToast } from "@/hooks/use-toast"
 
 // Import icons for collection display
@@ -175,10 +181,16 @@ export function CatalogSidebar({
   onCollectionClick,
   selectedCollectionId
 }: CatalogSidebarProps) {
-  const { collections } = useCollections()
+  const { 
+    collections,
+    getSubcollections,
+    getDependencies,
+    getDependencyGroups,
+  } = useCollections()
   const [collectionsExpanded, setCollectionsExpanded] = React.useState(true)
   const [sharedExpanded, setSharedExpanded] = React.useState(true)
   const [selectedOrganization, setSelectedOrganization] = React.useState("onb")
+  const [expandedCollections, setExpandedCollections] = React.useState<Set<string>>(new Set(['aviation-main']))
 
   const handleCollectionClick = (collectionId: string) => {
     onViewChange?.(collectionId)
@@ -187,6 +199,18 @@ export function CatalogSidebar({
   const handleOrganizationChange = (organizationId: string) => {
     setSelectedOrganization(organizationId)
     onOrganizationChange?.(organizationId)
+  }
+
+  const toggleCollectionExpansion = (collectionId: string) => {
+    setExpandedCollections(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(collectionId)) {
+        newSet.delete(collectionId)
+      } else {
+        newSet.add(collectionId)
+      }
+      return newSet
+    })
   }
 
   const aiSuggestions: any[] = []
@@ -294,16 +318,65 @@ export function CatalogSidebar({
 
               {/* Collections list */}
               <div className="space-y-1">
-                {collections.map((collection) => (
-                  <CollectionItem
-                    key={collection.id}
-                    collection={collection}
-                    activeView={activeView}
-                    onCollectionClick={handleCollectionClick}
-                    onCollectionSelect={onCollectionSelect}
-                    selectedCollectionId={selectedCollectionId}
-                  />
-                ))}
+                {collections
+                  .filter(collection => !collection.parentId) // Only show root collections
+                  .map((collection) => {
+                    const dependencies = getDependencies(collection.id)
+                    const dependencyGroups = getDependencyGroups(collection.id)
+                    const subcollections = getSubcollections(collection.id)
+                    const isExpanded = expandedCollections.has(collection.id)
+                    
+                    return (
+                      <div key={collection.id}>
+                        <CollectionItem
+                          collection={collection}
+                          activeView={activeView}
+                          onCollectionClick={handleCollectionClick}
+                          onCollectionSelect={onCollectionSelect}
+                          selectedCollectionId={selectedCollectionId}
+                          dependencyCount={dependencies.length}
+                          hasSubcollections={subcollections.length > 0}
+                          isExpanded={isExpanded}
+                          onToggleExpansion={() => toggleCollectionExpansion(collection.id)}
+                          allCollections={collections}
+                        />
+                        
+        {/* Subcollections */}
+        {subcollections.length > 0 && isExpanded && (
+          <div className="ml-2 space-y-0.5 mt-0.5">
+            {subcollections.map((subcollection) => (
+              <CollectionItem
+                key={subcollection.id}
+                collection={subcollection}
+                activeView={activeView}
+                onCollectionClick={handleCollectionClick}
+                onCollectionSelect={onCollectionSelect}
+                selectedCollectionId={selectedCollectionId}
+                dependencyCount={getDependencies(subcollection.id).length}
+                isSubcollection={true}
+                allCollections={collections}
+              />
+            ))}
+          </div>
+        )}
+                        
+                        {/* Dependencies Section */}
+                        {dependencyGroups.length > 0 && (
+                          <DependenciesSection
+                            dependencies={dependencyGroups}
+                            onNavigateToDependency={(depGroup) => {
+                              // Navigate to first target collection
+                              if (depGroup.targetCollectionIds.length > 0) {
+                                handleCollectionClick(depGroup.targetCollectionIds[0])
+                              }
+                            }}
+                            onNavigateToCollection={handleCollectionClick}
+                            collapsed={true}
+                          />
+                        )}
+                      </div>
+                    )
+                  })}
               </div>
             </>
           )}
@@ -350,16 +423,28 @@ function CollectionItem({
   onCollectionClick,
   onCollectionSelect,
   selectedCollectionId,
+  dependencyCount = 0,
+  hasSubcollections = false,
+  isExpanded = false,
+  onToggleExpansion,
+  isSubcollection = false,
+  allCollections = [],
 }: {
   collection: any // Using any for now since we're mixing old and new interfaces
   activeView?: string
   onCollectionClick?: (id: string) => void
   onCollectionSelect?: (collectionId: string | null) => void
   selectedCollectionId?: string | null
+  dependencyCount?: number
+  hasSubcollections?: boolean
+  isExpanded?: boolean
+  onToggleExpansion?: () => void
+  isSubcollection?: boolean
+  allCollections?: any[]
 }) {
   const router = useRouter()
   const { toast } = useToast()
-  const { updateCollection, removeCollection } = useCollections()
+  const { updateCollection, removeCollection, createSubcollection } = useCollections()
   const isActive = activeView === collection.id
   const isSelected = selectedCollectionId === collection.id
   
@@ -367,6 +452,8 @@ function CollectionItem({
   const [editDialogOpen, setEditDialogOpen] = React.useState(false)
   const [shareModalOpen, setShareModalOpen] = React.useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false)
+  const [createDependencyOpen, setCreateDependencyOpen] = React.useState(false)
+  const [createSubcollectionOpen, setCreateSubcollectionOpen] = React.useState(false)
   
   // Action handlers
   const handlePin = (e: React.MouseEvent) => {
@@ -412,11 +499,51 @@ function CollectionItem({
       variant: "destructive",
     })
   }
+  
+  const handleCreateSubcollection = (data: {
+    name: string
+    description?: string
+    type: CollectionType
+    icon: string
+  }) => {
+    createSubcollection(collection.id, {
+      name: data.name,
+      description: data.description || "",
+      type: data.type,
+      icon: data.icon,
+      category: collection.category,
+      tags: [],
+      items: [],
+      filters: [],
+      autoSync: false,
+      subcollections: [],
+      isSubcollection: true,
+      subcollectionCount: 0,
+      updatedAt: new Date(),
+      createdBy: collection.createdBy,
+      viewCount: 0,
+    })
+    
+    // Auto-expand parent collection if not already expanded
+    if (onToggleExpansion && !isExpanded) {
+      onToggleExpansion()
+    }
+    
+    toast({
+      title: "Subcollection created",
+      description: `"${data.name}" has been created in "${collection.name}"`,
+    })
+  }
 
   // Get icon component based on collection data
   const getIcon = () => {
     if (collection.customImage) {
       return <img src={collection.customImage} alt="Custom" className="h-4 w-4 rounded object-cover" />
+    }
+    
+    // Use Database icon for collections with subcollections
+    if (hasSubcollections) {
+      return <Database className="h-4 w-4 text-muted-foreground" />
     }
     
     // Find icon by name
@@ -432,27 +559,63 @@ function CollectionItem({
 
   return (
     <div className="relative group z-10">
-      <Button
-        variant={isSelected ? "secondary" : "ghost"}
-        className="w-full justify-start text-sm font-normal pr-8"
-            onClick={() => {
-              if (onCollectionClick) {
-                onCollectionClick(collection.id)
-              } else if (onCollectionSelect) {
-                onCollectionSelect(isSelected ? null : collection.id)
-              } else {
-                // Fallback to old navigation
-                router.push(`/collections/${collection.id}`)
-              }
+      <div className="flex items-center">
+        {/* Expansion button for collections with subcollections */}
+        {hasSubcollections && onToggleExpansion && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onToggleExpansion()
             }}
-      >
-        {getIcon()}
-        <div className="ml-2 flex-1 text-left overflow-hidden pr-2" style={{ minWidth: 0, width: 0 }}>
-          <span className="block overflow-hidden text-ellipsis whitespace-nowrap !text-ellipsis !overflow-hidden !whitespace-nowrap">{collection.name}</span>
-        </div>
-        {/* Show count by default, show actions on hover */}
-        <span className="ml-auto text-xs text-muted-foreground flex-shrink-0 group-hover:hidden">{collection.itemCount || 0}</span>
-      </Button>
+            className="p-0 hover:bg-transparent"
+          >
+            {isExpanded ? (
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            )}
+          </button>
+        )}
+        
+        
+        {/* Subcollection indent */}
+        {isSubcollection && (
+          <div className="w-2" />
+        )}
+        
+        <Button
+          variant={isSelected ? "secondary" : "ghost"}
+          className={`flex-1 justify-start text-sm font-normal pr-8 px-3 py-1.5 ${isSubcollection ? 'text-muted-foreground' : ''}`}
+          onClick={() => {
+            if (onCollectionClick) {
+              onCollectionClick(collection.id)
+            } else if (onCollectionSelect) {
+              onCollectionSelect(isSelected ? null : collection.id)
+            } else {
+              // Fallback to old navigation
+              router.push(`/collections/${collection.id}`)
+            }
+          }}
+        >
+          {getIcon()}
+          <div className="ml-2 flex-1 text-left overflow-hidden pr-2" style={{ minWidth: 0, width: 0 }}>
+            <div className="flex items-center gap-1">
+              <span className={`block overflow-hidden text-ellipsis whitespace-nowrap !text-ellipsis !overflow-hidden !whitespace-nowrap ${!isSubcollection ? 'font-medium' : ''} ${hasSubcollections ? 'font-medium' : ''}`}>
+                {isSubcollection && collection.parentId 
+                  ? (() => {
+                      const parentCollection = allCollections.find(c => c.id === collection.parentId)
+                      return parentCollection ? `${parentCollection.name} > ${collection.name}` : collection.name
+                    })()
+                  : collection.name
+                }
+              </span>
+              <DependenciesIndicator dependencyCount={dependencyCount} />
+            </div>
+          </div>
+          {/* Show count by default, show actions on hover */}
+          <span className="ml-auto text-xs text-muted-foreground flex-shrink-0 group-hover:hidden">{collection.itemCount || 0}</span>
+        </Button>
+      </div>
       
       {/* Hover Actions Menu */}
       <DropdownMenu>
@@ -469,6 +632,14 @@ function CollectionItem({
         <DropdownMenuContent align="end" side="right" className="z-50 w-48">
           <DropdownMenuItem onClick={(e) => {
             e.stopPropagation()
+            setCreateSubcollectionOpen(true)
+          }}>
+            <FolderPlus className="mr-2 h-4 w-4" />
+            Create Subcollection
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={(e) => {
+            e.stopPropagation()
             setEditDialogOpen(true)
           }}>
             <Edit className="mr-2 h-4 w-4" />
@@ -480,6 +651,13 @@ function CollectionItem({
           }}>
             <Share2 className="mr-2 h-4 w-4" />
             Share
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={(e) => {
+            e.stopPropagation()
+            setCreateDependencyOpen(true)
+          }}>
+            <Link className="mr-2 h-4 w-4" />
+            Create Dependency
           </DropdownMenuItem>
           <DropdownMenuItem onClick={handleExport}>
             <Download className="mr-2 h-4 w-4" />
@@ -532,6 +710,20 @@ function CollectionItem({
           trigger={<div />}
         />
       )}
+      
+      <CreateDependencyDialog
+        open={createDependencyOpen}
+        onOpenChange={setCreateDependencyOpen}
+        sourceCollectionId={collection.id}
+        sourceCollectionName={collection.name}
+      />
+      
+      <CreateSubcollectionDialog
+        open={createSubcollectionOpen}
+        onOpenChange={setCreateSubcollectionOpen}
+        parentCollection={collection}
+        onCreateSubcollection={handleCreateSubcollection}
+      />
     </div>
   )
 }

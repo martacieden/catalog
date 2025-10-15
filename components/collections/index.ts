@@ -20,7 +20,11 @@ export { RulesModal } from "./rules-modal"
 
 // Subcollections
 export { SubcollectionCard } from "./subcollection-card"
+export { CollectionsGrid } from "./collections-grid"
 export { CollectionBreadcrumb, CollectionBreadcrumbCompact } from "./collection-breadcrumb"
 export { SubcollectionsSection, SubcollectionsList } from "./subcollections-section"
 export { CreateSubcollectionDialog } from "./create-subcollection-dialog"
 export { DeleteCollectionWithSubsDialog } from "./delete-collection-with-subs-dialog"
+
+// Dependencies
+export { CreateDependencyDialog } from "./create-dependency-dialog"

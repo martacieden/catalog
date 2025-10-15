@@ -4,6 +4,16 @@
  * Single source of truth for all catalog data
  */
 
+import type { Dependency } from "@/types/dependency"
+
+// Mock current user for dependencies
+const currentUser = {
+  id: 'user-1',
+  name: 'Current User',
+  email: 'user@example.com',
+  avatar: '/placeholder-user.jpg'
+}
+
 /**
  * Catalog Items Data Interface
  */
@@ -1071,4 +1081,35 @@ export const catalogStats = {
  */
 export const MOCK_CATALOG_ITEMS = catalogItems.map(addCompatibilityFields)
 export type MockCatalogItem = CatalogItem
+
+/**
+ * Demo Dependencies Data
+ * Aviation collection with Legal Documents and Insurance dependencies
+ */
+export const DEMO_DEPENDENCIES: Dependency[] = [
+  {
+    id: "dep-aviation-legal-1",
+    type: "Legal Documents",
+    sourceId: "aviation-main",
+    sourceType: "collection",
+    targetId: "legal-docs-main",
+    targetType: "collection",
+    relationship: "Required Documentation",
+    description: "Aviation operations require legal documentation",
+    createdAt: new Date("2024-01-15"),
+    createdBy: currentUser
+  },
+  {
+    id: "dep-aviation-insurance-1", 
+    type: "Insurance Policies",
+    sourceId: "aviation-main",
+    sourceType: "collection",
+    targetId: "insurance-main",
+    targetType: "collection",
+    relationship: "Coverage Required",
+    description: "Aviation fleet requires comprehensive insurance coverage",
+    createdAt: new Date("2024-01-15"),
+    createdBy: currentUser
+  }
+]
 

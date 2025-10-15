@@ -66,23 +66,7 @@ export function SubcollectionsSection({
       </CardHeader>
 
       <CardContent className="pt-0">
-        {!hasSubcollections ? (
-          // Empty state
-          <EmptyState
-            icon={Folders}
-            title="No subcollections yet"
-            description="Create subcollections to better organize items within this collection."
-            action={
-              showCreateButton ? (
-                <Button onClick={onCreateSubcollection} className="gap-2">
-                  <FolderPlus className="h-4 w-4" />
-                  Create First Subcollection
-                </Button>
-              ) : undefined
-            }
-            className="py-8"
-          />
-        ) : layout === "grid" ? (
+        {hasSubcollections && layout === "grid" ? (
           // Grid layout
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {subcollections.map((subcollection) => (
@@ -96,7 +80,7 @@ export function SubcollectionsSection({
               />
             ))}
           </div>
-        ) : (
+        ) : hasSubcollections ? (
           // List layout
           <div className="space-y-2">
             {subcollections.map((subcollection) => (
@@ -110,7 +94,7 @@ export function SubcollectionsSection({
               />
             ))}
           </div>
-        )}
+        ) : null}
 
         {/* Info banner */}
         {hasSubcollections && (

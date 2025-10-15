@@ -22,7 +22,11 @@ import {
   Flag,
   X,
   Plus,
+  FolderOpen,
 } from "lucide-react"
+import { AddSelectedToCollectionDialog } from "@/components/collections/add-selected-to-collection-dialog"
+import { ManualCollectionDialog } from "@/components/manual-collection-dialog"
+import { useCollections } from "@/contexts/collections-context"
 
 interface ItemsGridProps {
   items: CollectionItem[]
@@ -55,6 +59,7 @@ export function ItemsGrid({
   onBulkAddToCollection,
   onBulkPin,
 }: ItemsGridProps) {
+  const { collections } = useCollections()
   
   const handleSelectItem = (id: string, checked: boolean) => {
     if (!onSelectionChange) return
@@ -97,10 +102,39 @@ export function ItemsGrid({
               </Button>
             </div>
             <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+              {collections.length > 0 && (
+                <AddSelectedToCollectionDialog
+                  trigger={
+                    <Button variant="default" size="sm" className="bg-blue-600 hover:bg-blue-700">
+                      <Plus className="mr-1 sm:mr-2 h-4 w-4" />
+                      <span className="hidden sm:inline">Add to Collection</span>
+                      <span className="sm:hidden">Add to</span>
+                    </Button>
+                  }
+                  selectedItemIds={Array.from(selectedIds)}
+                />
+              )}
+              <ManualCollectionDialog
+                trigger={
+                  <Button variant="default" size="sm">
+                    <FolderOpen className="mr-1 sm:mr-2 h-4 w-4" />
+                    <span className="hidden sm:inline">Create Collection</span>
+                    <span className="sm:hidden">Create</span>
+                  </Button>
+                }
+                selectedItems={Array.from(selectedIds)}
+              />
+              {onBulkPin && (
+                <Button variant="outline" size="sm" onClick={onBulkPin}>
+                  <Pin className="mr-1 sm:mr-2 h-4 w-4" />
+                  <span className="hidden sm:inline">Pin items</span>
+                  <span className="sm:hidden">Pin</span>
+                </Button>
+              )}
               {onBulkDelete && (
                 <Button variant="destructive" size="sm" onClick={onBulkDelete}>
-                  <span className="hidden sm:inline">Remove items</span>
-                  <span className="sm:hidden">Remove</span>
+                  <span className="hidden sm:inline">Delete items</span>
+                  <span className="sm:hidden">Delete</span>
                 </Button>
               )}
             </div>
