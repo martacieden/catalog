@@ -38,7 +38,8 @@ interface ItemsGridProps {
   showSelection?: boolean
   showActions?: boolean
   emptyMessage?: string
-  onBulkDelete?: () => void
+  onBulkDelete?: () => void // Delete items permanently (All objects page only)
+  onBulkRemove?: () => void // Remove from collection (Collection detail page only)
   onBulkCreateCollection?: () => void
   onBulkAddToCollection?: () => void
   onBulkPin?: () => void
@@ -55,6 +56,7 @@ export function ItemsGrid({
   showActions = true,
   emptyMessage = "No items in this collection",
   onBulkDelete,
+  onBulkRemove,
   onBulkCreateCollection,
   onBulkAddToCollection,
   onBulkPin,
@@ -131,8 +133,16 @@ export function ItemsGrid({
                   <span className="sm:hidden">Pin</span>
                 </Button>
               )}
+              {onBulkRemove && (
+                <Button variant="outline" size="sm" onClick={onBulkRemove}>
+                  <X className="mr-1 sm:mr-2 h-4 w-4" />
+                  <span className="hidden sm:inline">Remove from collection</span>
+                  <span className="sm:hidden">Remove</span>
+                </Button>
+              )}
               {onBulkDelete && (
                 <Button variant="destructive" size="sm" onClick={onBulkDelete}>
+                  <Trash2 className="mr-1 sm:mr-2 h-4 w-4" />
                   <span className="hidden sm:inline">Delete items</span>
                   <span className="sm:hidden">Delete</span>
                 </Button>

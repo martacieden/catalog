@@ -4,7 +4,6 @@ import React from "react"
 import { useRouter } from "next/navigation"
 import {
   Folder,
-  FolderPlus,
   Plus,
   Settings,
   LayoutDashboard,
@@ -36,15 +35,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ManualCollectionDialog } from "@/components/manual-collection-dialog"
 import { Badge } from "@/components/ui/badge"
 import { useCollections } from "@/contexts/collections-context"
-import { CollectionType } from "@/types/collection"
 import { EmptyState } from "@/components/ui/empty-state"
-import { DependenciesSection, DependenciesIndicator } from "@/components/navigation/dependencies-section"
 import { MOCK_CATALOG_ITEMS } from "@/lib/mock-data"
 import { CollectionEditDialog } from "@/components/collections/collection-edit-dialog"
 import { ShareModal } from "@/components/collections/share-modal"
 import { RemoveCollectionDialog } from "@/components/remove-collection-dialog"
 import { CreateDependencyDialog } from "@/components/collections/create-dependency-dialog"
-import { CreateSubcollectionDialog } from "@/components/collections/create-subcollection-dialog"
 import { useToast } from "@/hooks/use-toast"
 
 // Import icons for collection display
@@ -184,8 +180,6 @@ export function CatalogSidebar({
   const { 
     collections,
     getSubcollections,
-    getDependencies,
-    getDependencyGroups,
   } = useCollections()
   const [collectionsExpanded, setCollectionsExpanded] = React.useState(true)
   const [sharedExpanded, setSharedExpanded] = React.useState(true)
@@ -321,8 +315,6 @@ export function CatalogSidebar({
                 {collections
                   .filter(collection => !collection.parentId) // Only show root collections
                   .map((collection) => {
-                    const dependencies = getDependencies(collection.id)
-                    const dependencyGroups = getDependencyGroups(collection.id)
                     const subcollections = getSubcollections(collection.id)
                     const isExpanded = expandedCollections.has(collection.id)
                     
@@ -334,7 +326,7 @@ export function CatalogSidebar({
                           onCollectionClick={handleCollectionClick}
                           onCollectionSelect={onCollectionSelect}
                           selectedCollectionId={selectedCollectionId}
-                          dependencyCount={dependencies.length}
+                          dependencyCount={0}
                           hasSubcollections={subcollections.length > 0}
                           isExpanded={isExpanded}
                           onToggleExpansion={() => toggleCollectionExpansion(collection.id)}
@@ -352,7 +344,7 @@ export function CatalogSidebar({
                 onCollectionClick={handleCollectionClick}
                 onCollectionSelect={onCollectionSelect}
                 selectedCollectionId={selectedCollectionId}
-                dependencyCount={getDependencies(subcollection.id).length}
+                dependencyCount={0}
                 isSubcollection={true}
                 allCollections={collections}
               />
@@ -360,20 +352,6 @@ export function CatalogSidebar({
           </div>
         )}
                         
-                        {/* Dependencies Section */}
-                        {dependencyGroups.length > 0 && (
-                          <DependenciesSection
-                            dependencies={dependencyGroups}
-                            onNavigateToDependency={(depGroup) => {
-                              // Navigate to first target collection
-                              if (depGroup.targetCollectionIds.length > 0) {
-                                handleCollectionClick(depGroup.targetCollectionIds[0])
-                              }
-                            }}
-                            onNavigateToCollection={handleCollectionClick}
-                            collapsed={true}
-                          />
-                        )}
                       </div>
                     )
                   })}
@@ -444,7 +422,7 @@ function CollectionItem({
 }) {
   const router = useRouter()
   const { toast } = useToast()
-  const { updateCollection, removeCollection, createSubcollection } = useCollections()
+  const { updateCollection, removeCollection } = useCollections()
   const isActive = activeView === collection.id
   const isSelected = selectedCollectionId === collection.id
   
@@ -453,7 +431,6 @@ function CollectionItem({
   const [shareModalOpen, setShareModalOpen] = React.useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false)
   const [createDependencyOpen, setCreateDependencyOpen] = React.useState(false)
-  const [createSubcollectionOpen, setCreateSubcollectionOpen] = React.useState(false)
   
   // Action handlers
   const handlePin = (e: React.MouseEvent) => {
@@ -500,40 +477,6 @@ function CollectionItem({
     })
   }
   
-  const handleCreateSubcollection = (data: {
-    name: string
-    description?: string
-    type: CollectionType
-    icon: string
-  }) => {
-    createSubcollection(collection.id, {
-      name: data.name,
-      description: data.description || "",
-      type: data.type,
-      icon: data.icon,
-      category: collection.category,
-      tags: [],
-      items: [],
-      filters: [],
-      autoSync: false,
-      subcollections: [],
-      isSubcollection: true,
-      subcollectionCount: 0,
-      updatedAt: new Date(),
-      createdBy: collection.createdBy,
-      viewCount: 0,
-    })
-    
-    // Auto-expand parent collection if not already expanded
-    if (onToggleExpansion && !isExpanded) {
-      onToggleExpansion()
-    }
-    
-    toast({
-      title: "Subcollection created",
-      description: `"${data.name}" has been created in "${collection.name}"`,
-    })
-  }
 
   // Get icon component based on collection data
   const getIcon = () => {
@@ -609,7 +552,6 @@ function CollectionItem({
                   : collection.name
                 }
               </span>
-              <DependenciesIndicator dependencyCount={dependencyCount} />
             </div>
           </div>
           {/* Show count by default, show actions on hover */}
@@ -630,14 +572,6 @@ function CollectionItem({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" side="right" className="z-50 w-48">
-          <DropdownMenuItem onClick={(e) => {
-            e.stopPropagation()
-            setCreateSubcollectionOpen(true)
-          }}>
-            <FolderPlus className="mr-2 h-4 w-4" />
-            Create Subcollection
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
           <DropdownMenuItem onClick={(e) => {
             e.stopPropagation()
             setEditDialogOpen(true)
@@ -718,12 +652,6 @@ function CollectionItem({
         sourceCollectionName={collection.name}
       />
       
-      <CreateSubcollectionDialog
-        open={createSubcollectionOpen}
-        onOpenChange={setCreateSubcollectionOpen}
-        parentCollection={collection}
-        onCreateSubcollection={handleCreateSubcollection}
-      />
     </div>
   )
 }

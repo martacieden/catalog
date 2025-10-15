@@ -778,7 +778,7 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
               const item = processedItems.find(i => i.id === id)
               if (item) handleItemDelete(item)
             }}
-            onBulkDelete={handleBulkDelete}
+            onBulkRemove={handleBulkDelete}
             onBulkCreateCollection={handleCreateCollectionFromSelected}
             onBulkAddToCollection={handleAddToCollection}
             onBulkPin={handlePinSelected}
@@ -794,7 +794,7 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
             selectedIds={selectedIds}
             onSelectionChange={setSelectedIds}
             onItemDelete={handleItemDelete}
-            onBulkDelete={handleBulkDelete}
+            onBulkRemove={handleBulkDelete}
             onBulkCreateCollection={handleCreateCollectionFromSelected}
             onBulkAddToCollection={handleAddToCollection}
             onBulkPin={handlePinSelected}
