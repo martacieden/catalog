@@ -84,13 +84,15 @@ interface CollectionDetailsSectionProps {
   defaultCollapsed?: boolean
   onToggle?: (collapsed: boolean) => void
   className?: string
+  badge?: string
 }
 
 export function CollectionDetailsSection({
   children,
   defaultCollapsed = false,
   onToggle,
-  className
+  className,
+  badge
 }: CollectionDetailsSectionProps) {
   return (
     <CollapsibleSection
@@ -98,6 +100,7 @@ export function CollectionDetailsSection({
       defaultCollapsed={defaultCollapsed}
       onToggle={onToggle}
       className={className}
+      badge={badge}
     >
       {children}
     </CollapsibleSection>

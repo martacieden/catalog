@@ -46,8 +46,6 @@ export function RulesModal({ collection, open, onOpenChange, onSave }: RulesModa
   }
 
   const handleSave = async () => {
-    if (!validation.valid) return
-    
     setIsLoading(true)
     try {
       if (onSave) {
@@ -108,11 +106,6 @@ export function RulesModal({ collection, open, onOpenChange, onSave }: RulesModa
                 Unsaved changes
               </Badge>
             )}
-            {!validation.valid && (
-              <Badge variant="destructive">
-                {validation.errors.length} error{validation.errors.length !== 1 ? 's' : ''}
-              </Badge>
-            )}
           </div>
           
           <div className="flex items-center gap-3">
@@ -126,7 +119,7 @@ export function RulesModal({ collection, open, onOpenChange, onSave }: RulesModa
             </Button>
             <Button 
               onClick={handleSave}
-              disabled={isLoading || !validation.valid || !hasChanges}
+              disabled={isLoading || !hasChanges}
             >
               <Save className="h-4 w-4 mr-2" />
               {isLoading ? 'Saving...' : 'Save Changes'}

@@ -498,7 +498,7 @@ export function CollectionsDashboard() {
       {/* AI-Powered Collections & Quick Actions */}
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Smart Collection Search */}
-        <Card className="px-6 pt-6 pb-4 rounded-xl border-slate-200 shadow-sm hover:shadow-md transition-shadow lg:col-span-2 h-[200px]">
+        <Card className="px-6 pt-6 pb-6 rounded-xl border-slate-200 shadow-sm hover:shadow-md transition-shadow lg:col-span-2 h-[200px]">
           <SmartSearchQuery />
         </Card>
 

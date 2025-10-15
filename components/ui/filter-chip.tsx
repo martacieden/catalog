@@ -85,7 +85,7 @@ export function FilterChip({
   
   return (
     <div className={cn(
-      "inline-flex items-center gap-2 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-md text-sm font-medium transition-colors",
+      "inline-flex items-center gap-1 px-2 py-1 bg-gray-50 border border-gray-200 rounded-md text-xs font-medium transition-colors",
       "hover:bg-gray-100",
       className
     )}>
@@ -98,9 +98,9 @@ export function FilterChip({
           variant="ghost"
           size="sm"
           onClick={() => onEdit(filter)}
-          className="h-4 w-4 p-0 hover:bg-gray-200"
+          className="h-3 w-3 p-0 hover:bg-gray-200"
         >
-          <Edit3 className="h-3 w-3" />
+          <Edit3 className="h-2 w-2" />
         </Button>
       )}
       
@@ -109,9 +109,9 @@ export function FilterChip({
           variant="ghost"
           size="sm"
           onClick={() => onRemove(filter.id)}
-          className="h-4 w-4 p-0 hover:bg-gray-200"
+          className="h-3 w-3 p-0 hover:bg-gray-200"
         >
-          <X className="h-3 w-3" />
+          <X className="h-2 w-2" />
         </Button>
       )}
     </div>

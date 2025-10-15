@@ -335,7 +335,7 @@ export function ManualCollectionDialog({ trigger, selectedItems = [], onCollecti
     if (fieldOptions.length > 0) {
       return (
         <Select value={String(filter.value ?? "")} onValueChange={(value) => updateFilter(filter.id, "value", value)}>
-          <SelectTrigger className="w-full">
+          <SelectTrigger className="flex-1">
             <SelectValue placeholder="Select value" />
           </SelectTrigger>
           <SelectContent>
@@ -352,7 +352,7 @@ export function ManualCollectionDialog({ trigger, selectedItems = [], onCollecti
         value={String(filter.value ?? "")}
         onChange={(e) => updateFilter(filter.id, "value", e.target.value)}
         placeholder="Enter value"
-        className="w-full"
+        className="flex-1"
       />
     )
   }

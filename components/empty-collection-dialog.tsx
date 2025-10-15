@@ -414,7 +414,7 @@ export function EmptyCollectionDialog({
                     
                     {/* Operator Select */}
                     <select
-                      className="w-40 px-3 py-2 border rounded-md text-sm"
+                      className="w-32 px-3 py-2 border rounded-md text-sm"
                       value={rule.operator}
                       onChange={(e) => handleUpdateRule(rule.id, { operator: e.target.value as FilterRule['operator'] })}
                     >

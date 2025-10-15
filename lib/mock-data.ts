@@ -60,6 +60,12 @@ export const catalogItems: CatalogItem[] = [
     guestRating: 4.9,
     lastUpdated: "2024-12-01",
     createdAt: new Date("2024-12-01"),
+    createdOn: "2024-12-01",
+    lastUpdate: "2024-12-01T14:30:00Z",
+    createdBy: {
+      name: "James Mitchell",
+      avatar: "/placeholder-user.jpg"
+    },
     people: [
       { id: "owner-1", role: "Owner", name: "James Mitchell" },
       { id: "manager-1", role: "Property Manager", name: "Sarah Chen" }
@@ -78,6 +84,12 @@ export const catalogItems: CatalogItem[] = [
     tags: ["commercial", "office", "corporate", "manhattan"],
     lastUpdated: "2024-12-22",
     createdAt: new Date("2024-12-22"),
+    createdOn: "2024-12-22",
+    lastUpdate: "2024-12-22T09:15:00Z",
+    createdBy: {
+      name: "Global Corp Inc.",
+      avatar: "/placeholder-user.jpg"
+    },
     people: [
       { id: "owner-2", role: "Owner", name: "Global Corp Inc." },
       { id: "manager-2", role: "Facility Manager", name: "Michael Brown" },
@@ -117,6 +129,12 @@ export const catalogItems: CatalogItem[] = [
     guestRating: 5.0,
     lastUpdated: "2025-01-15",
     createdAt: new Date("2025-01-15"),
+    createdOn: "2025-01-15",
+    lastUpdate: "2025-01-15T16:45:00Z",
+    createdBy: {
+      name: "Elite Estates Trust",
+      avatar: "/placeholder-user.jpg"
+    },
     people: [
       { id: "owner-4", role: "Owner", name: "Elite Estates Trust" },
       { id: "manager-4", role: "Island Manager", name: "Roberto Silva" }
@@ -135,6 +153,12 @@ export const catalogItems: CatalogItem[] = [
     tags: ["penthouse", "luxury", "downtown", "high-rise"],
     lastUpdated: "2025-01-20",
     createdAt: new Date("2025-01-20"),
+    createdOn: "2025-01-20",
+    lastUpdate: "2025-01-20T10:20:00Z",
+    createdBy: {
+      name: "Ahmed Al-Rashid",
+      avatar: "/placeholder-user.jpg"
+    },
     people: [
       { id: "owner-5", role: "Owner", name: "Ahmed Al-Rashid" }
     ]
@@ -153,6 +177,12 @@ export const catalogItems: CatalogItem[] = [
     guestRating: 4.7,
     lastUpdated: "2025-01-22",
     createdAt: new Date("2025-01-22"),
+    createdOn: "2025-01-22",
+    lastUpdate: "2025-01-22T12:30:00Z",
+    createdBy: {
+      name: "Vintage Vineyards LLC",
+      avatar: "/placeholder-user.jpg"
+    },
     people: [
       { id: "owner-6", role: "Owner", name: "Vintage Vineyards LLC" }
     ]
@@ -171,6 +201,12 @@ export const catalogItems: CatalogItem[] = [
     guestRating: 4.8,
     lastUpdated: "2025-01-24",
     createdAt: new Date("2025-01-24"),
+    createdOn: "2025-01-24",
+    lastUpdate: "2025-01-24T14:15:00Z",
+    createdBy: {
+      name: "Caribbean Resorts Group",
+      avatar: "/placeholder-user.jpg"
+    },
     people: [
       { id: "owner-18", role: "Owner", name: "Caribbean Resorts Group" }
     ]
@@ -188,6 +224,12 @@ export const catalogItems: CatalogItem[] = [
     tags: ["golf", "estate", "luxury", "florida"],
     lastUpdated: "2025-01-26",
     createdAt: new Date("2025-01-26"),
+    createdOn: "2025-01-26",
+    lastUpdate: "2025-01-26T16:45:00Z",
+    createdBy: {
+      name: "Golf Properties LLC",
+      avatar: "/placeholder-user.jpg"
+    },
     people: [
       { id: "owner-19", role: "Owner", name: "Golf Properties LLC" }
     ]
@@ -242,6 +284,12 @@ export const catalogItems: CatalogItem[] = [
     guestRating: 5.0,
     lastUpdated: "2025-02-05",
     createdAt: new Date("2025-02-05"),
+    createdOn: "2025-02-05",
+    lastUpdate: "2025-02-05T09:00:00Z",
+    createdBy: {
+      name: "African Safari Holdings",
+      avatar: "/placeholder-user.jpg"
+    },
     people: [
       { id: "owner-26", role: "Owner", name: "African Safari Holdings" },
       { id: "manager-6", role: "Lodge Manager", name: "Joseph Kimani" }

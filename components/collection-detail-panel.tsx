@@ -21,7 +21,6 @@ import { CollectionItemsManager } from "./collections/collection-items-manager"
 import { AddItemsDialog } from "./collections/add-items-dialog"
 import { SyncPreviewDialog } from "./collections/sync-preview-dialog"
 import { CollectionAIAssistant } from "./collections/collection-ai-assistant"
-import { CollectionSettingsDialog } from "./collection-settings-dialog"
 import { ShareModal } from "./collections/share-modal"
 import { RulesModal } from "./collections/rules-modal"
 import { CollectionEditSidebar } from "./collections/collection-edit-sidebar"
@@ -207,7 +206,6 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
   const [syncPreviewOpen, setSyncPreviewOpen] = React.useState(false)
   const [aiAssistantOpen, setAiAssistantOpen] = React.useState(false)
   const [selectedInsight, setSelectedInsight] = React.useState<any>(null)
-  const [settingsDialogOpen, setSettingsDialogOpen] = React.useState(false)
   const [shareModalOpen, setShareModalOpen] = React.useState(false)
   const [rulesModalOpen, setRulesModalOpen] = React.useState(false)
   const [editSidebarOpen, setEditSidebarOpen] = React.useState(false)
@@ -773,15 +771,6 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
           onSuggestRules={handleAIAssistantSuggestRules}
           onExport={handleAIAssistantExport}
           initialInsightData={selectedInsight}
-        />
-      )}
-
-      {/* Collection Settings Dialog */}
-      {collection && (
-        <CollectionSettingsDialog
-          collectionName={collection.name}
-          open={settingsDialogOpen}
-          onOpenChange={setSettingsDialogOpen}
         />
       )}
 

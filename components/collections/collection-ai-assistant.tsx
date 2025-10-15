@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/sheet"
 import {
   Sparkles,
-  X,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
@@ -120,14 +119,6 @@ How would you like me to help you address this issue?`,
                 <SheetDescription>{collection.name}</SheetDescription>
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onOpenChange(false)}
-              className="h-8 w-8"
-            >
-              <X className="h-4 w-4" />
-            </Button>
           </div>
         </SheetHeader>
 

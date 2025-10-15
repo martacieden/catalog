@@ -10,6 +10,7 @@ import {
   Database,
   Clock,
   Pin,
+  PinOff,
   ChevronDown,
   ChevronRight,
   Sparkles,
@@ -22,6 +23,8 @@ import {
   Edit3,
   Trash2,
   Share2,
+  Download,
+  Edit,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -33,6 +36,10 @@ import { Badge } from "@/components/ui/badge"
 import { useCollections } from "@/contexts/collections-context"
 import { EmptyState } from "@/components/ui/empty-state"
 import { MOCK_CATALOG_ITEMS } from "@/lib/mock-data"
+import { CollectionEditDialog } from "@/components/collections/collection-edit-dialog"
+import { ShareModal } from "@/components/collections/share-modal"
+import { RemoveCollectionDialog } from "@/components/remove-collection-dialog"
+import { useToast } from "@/hooks/use-toast"
 
 // Import icons for collection display
 const ALL_ICONS = [
@@ -351,8 +358,60 @@ function CollectionItem({
   selectedCollectionId?: string | null
 }) {
   const router = useRouter()
+  const { toast } = useToast()
+  const { updateCollection, removeCollection } = useCollections()
   const isActive = activeView === collection.id
   const isSelected = selectedCollectionId === collection.id
+  
+  // Dialog states
+  const [editDialogOpen, setEditDialogOpen] = React.useState(false)
+  const [shareModalOpen, setShareModalOpen] = React.useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false)
+  
+  // Action handlers
+  const handlePin = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    const isPinned = collection.tags?.includes('pinned')
+    const newTags = isPinned 
+      ? (collection.tags || []).filter((tag: string) => tag !== 'pinned')
+      : [...(collection.tags || []), 'pinned']
+    
+    updateCollection(collection.id, { tags: newTags })
+    toast({
+      title: isPinned ? "Unpinned" : "Pinned",
+      description: isPinned 
+        ? `"${collection.name}" has been unpinned` 
+        : `"${collection.name}" has been pinned`,
+    })
+  }
+  
+  const handleExport = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    // Export collection data as JSON
+    const dataStr = JSON.stringify(collection, null, 2)
+    const dataBlob = new Blob([dataStr], { type: 'application/json' })
+    const url = URL.createObjectURL(dataBlob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${collection.name.replace(/\s+/g, '-').toLowerCase()}.json`
+    link.click()
+    URL.revokeObjectURL(url)
+    
+    toast({
+      title: "Collection exported",
+      description: `"${collection.name}" has been exported successfully`,
+    })
+  }
+  
+  const handleDelete = () => {
+    removeCollection?.(collection.id)
+    setDeleteDialogOpen(false)
+    toast({
+      title: "Collection deleted",
+      description: `"${collection.name}" has been deleted`,
+      variant: "destructive",
+    })
+  }
 
   // Get icon component based on collection data
   const getIcon = () => {
@@ -375,7 +434,7 @@ function CollectionItem({
     <div className="relative group z-10">
       <Button
         variant={isSelected ? "secondary" : "ghost"}
-        className="w-full justify-start text-sm font-normal"
+        className="w-full justify-start text-sm font-normal pr-8"
             onClick={() => {
               if (onCollectionClick) {
                 onCollectionClick(collection.id)
@@ -401,60 +460,78 @@ function CollectionItem({
           <Button
             variant="ghost"
             size="sm"
-            className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+            className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-accent"
             onClick={(e) => e.stopPropagation()}
           >
-            <MoreVertical className="h-3 w-3" />
+            <MoreVertical className="h-3.5 w-3.5" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" side="right" className="z-50">
+        <DropdownMenuContent align="end" side="right" className="z-50 w-48">
           <DropdownMenuItem onClick={(e) => {
             e.stopPropagation()
-            console.log('🔍 Dropdown Open clicked for collection:', collection.id)
-            if (onCollectionClick) {
-              console.log('🔍 Using onCollectionClick')
-              onCollectionClick(collection.id)
-            } else if (onCollectionSelect) {
-              console.log('🔍 Using onCollectionSelect')
-              onCollectionSelect(collection.id)
-            } else {
-              console.log('🔍 Using router.push fallback')
-              router.push(`/collections/${collection.id}`)
-            }
+            setEditDialogOpen(true)
           }}>
-            <Eye className="mr-2 h-4 w-4" />
-            Open
+            <Edit className="mr-2 h-4 w-4" />
+            Edit
           </DropdownMenuItem>
           <DropdownMenuItem onClick={(e) => {
             e.stopPropagation()
-            console.log('🔍 Dropdown Share clicked for collection:', collection.id)
-            // TODO: Implement share functionality
+            setShareModalOpen(true)
           }}>
             <Share2 className="mr-2 h-4 w-4" />
             Share
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={(e) => {
-            e.stopPropagation()
-            console.log('🔍 Dropdown Rename clicked for collection:', collection.id)
-            // TODO: Implement rename functionality
-          }}>
-            <Edit3 className="mr-2 h-4 w-4" />
-            Rename
+          <DropdownMenuItem onClick={handleExport}>
+            <Download className="mr-2 h-4 w-4" />
+            Export
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={handlePin}>
+            {collection.tags?.includes('pinned') ? (
+              <>
+                <PinOff className="mr-2 h-4 w-4" />
+                Unpin
+              </>
+            ) : (
+              <>
+                <Pin className="mr-2 h-4 w-4" />
+                Pin
+              </>
+            )}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem 
             className="text-destructive"
             onClick={(e) => {
               e.stopPropagation()
-              console.log('🔍 Dropdown Remove clicked for collection:', collection.id)
-              // TODO: Implement remove functionality
+              setDeleteDialogOpen(true)
             }}
           >
             <Trash2 className="mr-2 h-4 w-4" />
-            Remove Collection
+            Delete
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      
+      {/* Dialogs */}
+      <CollectionEditDialog
+        collection={collection}
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+      />
+      
+      <ShareModal
+        collection={collection}
+        open={shareModalOpen}
+        onOpenChange={setShareModalOpen}
+      />
+      
+      {deleteDialogOpen && (
+        <RemoveCollectionDialog
+          collectionName={collection.name}
+          onConfirm={handleDelete}
+          trigger={<div />}
+        />
+      )}
     </div>
   )
 }

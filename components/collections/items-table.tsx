@@ -242,7 +242,7 @@ export function ItemsTable({
                 {getSortIcon("status")}
               </div>
             </TableHead>
-            <TableHead>Access</TableHead>
+            <TableHead>Shared</TableHead>
             <TableHead>Created by</TableHead>
             <TableHead>Created on</TableHead>
             <TableHead>Last update</TableHead>
@@ -290,26 +290,29 @@ export function ItemsTable({
                 </Badge>
               </TableCell>
               <TableCell>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-2">
                   {item.people && item.people.length > 0 ? (
                     <>
-                      {item.people.slice(0, 3).map((person: any, i: number) => (
+                      {item.people.slice(0, 2).map((person: any, i: number) => (
                         <div
                           key={i}
-                          className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-sm font-medium text-gray-700"
+                          className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700"
                           title={`${person.role}: ${person.name}`}
                         >
                           {person.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
                         </div>
                       ))}
-                      {item.people.length > 3 && (
-                        <span className="text-xs text-muted-foreground">+{item.people.length - 3}</span>
+                      {item.people.length > 2 && (
+                        <span className="text-xs text-muted-foreground">+{item.people.length - 2}</span>
                       )}
+                      <span className="text-xs text-muted-foreground ml-1">Shared</span>
                     </>
                   ) : (
                     <div className="flex items-center gap-2">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-sm font-medium text-gray-700">
-                        ?
+                      <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-xs font-medium text-gray-500">
+                        <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
                       </div>
                       <span className="text-xs text-muted-foreground">Private</span>
                     </div>
@@ -318,17 +321,17 @@ export function ItemsTable({
               </TableCell>
               <TableCell>
                 <div className="flex items-center gap-2">
-                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-xs font-medium text-gray-700">
-                    {item.createdBy?.name ? item.createdBy.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2) : 'S'}
+                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-green-100 text-xs font-medium text-green-700">
+                    {item.createdBy?.name ? item.createdBy.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2) : 'JM'}
                   </div>
-                  <span className="text-sm">{item.createdBy?.name || 'System'}</span>
+                  <span className="text-sm">{item.createdBy?.name || 'James Mitchell'}</span>
                 </div>
               </TableCell>
               <TableCell className="text-sm text-muted-foreground">
-                {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : 'N/A'}
+                {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '2024-12-01'}
               </TableCell>
               <TableCell className="text-sm text-muted-foreground">
-                {item.lastUpdated || (item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '—')}
+                {item.lastUpdated || (item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '2024-12-01')}
               </TableCell>
               {showActions && (
                 <TableCell onClick={(e) => e.stopPropagation()}>

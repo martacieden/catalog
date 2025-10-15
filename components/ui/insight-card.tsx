@@ -57,7 +57,7 @@ export function InsightCard({ insight, className, onClick, onViewDetails }: Insi
   return (
     <div 
       className={cn(
-        "flex flex-col gap-2 p-3 rounded-lg border min-h-[60px] cursor-pointer transition-colors hover:opacity-80 relative",
+        "group flex flex-col gap-1.5 p-3 rounded-lg border cursor-pointer transition-colors hover:opacity-80 relative",
         config.bgColor,
         config.borderColor,
         className
@@ -82,7 +82,7 @@ export function InsightCard({ insight, className, onClick, onViewDetails }: Insi
         {insight.message}
       </p>
       {insight.aiDetails && onViewDetails && (
-        <div className="flex items-center justify-end mt-2">
+        <div className="flex items-center justify-end">
           <Button
             variant="ghost"
             size="sm"

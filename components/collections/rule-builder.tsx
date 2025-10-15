@@ -136,20 +136,6 @@ export function RuleBuilder({
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            onClick={handleAddRule}
-            disabled={rules.length >= maxRules}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Rule
-          </Button>
-        </div>
-      </div>
-
       {/* Rules List */}
       {rules.length > 0 && (
         <div className="space-y-2">
@@ -165,6 +151,18 @@ export function RuleBuilder({
           ))}
         </div>
       )}
+
+      {/* Add Rule Button */}
+      <div className="flex items-center justify-start">
+        <Button
+          size="sm"
+          onClick={handleAddRule}
+          disabled={rules.length >= maxRules}
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Add Rule
+        </Button>
+      </div>
 
     </div>
   )
@@ -327,7 +325,7 @@ function RuleEditor({
       
       {/* Operator Select */}
       <select
-        className="w-40 px-3 py-2 border rounded-md text-sm"
+        className="w-32 px-3 py-2 border rounded-md text-sm"
         value={rule.operator}
         onChange={(e) => onUpdate({ operator: e.target.value as FilterOperator })}
       >

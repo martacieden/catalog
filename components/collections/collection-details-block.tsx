@@ -10,6 +10,9 @@ import { Separator } from "@/components/ui/separator"
 import { InsightCard, InsightData } from "@/components/ui/insight-card"
 import { FilterChipsList, FilterChipData } from "@/components/ui/filter-chip"
 import { CollectionDetailsSection } from "@/components/ui/collapsible-section"
+import { RulesModal } from "@/components/collections/rules-modal"
+import { countMatchedItems } from "@/lib/rule-engine"
+import { useToast } from "@/hooks/use-toast"
 import {
   Sparkles,
   Filter,
@@ -223,10 +226,61 @@ export function CollectionDetailsBlock({
   onInsightClick
 }: CollectionDetailsBlockProps) {
   const [isCollapsed, setIsCollapsed] = React.useState(false)
+  const [rulesModalOpen, setRulesModalOpen] = React.useState(false)
+  const [isSyncing, setIsSyncing] = React.useState(false)
+  const [lastSyncTime, setLastSyncTime] = React.useState<Date | null>(null)
+  const [matchedItemsCount, setMatchedItemsCount] = React.useState(items.length)
+  const [previousCount, setPreviousCount] = React.useState(items.length)
+  const { toast } = useToast()
+  
+  // Оновлюємо кількість відповідних елементів при зміні правил
+  React.useEffect(() => {
+    if (collection.filters && collection.filters.length > 0) {
+      const newMatchedCount = countMatchedItems(items, collection.filters)
+      setPreviousCount(matchedItemsCount)
+      setMatchedItemsCount(newMatchedCount)
+    } else {
+      setPreviousCount(matchedItemsCount)
+      setMatchedItemsCount(items.length)
+    }
+  }, [collection.filters, items])
   
   const handleViewInsightDetails = (insight: InsightData) => {
     // Open AI Assistant with insight data instead of modal
     onOpenAIAssistant?.(insight)
+  }
+  
+  const handleSaveRules = async (rules: FilterRule[]) => {
+    setIsSyncing(true)
+    try {
+      // Симуляція API виклику
+      await new Promise(resolve => setTimeout(resolve, 1500))
+      
+      // Тут буде логіка збереження правил
+      console.log('Saving rules:', rules)
+      
+      // Оновлюємо кількість відповідних елементів
+      const newMatchedCount = countMatchedItems(items, rules)
+      setMatchedItemsCount(newMatchedCount)
+      
+      // Оновлюємо час останньої синхронізації
+      setLastSyncTime(new Date())
+      
+      // Показуємо toast повідомлення
+      toast({
+        title: "Collection synced successfully",
+        description: `Rules updated. Collection now contains ${newMatchedCount} matching items.`,
+      })
+    } catch (error) {
+      console.error('Error saving rules:', error)
+      toast({
+        title: "Sync failed",
+        description: "Failed to update collection rules. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSyncing(false)
+    }
   }
   
   // SIMPLIFIED AI INSIGHTS - only 3 most important (real data for 9 items)
@@ -326,6 +380,7 @@ export function CollectionDetailsBlock({
         <CollectionDetailsSection
           defaultCollapsed={isCollapsed}
           onToggle={setIsCollapsed}
+          badge={`${matchedItemsCount} items`}
         >
           {/* Description */}
         {collection.description && (
@@ -342,18 +397,51 @@ export function CollectionDetailsBlock({
               <div className="space-y-4 py-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">Filter criteria</span>
-                  <button className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-pen w-3 h-3">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-sm text-blue-600 hover:text-blue-700 h-7 px-2 gap-1"
+                    onClick={() => setRulesModalOpen(true)}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
                       <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path>
                     </svg>
                     Customize filters
-                  </button>
+                  </Button>
                 </div>
                 <FilterChipsList filters={filterChips} />
-                {collection.autoSync && (
+                {collection.autoSync && filterChips.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Sparkles className="h-3 w-3" />
+                      Auto-sync enabled - collection updates automatically when rules change
+                    </p>
+                    {isSyncing && (
+                      <p className="text-xs text-blue-600 flex items-center gap-1">
+                        <div className="h-3 w-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                        Syncing collection data...
+                      </p>
+                    )}
+                    {lastSyncTime && !isSyncing && (
+                      <div className="space-y-1">
+                        <p className="text-xs text-green-600 flex items-center gap-1">
+                          <div className="h-3 w-3 bg-green-600 rounded-full" />
+                          Last synced: {lastSyncTime.toLocaleTimeString()}
+                        </p>
+                        {previousCount !== matchedItemsCount && (
+                          <p className="text-xs text-blue-600 flex items-center gap-1">
+                            <div className="h-3 w-3 bg-blue-600 rounded-full" />
+                            Items updated: {previousCount} → {matchedItemsCount}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+                {collection.autoSync && filterChips.length === 0 && (
                   <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
                     <Sparkles className="h-3 w-3" />
-                    Auto-sync enabled - collection updates automatically
+                    Auto-sync enabled - add rules to enable automatic updates
                   </p>
                 )}
               </div>
@@ -378,7 +466,7 @@ export function CollectionDetailsBlock({
                       variant="default" 
                       size="sm" 
                       className="h-7 px-3 text-sm bg-blue-600 hover:bg-blue-700 text-white"
-                      onClick={onOpenAIAssistant}
+                      onClick={() => onOpenAIAssistant?.()}
                     >
                       <Bot className="h-4 w-4 mr-1" />
                       AI Fojo
@@ -406,6 +494,14 @@ export function CollectionDetailsBlock({
           )}
         </CollectionDetailsSection>
       </CardContent>
+      
+      {/* Rules Modal */}
+      <RulesModal
+        collection={collection}
+        open={rulesModalOpen}
+        onOpenChange={setRulesModalOpen}
+        onSave={handleSaveRules}
+      />
     </Card>
   )
 }

@@ -313,31 +313,8 @@ export function AIChat({
 
       {/* Input Area - Fixed at bottom */}
       <div className="border-t p-4 bg-background sticky bottom-0 z-10">
-        <div className="flex gap-2">
-          <Textarea
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={placeholder}
-            disabled={disabled || isGenerating}
-            className="min-h-[60px] resize-none"
-          />
-          <Button
-            onClick={handleSendMessage}
-            disabled={!inputValue.trim() || disabled || isGenerating}
-            size="icon"
-            className="self-end"
-          >
-            {isGenerating ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Send className="h-4 w-4" />
-            )}
-          </Button>
-        </div>
-        
         {/* Quick Actions */}
-        <div className="mt-2 flex flex-wrap gap-2">
+        <div className="mb-2 flex flex-wrap gap-2">
           <Button
             variant="outline"
             size="sm"
@@ -364,6 +341,29 @@ export function AIChat({
           >
             <Sparkles className="h-3 w-3 mr-1" />
             By categories
+          </Button>
+        </div>
+        
+        <div className="flex gap-2">
+          <Textarea
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={placeholder}
+            disabled={disabled || isGenerating}
+            className="min-h-[60px] resize-none"
+          />
+          <Button
+            onClick={handleSendMessage}
+            disabled={!inputValue.trim() || disabled || isGenerating}
+            size="icon"
+            className="self-end"
+          >
+            {isGenerating ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
           </Button>
         </div>
       </div>
