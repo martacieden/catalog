@@ -5,7 +5,6 @@ import { Collection } from "@/types/collection"
 import { Button } from "@/components/ui/button"
 import {
   ChevronRight,
-  Home,
   Folder,
 } from "lucide-react"
 
@@ -22,21 +21,6 @@ export function CollectionBreadcrumb({
 }: CollectionBreadcrumbProps) {
   return (
     <nav className="flex items-center gap-1 text-sm">
-      {/* Home / All Collections */}
-      {showHome && (
-        <>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onNavigate(null)}
-            className="h-7 gap-1 px-2 text-muted-foreground hover:text-foreground"
-          >
-            <Home className="h-3.5 w-3.5" />
-            All Collections
-          </Button>
-          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-        </>
-      )}
 
       {/* Breadcrumb path */}
       {path.map((collection, index) => {
@@ -97,19 +81,7 @@ export function CollectionBreadcrumbCompact({
           </Button>
           <ChevronRight className="h-4 w-4 text-muted-foreground" />
         </>
-      ) : (
-        <>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onNavigate(null)}
-            className="h-7 gap-1 px-2 text-muted-foreground hover:text-foreground"
-          >
-            <Home className="h-3.5 w-3.5" />
-          </Button>
-          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-        </>
-      )}
+      ) : null}
 
       <span className="truncate font-semibold">
         {currentCollection.name}
