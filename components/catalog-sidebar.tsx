@@ -431,6 +431,7 @@ function CollectionItem({
   const [shareModalOpen, setShareModalOpen] = React.useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false)
   const [createDependencyOpen, setCreateDependencyOpen] = React.useState(false)
+  const [manualCollectionDialogOpen, setManualCollectionDialogOpen] = React.useState(false)
   
   // Action handlers
   const handlePin = (e: React.MouseEvent) => {
@@ -503,24 +504,6 @@ function CollectionItem({
   return (
     <div className="relative group z-10">
       <div className="flex items-center">
-        {/* Expansion button for collections with subcollections */}
-        {hasSubcollections && onToggleExpansion && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              onToggleExpansion()
-            }}
-            className="p-0 hover:bg-transparent"
-          >
-            {isExpanded ? (
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
-            ) : (
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            )}
-          </button>
-        )}
-        
-        
         {/* Subcollection indent */}
         {isSubcollection && (
           <div className="w-2" />
@@ -540,7 +523,24 @@ function CollectionItem({
             }
           }}
         >
-          {getIcon()}
+          {/* Show expansion arrow instead of icon if collection has subcollections */}
+          {hasSubcollections && onToggleExpansion ? (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onToggleExpansion()
+              }}
+              className="p-0 hover:bg-transparent mr-2"
+            >
+              {isExpanded ? (
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              )}
+            </button>
+          ) : (
+            getIcon()
+          )}
           <div className="ml-2 flex-1 text-left overflow-hidden pr-2" style={{ minWidth: 0, width: 0 }}>
             <div className="flex items-center gap-1">
               <span className={`block overflow-hidden text-ellipsis whitespace-nowrap !text-ellipsis !overflow-hidden !whitespace-nowrap ${!isSubcollection ? 'font-medium' : ''} ${hasSubcollections ? 'font-medium' : ''}`}>
@@ -554,75 +554,72 @@ function CollectionItem({
               </span>
             </div>
           </div>
-          {/* Show count by default, show actions on hover */}
-          <span className="ml-auto text-xs text-muted-foreground flex-shrink-0 group-hover:hidden">{collection.itemCount || 0}</span>
+          {/* Show dots on hover - clickable */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className="ml-auto flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-accent rounded-sm"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" side="left" className="z-50 w-48">
+              <DropdownMenuItem onClick={(e) => {
+                e.stopPropagation()
+                setManualCollectionDialogOpen(true)
+              }}>
+                <Plus className="mr-2 h-4 w-4" />
+                Create Collection
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={(e) => {
+                e.stopPropagation()
+                setEditDialogOpen(true)
+              }}>
+                <Edit className="mr-2 h-4 w-4" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={(e) => {
+                e.stopPropagation()
+                setShareModalOpen(true)
+              }}>
+                <Share2 className="mr-2 h-4 w-4" />
+                Share
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExport}>
+                <Download className="mr-2 h-4 w-4" />
+                Export
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handlePin}>
+                {collection.tags?.includes('pinned') ? (
+                  <>
+                    <PinOff className="mr-2 h-4 w-4" />
+                    Unpin
+                  </>
+                ) : (
+                  <>
+                    <Pin className="mr-2 h-4 w-4" />
+                    Pin
+                  </>
+                )}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                className="text-destructive"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setDeleteDialogOpen(true)
+                }}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </Button>
       </div>
       
-      {/* Hover Actions Menu */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-accent"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <MoreVertical className="h-3.5 w-3.5" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" side="right" className="z-50 w-48">
-          <DropdownMenuItem onClick={(e) => {
-            e.stopPropagation()
-            setEditDialogOpen(true)
-          }}>
-            <Edit className="mr-2 h-4 w-4" />
-            Edit
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={(e) => {
-            e.stopPropagation()
-            setShareModalOpen(true)
-          }}>
-            <Share2 className="mr-2 h-4 w-4" />
-            Share
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={(e) => {
-            e.stopPropagation()
-            setCreateDependencyOpen(true)
-          }}>
-            <Link className="mr-2 h-4 w-4" />
-            Create Dependency
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleExport}>
-            <Download className="mr-2 h-4 w-4" />
-            Export
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={handlePin}>
-            {collection.tags?.includes('pinned') ? (
-              <>
-                <PinOff className="mr-2 h-4 w-4" />
-                Unpin
-              </>
-            ) : (
-              <>
-                <Pin className="mr-2 h-4 w-4" />
-                Pin
-              </>
-            )}
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem 
-            className="text-destructive"
-            onClick={(e) => {
-              e.stopPropagation()
-              setDeleteDialogOpen(true)
-            }}
-          >
-            <Trash2 className="mr-2 h-4 w-4" />
-            Delete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
       
       {/* Dialogs */}
       <CollectionEditDialog
@@ -650,6 +647,20 @@ function CollectionItem({
         onOpenChange={setCreateDependencyOpen}
         sourceCollectionId={collection.id}
         sourceCollectionName={collection.name}
+      />
+      
+      {/* Manual Collection Dialog */}
+      <ManualCollectionDialog
+        trigger={<div style={{ display: 'none' }} />}
+        open={manualCollectionDialogOpen}
+        onOpenChange={setManualCollectionDialogOpen}
+        onCollectionCreated={() => {
+          setManualCollectionDialogOpen(false)
+          toast({
+            title: "Collection created",
+            description: "Your collection has been created successfully.",
+          })
+        }}
       />
       
     </div>
