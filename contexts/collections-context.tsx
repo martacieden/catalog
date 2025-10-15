@@ -98,6 +98,13 @@ interface CollectionsContextType {
   duplicateCollection: (id: string) => Collection | null
   archiveCollection: (id: string) => void
   
+  // Subcollections Management
+  createSubcollection: (parentId: string, data: Omit<Collection, "id" | "createdAt" | "itemCount" | "parentId" | "depth">) => Collection
+  getSubcollections: (parentId: string) => Collection[]
+  getParentCollection: (subcollectionId: string) => Collection | null
+  getCollectionPath: (collectionId: string) => Collection[]
+  moveItemsToSubcollection: (itemIds: string[], fromCollectionId: string, toCollectionId: string) => void
+  
   // Items Management
   addNewItem: (item: Omit<CollectionItem, "id">) => CollectionItem
   addItemToCollection: (collectionId: string, item: CollectionItem) => void
@@ -983,6 +990,121 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  // ==================== Subcollections Management ====================
+  
+  const createSubcollection = useCallback((parentId: string, data: Omit<Collection, "id" | "createdAt" | "itemCount" | "parentId" | "depth">): Collection => {
+    const parent = collections.find(c => c.id === parentId)
+    if (!parent) {
+      throw new Error(`Parent collection ${parentId} not found`)
+    }
+
+    // Validate depth (only 1 level allowed)
+    if (parent.depth && parent.depth >= 1) {
+      throw new Error('Maximum subcollection depth reached. Cannot create subcollection.')
+    }
+
+    const now = new Date()
+    const newSubcollection: Collection = {
+      ...data,
+      id: `subcollection-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      parentId,
+      depth: 1,
+      isSubcollection: true,
+      createdAt: now,
+      updatedAt: now,
+      createdBy: currentUser,
+      itemCount: data.items?.length || 0,
+    }
+
+    setCollections(prev => {
+      const updated = [...prev, newSubcollection]
+      
+      // Update parent's subcollection count
+      const updatedParent = updated.find(c => c.id === parentId)
+      if (updatedParent) {
+        updatedParent.subcollectionCount = (updatedParent.subcollectionCount || 0) + 1
+      }
+      
+      saveCollectionsToStorage(updated)
+      return updated
+    })
+
+    return newSubcollection
+  }, [collections, currentUser])
+
+  const getSubcollections = useCallback((parentId: string): Collection[] => {
+    return collections.filter(c => c.parentId === parentId)
+  }, [collections])
+
+  const getParentCollection = useCallback((subcollectionId: string): Collection | null => {
+    const subcollection = collections.find(c => c.id === subcollectionId)
+    if (!subcollection || !subcollection.parentId) return null
+    
+    return collections.find(c => c.id === subcollection.parentId) || null
+  }, [collections])
+
+  const getCollectionPath = useCallback((collectionId: string): Collection[] => {
+    const path: Collection[] = []
+    let current: Collection | undefined = collections.find(c => c.id === collectionId)
+    
+    if (!current) return path
+    
+    path.unshift(current)
+    
+    // Traverse up to root
+    while (current?.parentId) {
+      const parent = collections.find(c => c.id === current?.parentId)
+      if (!parent) break
+      path.unshift(parent)
+      current = parent
+    }
+    
+    return path
+  }, [collections])
+
+  const moveItemsToSubcollection = useCallback((
+    itemIds: string[],
+    fromCollectionId: string,
+    toCollectionId: string
+  ) => {
+    setCollections(prev => {
+      const fromCollection = prev.find(c => c.id === fromCollectionId)
+      const toCollection = prev.find(c => c.id === toCollectionId)
+      
+      if (!fromCollection || !toCollection) {
+        console.error('Collections not found')
+        return prev
+      }
+
+      // Get items to move
+      const itemsToMove = fromCollection.items?.filter(item => itemIds.includes(item.id)) || []
+      
+      // Remove from source
+      const updatedFrom = {
+        ...fromCollection,
+        items: fromCollection.items?.filter(item => !itemIds.includes(item.id)) || [],
+        itemCount: (fromCollection.items?.length || 0) - itemsToMove.length,
+      }
+      
+      // Add to destination
+      const updatedTo = {
+        ...toCollection,
+        items: [...(toCollection.items || []), ...itemsToMove],
+        itemCount: (toCollection.items?.length || 0) + itemsToMove.length,
+      }
+      
+      // Update collections array
+      const updated = prev.map(c => {
+        if (c.id === fromCollectionId) return updatedFrom
+        if (c.id === toCollectionId) return updatedTo
+        return c
+      })
+      
+      saveCollectionsToStorage(updated)
+      return updated
+    })
+  }, [])
+
   return (
     <CollectionsContext.Provider value={{
       // Core State
@@ -1004,6 +1126,13 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
       getCollectionById,
       duplicateCollection,
       archiveCollection,
+      
+      // Subcollections Management
+      createSubcollection,
+      getSubcollections,
+      getParentCollection,
+      getCollectionPath,
+      moveItemsToSubcollection,
       
       // Items Management
       addNewItem,

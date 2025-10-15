@@ -450,6 +450,12 @@ export function CollectionCard({
             <Folder className="h-3 w-3" />
             {formatItemCount(collection.itemCount)}
           </span>
+          {collection.subcollectionCount && collection.subcollectionCount > 0 && (
+            <span className="flex items-center gap-1 text-blue-600">
+              <Folder className="h-3 w-3" />
+              {collection.subcollectionCount} {collection.subcollectionCount === 1 ? 'folder' : 'folders'}
+            </span>
+          )}
           <span className="flex items-center gap-1">
             <Calendar className="h-3 w-3" />
             {formatRelativeTime(collection.createdAt)}

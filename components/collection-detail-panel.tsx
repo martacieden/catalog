@@ -24,7 +24,11 @@ import { CollectionAIAssistant } from "./collections/collection-ai-assistant"
 import { ShareModal } from "./collections/share-modal"
 import { RulesModal } from "./collections/rules-modal"
 import { CollectionEditSidebar } from "./collections/collection-edit-sidebar"
+import { SubcollectionsSection } from "./collections/subcollections-section"
+import { CreateSubcollectionDialog } from "./collections/create-subcollection-dialog"
+import { CollectionBreadcrumb } from "./collections/collection-breadcrumb"
 import { AvatarStack } from "./avatar-stack"
+import { canCreateSubcollection } from "@/lib/collection-utils"
 import {
   Filter,
   Search,
@@ -165,6 +169,10 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
     updateCollection,
     toggleAutoSync,
     getCollectionStats,
+    createSubcollection,
+    getSubcollections,
+    getCollectionPath,
+    moveItemsToSubcollection,
   } = useCollections()
   const { toast } = useToast()
   const [isMounted, setIsMounted] = React.useState(false)
@@ -209,6 +217,16 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
   const [shareModalOpen, setShareModalOpen] = React.useState(false)
   const [rulesModalOpen, setRulesModalOpen] = React.useState(false)
   const [editSidebarOpen, setEditSidebarOpen] = React.useState(false)
+  const [createSubcollectionOpen, setCreateSubcollectionOpen] = React.useState(false)
+  
+  // Subcollections data
+  const subcollections = React.useMemo(() => {
+    return collectionId ? getSubcollections(collectionId) : []
+  }, [collectionId, getSubcollections])
+  
+  const collectionPath = React.useMemo(() => {
+    return collectionId ? getCollectionPath(collectionId) : []
+  }, [collectionId, getCollectionPath])
   
   // Mock users for avatar stack
   const sharedUsers = [
@@ -432,6 +450,66 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
       })
     }
   }
+
+  // Subcollections handlers
+  const handleCreateSubcollection = (data: { name: string; description?: string; type: any; icon: string }) => {
+    if (!collectionId) return
+
+    try {
+      const newSubcollection = createSubcollection(collectionId, {
+        name: data.name,
+        description: data.description,
+        icon: data.icon,
+        type: data.type,
+        autoSync: data.type === "smart",
+        items: [],
+        filters: [],
+        isPublic: false,
+        sharedWith: [],
+        viewCount: 0,
+        createdBy: collection!.createdBy,
+        updatedAt: new Date(),
+      })
+
+      toast({
+        title: "Subcollection created",
+        description: `"${newSubcollection.name}" has been created successfully.`,
+      })
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create subcollection.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleOpenSubcollection = (subcollectionId: string) => {
+    // Navigate to subcollection - reuse current panel
+    // In a real app, this would update the URL/route
+    window.location.hash = `collection/${subcollectionId}`
+    // For now, just show toast
+    toast({
+      title: "Opening subcollection",
+      description: "Navigation will be implemented in routing.",
+    })
+  }
+
+  const handleEditSubcollection = (subcollection: Collection) => {
+    // TODO: Open edit dialog for subcollection
+    toast({
+      title: "Coming soon",
+      description: "Edit subcollection functionality will be available soon.",
+    })
+  }
+
+  const handleDeleteSubcollection = (subcollection: Collection) => {
+    // TODO: Open delete confirmation dialog
+    toast({
+      title: "Coming soon",
+      description: "Delete subcollection functionality will be available soon.",
+    })
+  }
   
   if (!collection) {
     return (
@@ -450,6 +528,23 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
     <div className="flex flex-col h-full bg-gray-50">
       {/* Header Layout */}
       <div className="bg-white border-b border-gray-200 px-6 py-3">
+        {/* Breadcrumb Navigation */}
+        {collectionPath.length > 0 && (
+          <div className="mb-3">
+            <CollectionBreadcrumb
+              path={collectionPath}
+              onNavigate={(id) => {
+                if (id) {
+                  handleOpenSubcollection(id)
+                } else {
+                  onClose()
+                }
+              }}
+              showHome={true}
+            />
+          </div>
+        )}
+        
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="flex flex-col gap-1">
@@ -551,6 +646,20 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
             }
           }}
         />
+
+        {/* Subcollections Section */}
+        {canCreateSubcollection(collection) && (
+          <SubcollectionsSection
+            parentCollection={collection}
+            subcollections={subcollections}
+            onCreateSubcollection={() => setCreateSubcollectionOpen(true)}
+            onOpenSubcollection={handleOpenSubcollection}
+            onEditSubcollection={handleEditSubcollection}
+            onDeleteSubcollection={handleDeleteSubcollection}
+            layout="grid"
+            showCreateButton={true}
+          />
+        )}
         
         {/* Table Controls */}
         <div className="flex items-center justify-between mb-4 mt-4">
@@ -806,6 +915,16 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
           open={editSidebarOpen}
           onOpenChange={setEditSidebarOpen}
           onSave={handleSaveCollection}
+        />
+      )}
+
+      {/* Create Subcollection Dialog */}
+      {collection && (
+        <CreateSubcollectionDialog
+          open={createSubcollectionOpen}
+          onOpenChange={setCreateSubcollectionOpen}
+          parentCollection={collection}
+          onCreateSubcollection={handleCreateSubcollection}
         />
       )}
     </div>

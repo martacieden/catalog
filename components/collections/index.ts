@@ -17,3 +17,9 @@ export { SyncPreviewDialog } from "./sync-preview-dialog"
 export { CollectionAIAssistant } from "./collection-ai-assistant"
 export { RuleBuilder } from "./rule-builder"
 export { RulesModal } from "./rules-modal"
+
+// Subcollections
+export { SubcollectionCard } from "./subcollection-card"
+export { CollectionBreadcrumb, CollectionBreadcrumbCompact } from "./collection-breadcrumb"
+export { SubcollectionsSection, SubcollectionsList } from "./subcollections-section"
+export { CreateSubcollectionDialog } from "./create-subcollection-dialog"

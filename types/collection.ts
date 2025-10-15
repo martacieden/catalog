@@ -27,6 +27,13 @@ export interface Collection {
   items?: CollectionItem[]
   filters?: FilterRule[]
   
+  // Hierarchy & Subcollections
+  parentId?: string | null          // ID батьківської колекції (null для root)
+  subcollections?: Collection[]      // Масив підколекцій
+  depth?: number                     // Рівень вкладеності (0 = root, 1 = subcollection)
+  isSubcollection?: boolean          // Прапорець для швидкої перевірки
+  subcollectionCount?: number        // Кількість підколекцій
+  
   // Automation
   autoSync: boolean
   syncRules?: JSONLogicRule
@@ -139,6 +146,10 @@ export type CollectionChangeAction =
   | 'shared'
   | 'unshared'
   | 'duplicated'
+  | 'subcollection_created'
+  | 'subcollection_deleted'
+  | 'moved_to_subcollection'
+  | 'moved_from_subcollection'
 
 export interface CollectionSnapshot {
   id: string

@@ -631,4 +631,134 @@ export function CardItemThumbnail({ item }: { item: any }) {
   )
 }
 
+// ==================== Subcollections ====================
+
+/**
+ * Maximum depth for subcollections (0 = root, 1 = subcollection)
+ */
+export const MAX_SUBCOLLECTION_DEPTH = 1
+
+/**
+ * Check if a collection can have subcollections
+ */
+export function canCreateSubcollection(collection: Collection): boolean {
+  // Можна створювати підколекції тільки в root колекціях (depth 0 або undefined)
+  return !collection.parentId && (!collection.depth || collection.depth === 0)
+}
+
+/**
+ * Get all subcollections for a given collection
+ */
+export function getSubcollections(
+  collectionId: string,
+  allCollections: Collection[]
+): Collection[] {
+  return allCollections.filter(col => col.parentId === collectionId)
+}
+
+/**
+ * Get parent collection
+ */
+export function getParentCollection(
+  collection: Collection,
+  allCollections: Collection[]
+): Collection | null {
+  if (!collection.parentId) return null
+  return allCollections.find(col => col.id === collection.parentId) || null
+}
+
+/**
+ * Get collection path (breadcrumb trail)
+ * Returns array of collections from root to current
+ */
+export function getCollectionPath(
+  collection: Collection,
+  allCollections: Collection[]
+): Collection[] {
+  const path: Collection[] = [collection]
+  let current = collection
+  
+  // Traverse up to root
+  while (current.parentId) {
+    const parent = allCollections.find(col => col.id === current.parentId)
+    if (!parent) break
+    path.unshift(parent)
+    current = parent
+  }
+  
+  return path
+}
+
+/**
+ * Get total item count including subcollections
+ */
+export function getTotalItemCount(
+  collection: Collection,
+  allCollections: Collection[],
+  includeSubcollections: boolean = false
+): number {
+  let count = collection.itemCount || 0
+  
+  if (includeSubcollections) {
+    const subcollections = getSubcollections(collection.id, allCollections)
+    subcollections.forEach(sub => {
+      count += sub.itemCount || 0
+    })
+  }
+  
+  return count
+}
+
+/**
+ * Format subcollection count
+ */
+export function formatSubcollectionCount(count: number): string {
+  if (count === 0) return 'No subcollections'
+  if (count === 1) return '1 subcollection'
+  return `${count} subcollections`
+}
+
+/**
+ * Check if collection is a subcollection
+ */
+export function isSubcollection(collection: Collection): boolean {
+  return !!collection.parentId || collection.isSubcollection === true
+}
+
+/**
+ * Check if collection has subcollections
+ */
+export function hasSubcollections(
+  collection: Collection,
+  allCollections?: Collection[]
+): boolean {
+  if (collection.subcollectionCount && collection.subcollectionCount > 0) {
+    return true
+  }
+  
+  if (allCollections) {
+    return getSubcollections(collection.id, allCollections).length > 0
+  }
+  
+  return false
+}
+
+/**
+ * Validate subcollection depth
+ */
+export function validateSubcollectionDepth(
+  parentCollection: Collection
+): { valid: boolean; error?: string } {
+  const depth = parentCollection.depth || 0
+  
+  if (depth >= MAX_SUBCOLLECTION_DEPTH) {
+    return {
+      valid: false,
+      error: 'Maximum subcollection depth reached. Only 1 level of nesting is allowed.',
+    }
+  }
+  
+  return { valid: true }
+}
+
 
