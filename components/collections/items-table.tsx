@@ -233,8 +233,7 @@ export function ItemsTable({
               {onBulkRemove && (
                 <Button variant="outline" size="sm" onClick={onBulkRemove}>
                   <X className="mr-1 sm:mr-2 h-4 w-4" />
-                  <span className="hidden sm:inline">Remove from collection</span>
-                  <span className="sm:hidden">Remove</span>
+                  Remove
                 </Button>
               )}
               {onBulkDelete && (
