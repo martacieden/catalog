@@ -496,22 +496,18 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
         
         <div className="flex items-center justify-between">
           <div className="flex flex-col gap-2">
-            {/* Breadcrumb навігація - показуємо тільки якщо є батьківські колекції */}
-            {collectionPath.length > 1 ? (
-              <CollectionBreadcrumb
-                path={collectionPath}
-                onNavigate={(id) => {
-                  if (id) {
-                    router.push(`/collections/${id}`)
-                  } else {
-                    router.push('/catalog')
-                  }
-                }}
-                showHome={true}
-              />
-            ) : (
-              <h1 className="text-lg font-semibold">{collection.name}</h1>
-            )}
+            {/* Breadcrumb навігація - показуємо для всіх колекцій */}
+            <CollectionBreadcrumb
+              path={collectionPath}
+              onNavigate={(id) => {
+                if (id) {
+                  router.push(`/collections/${id}`)
+                } else {
+                  router.push('/catalog')
+                }
+              }}
+              showHome={false}
+            />
             
             {/* Метадані колекції */}
             <div className="flex items-center gap-2">
