@@ -643,7 +643,6 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
             onOpenSubcollection={handleOpenSubcollection}
             onEditSubcollection={handleEditSubcollection}
             onDeleteSubcollection={handleDeleteSubcollection}
-            layout="grid"
             showHeader={true}
           />
         )}
