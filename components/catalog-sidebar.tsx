@@ -422,7 +422,7 @@ function CollectionItem({
 }) {
   const router = useRouter()
   const { toast } = useToast()
-  const { updateCollection, removeCollection } = useCollections()
+  const { updateCollection, removeCollection, createSubcollection } = useCollections()
   const isActive = activeView === collection.id
   const isSelected = selectedCollectionId === collection.id
   
@@ -662,6 +662,7 @@ function CollectionItem({
           })
         }}
       />
+      
       
     </div>
   )
