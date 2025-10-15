@@ -223,7 +223,7 @@ const createDemoCollections = (): Collection[] => {
   ]
 
   return [
-    // Single High Value Assets Collection
+    // Main High Value Assets Collection
     {
       id: 'high-value-assets',
       name: 'High Value Assets',
@@ -239,11 +239,57 @@ const createDemoCollections = (): Collection[] => {
       subcollections: [],
       depth: 0,
       isSubcollection: false,
-      subcollectionCount: 0,
+      subcollectionCount: 2,
       createdAt: now,
       updatedAt: now,
       createdBy: currentUser,
       itemCount: aviationItems.length,
+      viewCount: 0,
+    },
+    // Fleet Subcollection
+    {
+      id: 'fleet-subcollection',
+      name: 'Fleet',
+      description: 'Aviation fleet management and operations',
+      icon: '✈️',
+      type: 'manual' as const,
+      category: 'Aviation',
+      tags: ['fleet', 'aviation', 'operations'],
+      items: fleetItems,
+      filters: [],
+      autoSync: false,
+      parentId: 'high-value-assets',
+      subcollections: [],
+      depth: 1,
+      isSubcollection: true,
+      subcollectionCount: 0,
+      createdAt: now,
+      updatedAt: now,
+      createdBy: currentUser,
+      itemCount: fleetItems.length,
+      viewCount: 0,
+    },
+    // Maintenance Subcollection
+    {
+      id: 'maintenance-subcollection',
+      name: 'Maintenance',
+      description: 'Aircraft maintenance and inspection records',
+      icon: '🔧',
+      type: 'manual' as const,
+      category: 'Maintenance',
+      tags: ['maintenance', 'inspection', 'records'],
+      items: maintenanceItems,
+      filters: [],
+      autoSync: false,
+      parentId: 'high-value-assets',
+      subcollections: [],
+      depth: 1,
+      isSubcollection: true,
+      subcollectionCount: 0,
+      createdAt: now,
+      updatedAt: now,
+      createdBy: currentUser,
+      itemCount: maintenanceItems.length,
       viewCount: 0,
     }
   ]
