@@ -193,6 +193,9 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
     itemCount: PLACEHOLDER_ITEMS.length,
   } : null
   
+  // Get subcollections for current collection
+  const subcollections = collection ? getSubcollections(collection.id) : []
+  
   // State
   const [searchQuery, setSearchQuery] = React.useState("")
   const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set())
@@ -222,10 +225,6 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
   const [rulesModalOpen, setRulesModalOpen] = React.useState(false)
   const [editSidebarOpen, setEditSidebarOpen] = React.useState(false)
   
-  // Subcollections data
-  const subcollections = React.useMemo(() => {
-    return collectionId ? getSubcollections(collectionId) : []
-  }, [collectionId, getSubcollections])
   
   const collectionPath = React.useMemo(() => {
     return collectionId ? getCollectionPath(collectionId) : []
@@ -606,13 +605,14 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
           }}
         />
 
-        {/* Collections Section - демо-блок для показу UI структури */}
+        {/* Collections Section - показуємо тільки якщо є підколекції */}
+        {subcollections.length > 0 && (
         <div className="mb-6 mt-4">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <h3 className="text-sm font-semibold">Collections</h3>
               <Badge variant="outline" className="text-xs">
-                2
+                {subcollections.length}
               </Badge>
             </div>
             
@@ -683,6 +683,7 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
             </Card>
           </div>
         </div>
+        )}
 
         
         {/* Table Controls */}

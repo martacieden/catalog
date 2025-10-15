@@ -35,6 +35,7 @@ interface ManualCollectionDialogProps {
   onCollectionCreated?: () => void
   open?: boolean
   onOpenChange?: (open: boolean) => void
+  parentId?: string // ID батьківської колекції для створення підколекції
 }
 
 const AVAILABLE_FIELDS = [
@@ -193,8 +194,8 @@ const ALL_ICONS = COLLECTION_ICON_CATEGORIES.flatMap(category =>
   category.icons.map(icon => ({ ...icon, category: category.name }))
 )
 
-export function ManualCollectionDialog({ trigger, selectedItems = [], onCollectionCreated, open: externalOpen, onOpenChange: externalOnOpenChange }: ManualCollectionDialogProps) {
-  const { addCollection, allItems } = useCollections()
+export function ManualCollectionDialog({ trigger, selectedItems = [], onCollectionCreated, open: externalOpen, onOpenChange: externalOnOpenChange, parentId }: ManualCollectionDialogProps) {
+  const { addCollection, allItems, createSubcollection } = useCollections()
   const { toast } = useToast()
   const router = useRouter()
   const [internalOpen, setInternalOpen] = React.useState(false)
@@ -379,32 +380,59 @@ export function ManualCollectionDialog({ trigger, selectedItems = [], onCollecti
     // Get selected items from allItems context
     const selectedItemObjects = allItems.filter(item => selectedItems.includes(item.id))
     
-    // Add collection to context
-    const newCollection = {
-      name: collectionName,
-      icon: customImage ? "custom" : selectedIcon.name,
-      customImage: customImage || undefined,
-      filters,
-      description: description || (selectedItems.length > 0 
-        ? `Collection created from ${selectedItems.length} selected items` 
-        : undefined),
-      type: 'manual' as const,
-      tags: [],
-      items: selectedItemObjects, // Додаємо вибрані items
-      autoSync: false,
-      isPublic: false,
-      sharedWith: [],
-      viewCount: 0,
-      // Satisfy type requirements; provider will overwrite createdBy/updatedAt
-      createdBy: { id: "temp", name: "", email: "", avatar: "" },
-      updatedAt: new Date(),
-    }
+    let createdCollection
     
-    const createdCollection = addCollection(newCollection)
+    if (parentId) {
+      // Create subcollection
+      const subcollectionData = {
+        name: collectionName,
+        icon: customImage ? "custom" : selectedIcon.name,
+        customImage: customImage || undefined,
+        filters,
+        description: description || (selectedItems.length > 0 
+          ? `Subcollection created from ${selectedItems.length} selected items` 
+          : undefined),
+        type: 'manual' as const,
+        tags: [],
+        items: selectedItemObjects,
+        autoSync: false,
+        isPublic: false,
+        sharedWith: [],
+        viewCount: 0,
+        // Satisfy type requirements; provider will overwrite createdBy/updatedAt
+        createdBy: { id: "temp", name: "", email: "", avatar: "" },
+        updatedAt: new Date(),
+      }
+      
+      createdCollection = createSubcollection(parentId, subcollectionData)
+    } else {
+      // Create regular collection
+      const newCollection = {
+        name: collectionName,
+        icon: customImage ? "custom" : selectedIcon.name,
+        customImage: customImage || undefined,
+        filters,
+        description: description || (selectedItems.length > 0 
+          ? `Collection created from ${selectedItems.length} selected items` 
+          : undefined),
+        type: 'manual' as const,
+        tags: [],
+        items: selectedItemObjects, // Додаємо вибрані items
+        autoSync: false,
+        isPublic: false,
+        sharedWith: [],
+        viewCount: 0,
+        // Satisfy type requirements; provider will overwrite createdBy/updatedAt
+        createdBy: { id: "temp", name: "", email: "", avatar: "" },
+        updatedAt: new Date(),
+      }
+      
+      createdCollection = addCollection(newCollection)
+    }
     
     // Show success message
     toast({
-      title: "Collection created successfully! 🎉",
+      title: parentId ? "Subcollection created successfully! 🎉" : "Collection created successfully! 🎉",
       description: selectedItemObjects.length > 0 
         ? `"${collectionName}" has been created with ${selectedItemObjects.length} selected item${selectedItemObjects.length > 1 ? 's' : ''}.`
         : `"${collectionName}" has been created.`,
