@@ -567,6 +567,12 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
       viewCount: 0,
       createdBy: currentUser,
       version: 1,
+      // Subcollection properties - defaults for new collections
+      parentId: null,
+      subcollections: [],
+      depth: 0,
+      isSubcollection: false,
+      subcollectionCount: 0,
     } as Collection
     setCollections(prev => {
       const updated = [...prev, newCollection]
