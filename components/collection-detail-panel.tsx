@@ -619,7 +619,9 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
             <Button
               size="sm"
               variant="outline"
-              className="h-8 gap-1.5"
+              className="h-8 gap-1.5 cursor-not-allowed opacity-50"
+              disabled
+              onClick={(e) => e.preventDefault()}
             >
               <Plus className="h-4 w-4" />
               Create Collection
@@ -629,7 +631,7 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
           {/* Демо підколекції */}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {/* Fleet */}
-            <Card className="group relative cursor-pointer overflow-hidden border border-gray-200 bg-white transition-all hover:border-blue-300 hover:shadow-sm p-4">
+            <Card className="group relative cursor-not-allowed opacity-75 overflow-hidden border border-gray-200 bg-white p-4">
               <CardHeader className="pb-0 pt-0">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-1.5">
@@ -656,7 +658,7 @@ export function CollectionDetailPanel({ collectionId, onClose }: CollectionDetai
             </Card>
 
             {/* Maintenance */}
-            <Card className="group relative cursor-pointer overflow-hidden border border-gray-200 bg-white transition-all hover:border-blue-300 hover:shadow-sm p-4">
+            <Card className="group relative cursor-not-allowed opacity-75 overflow-hidden border border-gray-200 bg-white p-4">
               <CardHeader className="pb-0 pt-0">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-1.5">

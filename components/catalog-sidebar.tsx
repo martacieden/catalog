@@ -565,10 +565,14 @@ function CollectionItem({
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" side="left" className="z-50 w-48">
-              <DropdownMenuItem onClick={(e) => {
-                e.stopPropagation()
-                setManualCollectionDialogOpen(true)
-              }}>
+              <DropdownMenuItem 
+                disabled
+                className="cursor-not-allowed opacity-50"
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                }}
+              >
                 <Plus className="mr-2 h-4 w-4" />
                 Create Collection
               </DropdownMenuItem>
