@@ -577,10 +577,14 @@ function CollectionItem({
                 Create Collection
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={(e) => {
-                e.stopPropagation()
-                setEditDialogOpen(true)
-              }}>
+              <DropdownMenuItem 
+                disabled
+                className="cursor-not-allowed opacity-50"
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                }}
+              >
                 <Edit className="mr-2 h-4 w-4" />
                 Edit
               </DropdownMenuItem>
