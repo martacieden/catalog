@@ -544,13 +544,7 @@ function CollectionItem({
           <div className="ml-2 flex-1 text-left overflow-hidden pr-2" style={{ minWidth: 0, width: 0 }}>
             <div className="flex items-center gap-1">
               <span className={`block overflow-hidden text-ellipsis whitespace-nowrap !text-ellipsis !overflow-hidden !whitespace-nowrap ${!isSubcollection ? 'font-medium' : ''} ${hasSubcollections ? 'font-medium' : ''}`}>
-                {isSubcollection && collection.parentId 
-                  ? (() => {
-                      const parentCollection = allCollections.find(c => c.id === collection.parentId)
-                      return parentCollection ? `${parentCollection.name} > ${collection.name}` : collection.name
-                    })()
-                  : collection.name
-                }
+                {collection.name}
               </span>
             </div>
           </div>
